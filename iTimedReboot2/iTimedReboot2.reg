@@ -1,0 +1,13 @@
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE\Software\Intermec\iTimedReboot2]
+"LastBootDate"="20120831"
+"RebootTime"="11:53"
+"RebootExtApp"="\\Windows\\fexplore.exe"
+"RebootExt"="1"
+"Interval"="60"
+"PingInterval"="30"
+"EnableLogging"="1"
+"RebootExtParms"="\\Flash File Store"
+"PingTarget"="127.0.0.1"
+

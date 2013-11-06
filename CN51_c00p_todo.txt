@@ -1,0 +1,75 @@
+3.      Anpassungen Applikationen
+ 
+ 3.1      FTP
+ Hier sind keine Anpassungen nötig. Die Funktion wie auch das Login sollten gleich wie beim CN2/CN50 bleiben.
+  
+ 3.2      iLock
+ Bei iLock sind zwei Punkte welche angepasst werden müssen.
+ Der Reboot Button wird nicht mehr benötigt.
+ iLock sollte über eine Tastenkombination oder Code geschlossen werden können. Dies muss auch per Remote und ab Barcode funktionieren.
+   
+ 3.3      iTimedReboot
+ Für iTimedReboot sind zwei zusätzliche Parameter erforderlich. Es soll Möglich sein den Intervall der Reboots (24h, 48h, wöchentlich) festzulegen. Zusätzlich soll es nicht mehr ein fixer Zeitpunkt sein, sondern ein Zeitfenster von 2h Stunden in diesem der Reboot variable ist. Grund: Würden alle 7000 Geräte gleichzeitig booten würde dies unsere Radius- und MobiControl Server massiv belasten.
+    
+ 3.4      Mortscript
+ Aktuell ist Mortscript die Basis für viele kleine Scripts zum Auswerten und Kontrolle des Zustandes. Aus diesem Grund möchten wir dies auch weiterhin beibehalten.
+
+ 3.5      KeyToggleBoot
+ Die Funktion für Reboot wird nicht mehr benötigt da dies ja vom Gerät selbst abgedeckt wird.
+ Allerdings benötigen wir das InactivityTimeout. Dieses soll so erweitert werden das zusätzlich zum akustischen auch ein vibrations- und LED Alarm ausgelöst wird. Ebenfalls soll ein Popup eingeblendet werden mit dem Grund des Alarms.
+ TBR:
+ Von Touchscreen ist im Meeting Zetes / Coop nichts mehr gesagt worden, also kann das entfallen. Allerdings muss der Scanner noch geprüft werden. Das Scannen muss den Timer genauso zurücksetzen wie das Drücken von Tasten. Die Logik ist dann: Wenn in einem in der Registry hinterlegten Intervall weder Tastendruck noch Scannerbetätigung erfolgen, startet die Alarmierung. "Scannerbetätigung" heißt dabei "Scanner an" auch wenn kein Barcode decodiert wurde. Wenn das zu knifflig ist, heißt "Scannerbetätigung" Decodieren eines Barcodes.
+Die Nachricht, die auf dem Display angezeigt wird, soll ganz allgemein nur ausdrücken: "Gerät wurde x Minuten nicht benutzt. Alarm ausschalten mit roter Taste."
+
+    
+ 4.      Funktionen
+     
+ 4.1      Rebootmenu
+ Beim Rebootmenu müssne die Punkte angepasst werden.
+ Sicher sind Reboot und Shutdown. Beim Cleanboot muss erst geklärt sein wie es sich bezüglich dem Speichern der Zertifikate verhält.
+        
+ 4.2      Auslesen der Seriennummer
+ Die Seriennummer muss elektronisch auslesbar sein ohne auf das Gerät zuzugreifen. Dies kann aus der Registry oder aus eine File sein.
+ Ideal wäre wenn eine API zu MobiControl besteht wie es die Konkurrenz bereits Umgesetzt hat.
+ TBR>>> Es wäre schön, wenn das im iLock Fenster angezeigt würde
+         
+ 4.3      Logfiles
+ Auf Basis des bestehenden Bootlogs soll weiter aufgebaut und erweitert werden. Auch von den obengenannten Applikationen wäre ein Logfile wünschenswert.
+          
+ 4.4      IP Fenster für Staging
+ Da der mRetail Client nicht mehr eingesetzt wird, braucht es neu ein Fenster wo die IP Adresse eingeblendet wird solange das Staging im SetupCenter nicht durchgeführt wurde. 
+
+===============================================================
+ToDo Changes for CN51:
+
+== iLock
+
+1.  Reboot button enable/disable
+2.  Close iLock using keyinput, barcode and remote
+3.  add logging to file
+4.  Show IP of device
+5.  add logging to file
+
+== iTimedReboot
+
+1.  new intervals for 24h, 48h, weekly
+2.  randomize reboot within time frame of 2h
+    a) what if the interval is shorter than the time frame?
+5.  add logging to file
+
+== KeyToggleBoot
+
+0.  Is keytoggleboot needed any more? There is a reboot dialog in the device!
+1.  reboot options dialog no more needed
+2.  add logging to file
+-
+2a.  add LED and Vibrate alarm to the existing sound alarm
+3.  show window message "Device was not used for xx now."
+    a) what is the reason? Currently we only know keyboard inactivity
+4.  include screen touch activity additionally to keyboard activity to reset timeout?
+
+== NEW?
+
+1.  store model code to be readable by external apps
+2.  show IP in startup as long as device is not commisioned
+

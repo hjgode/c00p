@@ -1,0 +1,10 @@
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE\Software\Intermec\RebootDialog2]
+"QuestionText"="You are about to Warmboot or Shutdown your device. Please select function:"
+"CancelText"="Cancel"
+"ShutdownText"="Shutdown"
+"RebootText"="Warmboot"
+"SuspendText"="Suspend"
+"CleanBootText"="CleanBoot"
+

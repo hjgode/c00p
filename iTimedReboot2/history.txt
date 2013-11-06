@@ -1,0 +1,11 @@
+iTimedReboot2
+
+	v0.1:
+		initial release with functional changes based on iTimedReboot
+	v0.2:
+		added a resource string for WindowClassName as other app TaskbarAddon4 relies on the Class Name
+		changed 
+			LoadString(hInstance, IDC_iTimedReboot2, szWindowClass, MAX_LOADSTRING); 
+		to
+			LoadString(hInstance, IDS_WINDOWCLASSNAME, szWindowClass, MAX_LOADSTRING);
+			

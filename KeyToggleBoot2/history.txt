@@ -1,0 +1,41 @@
+= KeyToggleBoot2 =
+
+	based on KeyToggleBoot
+	needs RebootDialog.exe in Windows Dir
+	
+== Usage ==
+	the tool will issue a warmboot dialog when a sequence of keys is pressed in the right order and time
+	
+== Config ==
+	configuration is done using the registry:
+	{{{
+	REGEDIT4
+
+	[HKEY_LOCAL_MACHINE\Software\Intermec\KeyToggleBoot]
+	"ForbiddenKeys"=hex:\00		
+							reg_binary, a list of forbidden key values, vk_ values
+	"RebootText"="Neustart"
+							reg_sz, the title of the reboot dialog
+	"QuestionText"="Sie haben den Reboot-Dialog geöffnet. Was möchten Sie?"
+							reg_sz, the message to display in the reboot dialog
+	"CancelText"="Abbrechen"
+							reg_sz, the text on the CANCEL button
+	"ShutdownText"="Herunterfahren"
+							reg_sz, the text on the ShutDown button
+	"SuspendText"="Standby"
+							reg_sz, the text on the Standby button
+	"KeySeq"="***"
+							reg_sz, the char values to be pressed in sequence to bring up the dialog
+	"Timeout"=dword:00000003
+							reg_dword, the number of seconds in which the sequence has to be entered
+	"LEDid"=dword:00000001
+							reg_dword, the ID of the LED to light, when the tool is in recognizing mode
+							(user has started to enter a char of the sequence)
+	}}}
+	
+== Version ==
+	1.0
+		initial release
+	1.01
+		moved reg key used to central place
+		

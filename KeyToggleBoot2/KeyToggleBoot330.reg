@@ -1,0 +1,14 @@
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE\Software\Intermec\KeyToggleBoot]
+"ForbiddenKeys"=hex:\
+      00
+"RebootText"="Neustart"
+"QuestionText"="Sie haben den Reboot-Dialog geöffnet. Was möchten Sie?"
+"CancelText"="Abbrechen"
+"ShutdownText"="Herunterfahren"
+"SuspendText"="Standby"
+"KeySeq"="***"
+"Timeout"=dword:00000003
+"LEDid"=dword:00000001
+
