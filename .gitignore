@@ -1,3 +1,21 @@
+# unused bin files
+*.suo
+*.ncb
+*.user
+*.exp
+*.lib
+*.obj
+*.pch
+*.pdb
+*.idb
+*.htm
+*.res
+*.sbr
+*.aps
+*.bsc
+*.sbr
+*.vcl
+
 # Compiled Object files
 *.slo
 *.lo
