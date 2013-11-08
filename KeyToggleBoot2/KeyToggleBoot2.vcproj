@@ -5,6 +5,10 @@
 	Name="KeyToggleBoot2"
 	ProjectGUID="{F36667DF-DE42-4C1D-A356-5E0649C1AB9E}"
 	RootNamespace="KeyToggleBoot2"
+	SccProjectName="Svn"
+	SccAuxPath="Svn"
+	SccLocalPath="Svn"
+	SccProvider="SubversionScc"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
