@@ -2,6 +2,9 @@
 
 iLock5 version history
 
+	version 5.4.0.0
+		adding event thread and stopEvent code to be able to stop iLock5 from extern
+		
 	in progress		
 		moved RETAILMSG(1, (buf)); outside if(UseLogging) in nclog.cpp. So it is always active.
 		==> tested 3 times with RETAIL build and was OK

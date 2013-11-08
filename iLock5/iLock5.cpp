@@ -23,6 +23,15 @@
 
 #pragma comment (user , "version 5.3.2.0")	//see also iLock5ppc.rc !
 
+//START stop watchdog code
+#define STOPEVENTNAME L"STOPILOCK"
+#define WM_USER_STOP_ILOCK WM_USER + 4711
+DWORD _stopEventWaitThreadID=0;
+HANDLE _hStopEventHandle=NULL;
+HANDLE _threadWaitStopEventThreadHandle=NULL;
+HANDLE _hStopThread=NULL;
+//END stop watchdog code
+
 //fix memory problem on WM5 and later, see http://social.msdn.microsoft.com/forums/en-US/vssmartdevicesnative/thread/e91d845d-d51e-45ad-8acf-737e832c20d0/
 #ifndef TH32CS_SNAPNOHEAPS
 #define TH32CS_SNAPNOHEAPS = 0x40000000
@@ -462,6 +471,68 @@ void ReadRegistry(void)
 	TIMER4COUNT=3;
 	iUseLogging=1;
 #endif
+}
+
+DWORD WINAPI watchdogSTOP(LPVOID param){
+	HWND hWndMain=(HWND) param;
+	_hStopEventHandle	=	CreateEvent(NULL, TRUE, FALSE, STOPEVENTNAME);	//create a MANUAL reset event handle
+	_hStopThread		=	CreateEvent(NULL, FALSE, FALSE, L"STOP iLock stop watchdog");
+	if(_hStopEventHandle==NULL)
+		return -1;
+	HANDLE myHandles[2];
+	myHandles[0]=_hStopEventHandle;
+	myHandles[1]=_hStopThread;
+	DWORD dwWait;
+	BOOL bExitThread=FALSE;
+	nclog(L"watchdogSTOP: thread started\r\n");
+	do{
+		dwWait = WaitForMultipleObjects(2, myHandles, FALSE, INFINITE);
+		switch(dwWait){
+			case WAIT_OBJECT_0:
+				nclog(L"watchdogSTOP: event signaled\r\n");
+				//send stop message
+				PostMessage(hWndMain, WM_USER_STOP_ILOCK, 0, 0);
+				ResetEvent(_hStopEventHandle);
+				break;
+			case WAIT_OBJECT_0+1:
+				//stop thread
+				nclog(L"watchdogSTOP: exit thread requested\r\n");
+				bExitThread=TRUE;
+				break;
+			case WAIT_ABANDONED:
+				nclog(L"watchdogSTOP: WAIT_ABANDONED\r\n");
+				break;
+			case WAIT_FAILED:
+				nclog(L"watchdogSTOP: WAIT_FAILED\r\n");
+				break;
+			case WAIT_TIMEOUT:
+				nclog(L"watchdogSTOP: WAIT_TIMEOUT\r\n");
+				break;
+			default:
+				nclog(L"watchdogSTOP: default\r\n");
+				break;
+		}
+	}while(!bExitThread);
+	nclog(L"watchdogSTOP: thread exit\r\n");
+	return 0;
+}
+
+int startSTOPwatchdog(HWND hWndMain){
+	_threadWaitStopEventThreadHandle = CreateThread(NULL, 0, watchdogSTOP, hWndMain, 0, &_stopEventWaitThreadID);
+	if(_threadWaitStopEventThreadHandle==NULL)
+		nclog(L"start of stop watchdog failed\r\n");
+	else
+		nclog(L"start of stop watchdog OK\r\n");
+
+	return 0;
+}
+
+int stopSTOPwatchdog(){
+	if(_hStopThread!=NULL){
+		nclog(L"setting stop STOP watchdog");
+		SetEvent(_hStopThread);
+	}
+	return 0;
 }
 
 DWORD WINAPI watchdogThread(LPVOID param){
@@ -969,6 +1040,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	nclog(L"iLock5: Inside MsgLoop\r\n");
     switch (message) 
     {
+		case WM_USER_STOP_ILOCK:	//gracefully close
+			break;
 		case ILOCK_WATCHDOG:
 			dwC = wParam;
 			nclog(L"Watchdog message: %i\r\n", dwC);
@@ -1157,6 +1230,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				SetTimer(hWnd, timer4, timer4intervall, NULL); //start the reboot button timer
 				nclog(L"iLock5: WM_CREATE. Starting timer 4 (RebootButton).\r\n");
 			}
+			//start a thread that enables EXIT of iLock
+			startSTOPwatchdog(hWnd);
             return 0;	//5.1.8.1 return messgage has been processed
 	   case WM_NOTIFY:
 #ifdef LISTVIEWPAUSES
