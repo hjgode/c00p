@@ -5,6 +5,10 @@
 	Name="iTimedReboot2"
 	ProjectGUID="{2CF72715-E18B-4975-93AC-ADDC811E4232}"
 	RootNamespace="iTimedReboot2"
+	SccProjectName="Svn"
+	SccAuxPath="Svn"
+	SccLocalPath="Svn"
+	SccProvider="SubversionScc"
 	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
