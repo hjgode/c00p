@@ -1327,6 +1327,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             EndPaint(hWnd, &ps);
 			nclog(L"iLock5: WM_PAINT. Leaving\r\n");
             return 0;	//5.1.8.1 return messgage has been processed
+
         case WM_DESTROY:
 			nclog(L"iLock5: WM_DESTROY. Killing timers 1, 2 and 4.\r\n");
 			if(pWatchdog!=0){
@@ -1340,6 +1341,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			KillTimer (hWnd, timer1);
 			KillTimer (hWnd, timer2);
 			KillTimer (hWnd, timer4);
+
+			//stop stopWatchdog thread
+			stopSTOPwatchdog();
+
 #ifdef USEMENUBAR
 			if(UseMenuBar==1){
 				CommandBar_Destroy(g_hWndMenuBar);
