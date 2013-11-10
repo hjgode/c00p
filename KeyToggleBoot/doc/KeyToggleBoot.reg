@@ -1,0 +1,10 @@
+REGEDIT4
+
+[HKEY_LOCAL_MACHINE\Software\Intermec\KeyToggleBoot]
+"ForbiddenKeys"=hex:\
+      72,73
+"LEDid"=dword:00000001
+"Timeout"=dword:0000000A
+"KeySeq"="*.#"
+
+
