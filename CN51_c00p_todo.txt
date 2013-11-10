@@ -48,7 +48,6 @@ ToDo Changes for CN51:
 2.  Close iLock using keyinput, barcode and remote
 3.  add logging to file
 4.  Show IP of device
-5.  add logging to file
 
 == iTimedReboot
 
