@@ -4,6 +4,14 @@ iLock5 version history
 
 	version 5.4.0.0
 		adding event thread and stopEvent code to be able to stop iLock5 from extern
+			iLock can now be quit by setting a named event "STOPILOCK"
+		fixed EnumWindow function
+		added bak copy for log file
+		
+		TODO:
+		close iLock by key sequence		->	to be done using iToggleBoot using the named event?
+		close iLock by barcode			->	use barcode to start stopIlock (new app that will set the new named event)
+		close iLock by remote			->	just run stopIlock remotely
 		
 	in progress		
 		moved RETAILMSG(1, (buf)); outside if(UseLogging) in nclog.cpp. So it is always active.

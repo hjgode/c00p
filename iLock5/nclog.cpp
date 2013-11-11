@@ -122,6 +122,15 @@ static int initFileNames()
 		if(iEnd > MAX_LOG_SIZE)
 		{
 			fclose(fp);
+
+			//make a backup
+			//delete previous bak
+			TCHAR txtFileNameBAK[MAX_PATH];
+			wsprintf(txtFileNameBAK, L"%s.bak", logFileNameW);
+			DeleteFile(txtFileNameBAK);
+			//rename old file to .BAK
+			MoveFile(txtFileName, txtFileNameBAK);
+			
 			fp=fopen(logFileName, "w+"); //creates an empty file
 		}
 	}

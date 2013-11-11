@@ -21,7 +21,7 @@
 #include "registry.h"
 #include "nclog.h"
 
-#pragma comment (user , "version 5.3.2.0")	//see also iLock5ppc.rc !
+#pragma comment (user , "version 5.4.0.0")	//see also iLock5ppc.rc !
 
 //START stop watchdog code
 #define STOPEVENTNAME L"STOPILOCK"
@@ -491,7 +491,7 @@ DWORD WINAPI watchdogSTOP(LPVOID param){
 			case WAIT_OBJECT_0:
 				nclog(L"watchdogSTOP: event signaled\r\n");
 				//send stop message
-				PostMessage(hWndMain, WM_USER_STOP_ILOCK, 0, 0);
+				SendMessage(hWndMain, WM_USER_STOP_ILOCK, 0, 0);
 				ResetEvent(_hStopEventHandle);
 				break;
 			case WAIT_OBJECT_0+1:
@@ -512,6 +512,7 @@ DWORD WINAPI watchdogSTOP(LPVOID param){
 				nclog(L"watchdogSTOP: default\r\n");
 				break;
 		}
+		Sleep(3000);
 	}while(!bExitThread);
 	nclog(L"watchdogSTOP: thread exit\r\n");
 	return 0;
@@ -541,11 +542,11 @@ DWORD WINAPI watchdogThread(LPVOID param){
 	int iC=0;
 	do{
 		iC++;
-		PostMessage(hWin, ILOCK_WATCHDOG, (WPARAM) iC, (LPARAM)0);
+		SendMessage(hWin, ILOCK_WATCHDOG, (WPARAM) iC, (LPARAM)0);
 		Sleep(1000);
-		nclog(L"Watchdog live sign\r\n");
+		nclog(L"iLock5: Watchdog live sign. hWnd=0x%08x\r\n", hWin);
 	}while(!stopWatchdog);
-	nclog(L"Watchdog Thread ended\r\n");
+	nclog(L"iLock5: Watchdog Thread ended\r\n");
 	return 0;
 }
 
@@ -723,12 +724,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     }
 	g_hWnd=hWnd;
 
-	//start watchdog
-	if (CreateThread(NULL, 0, watchdogThread, (LPVOID) hWnd, 0, &pWatchdog))
-		nclog(L"Watchdog thread created\r\n");
-	else
-		nclog(L"Watchdog thread creation failed\r\n");
-	
 #ifdef USEMENUBAR
 	nclog(L"iLock5: InitInstance: USEMENUBAR...\r\n");
 	if(UseMenuBar==1){
@@ -844,7 +839,7 @@ void DoCleanBoot()
 //
 LRESULT ClearList(HWND hList)
 {
-	SendMessage(hList, LVM_DELETEALLITEMS , 0, 0); //Clear List
+	PostMessage(hList, LVM_DELETEALLITEMS , 0, 0); //Clear List
 	lvNextItem=1;
 	return 0;
 }
@@ -875,11 +870,27 @@ LRESULT Add2List(HWND hList, TCHAR *text)
 	return 0;
 }
 
+/*  returns 1 iff str ends with suffix  */
+int str_ends_with(const TCHAR * str, const TCHAR * suffix) {
+
+  if( str == NULL || suffix == NULL )
+    return 0;
+
+  size_t str_len = wcslen(str);
+  size_t suffix_len = wcslen(suffix);
+
+  if(suffix_len > str_len)
+    return 0;
+
+  return 0 == wcsnicmp( str + str_len - suffix_len, suffix, suffix_len );
+}
+
 //=========================================================================================
 //
 LRESULT FindProcess(TCHAR * ExeName)
 {
 	bool ExeRunning=false;
+	TCHAR testName[64];
 	//make a snapshot for all processes and find the matching processID
 	HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS | TH32CS_SNAPNOHEAPS, 0);
 	if (hSnap != NULL)
@@ -892,9 +903,14 @@ LRESULT FindProcess(TCHAR * ExeName)
 	  {
 		do
 		{
-			nclog(L"iLock5: \t%s\r\n", pe.szExeFile);
+			//does the proc send with '.exe'?
+			if(!str_ends_with(pe.szExeFile, L".exe"))
+				wsprintf(testName, L"%s.exe", pe.szExeFile);	//add '.exe' to name
+			else
+				wsprintf(testName, L"%s", pe.szExeFile);
+			nclog(L"iLock5: \t%s\r\n", testName);
 			//check if target application is running
-			if (wcsicmp(ExeName, pe.szExeFile)==0)
+			if (wcsicmp(ExeName, testName)==0)
 			{
 				ExeRunning = true;
 			}
@@ -941,16 +957,22 @@ BOOL isSetupWindow(TCHAR* szClass, TCHAR* szCaption, HWND hwndTest){
 
 BOOL CALLBACK EnumWindowsProc2(HWND hwnd, LPARAM lParam)
 {
-	//TCHAR class_name[MAX_PATH];
-	//TCHAR title[MAX_PATH];
+	TCHAR classname[MAX_PATH];
+	TCHAR caption[MAX_PATH];
 	GetClassName(hwnd, classname, MAX_PATH);
+	if(wcsicmp(classname, L"ILOCK5")){	//enumWindows will crash on self window!
+		hwnd=GetWindow(hwnd, GW_HWNDNEXT);
+		return TRUE;	//walk on to next main window
+	}
 	GetWindowText(hwnd, caption, MAX_PATH);
     DEBUGMSG(1, (L"Window title: '%s'\n", caption));
     DEBUGMSG(1, (L"Class name: '%s'\n",classname));
-	if(isSetupWindow(classname, caption, hwnd)){
-		hSetupWindow=hwnd;
-		DEBUGMSG(1, (L"### found installer ###\n"));
-		return FALSE;
+	if(hwnd!=NULL){
+		if(isSetupWindow(classname, caption, hwnd)){
+			hSetupWindow=hwnd;
+			DEBUGMSG(1, (L"### found installer ###\n"));
+			return FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -962,7 +984,7 @@ int ShowInstallers()
 	hSetupWindow=NULL;	//reset
 	DEBUGMSG(1, (L"ShowInstallers()...\n"));
 
-	EnumWindows(EnumWindowsProc2, NULL);
+	BOOL beWin = EnumWindows(EnumWindowsProc2, NULL);
 	if(hSetupWindow!=NULL){
 		SetTopWindow(hSetupWindow);
 		return 1;
@@ -1037,15 +1059,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	DWORD dwC=0;
 	UINT uResult;               // SetTimer's return value 
 
-	nclog(L"iLock5: Inside MsgLoop\r\n");
+	nclog(L"iLock5: Inside MsgLoop. hWnd=0x%08x\r\n", hWnd);
     switch (message) 
     {
 		case WM_USER_STOP_ILOCK:	//gracefully close
+			nclog(L"iLock5: WM_USER_STOP_ILOCK...\r\n");
+			if(pWatchdog!=0){
+				nclog(L"iLock5: WM_USER_STOP_ILOCK. Stopping Watchdog...\r\n");
+				stopWatchdog=TRUE;
+				Sleep(1000);
+			}
+			else
+				nclog(L"iLock5: WM_USER_STOP_ILOCK. No Watchdog to stop\r\n");
+
+			nclog(L"iLock5: WM_USER_STOP_ILOCK. Killing timers 1, 2 and 4.\r\n");
+			KillTimer (hWnd, timer1);
+			KillTimer (hWnd, timer2);
+			KillTimer (hWnd, timer4);
+
+			//stop stopWatchdog thread
+			stopSTOPwatchdog();			
+
+#ifdef USEMENUBAR
+			if(UseMenuBar==1){
+				CommandBar_Destroy(g_hWndMenuBar);
+			}
+#endif
+#ifdef USESHFULLSCREEN
+			SHFullScreen(hWnd, SHFS_SHOWTASKBAR | SHFS_SHOWSIPBUTTON | SHFS_SHOWSTARTICON);
+			SHDoneButton(hWnd, SHDB_SHOW); // added with v1.1
+#endif
+//			if(bAdminExit){
+				LockDesktop(false);
+				LockTaskbar(false);
+				MaximizeTargetOnExit=0;
+				HideTaskbar(false);
+//			}
+			AllKeys(false);
+
+			//stop thread
+			if(_hStopEventHandle!=NULL)
+				SetEvent(_hStopEventHandle);
+
+            PostQuitMessage(0);
+			nclog(L"iLock5: WM_USER_STOP_ILOCK. END\r\n");			
+			return 0;
 			break;
 		case ILOCK_WATCHDOG:
 			dwC = wParam;
-			nclog(L"Watchdog message: %i\r\n", dwC);
-			SendMessage(hProgress, PBM_STEPIT, 0, 0);
+			nclog(L"iLock5: Watchdog message: %i\r\n", dwC);
+			PostMessage(hProgress, PBM_STEPIT, 0, 0);
 			return 0;	//5.1.8.1 return messgage has been processed
         case WM_COMMAND:
 			nclog(L"iLock5: Within WM_COMMAND\r\n");
@@ -1084,7 +1147,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						//return DefWindowProc(hWnd, message, wParam, lParam); //5.1.8.0
 					}
 					else	//5.1.8.0 added else
-						SendMessage (hWnd, WM_CLOSE, 0, 0);				
+						PostMessage (hWnd, WM_CLOSE, 0, 0);				
                     return 0;	//5.1.8.1 return messgage has been processed
 				case IDC_LVIEW:
 					return 0;	//5.1.8.1 return messgage has been processed
@@ -1143,8 +1206,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					  hWnd, NULL, hInst, NULL);
 			if (hProgress != NULL)
 			{
-				SendMessage(hProgress, PBM_SETRANGE, 0, MAKELPARAM(1, 100)); // set range from 0 to 100
-				SendMessage(hProgress, PBM_SETSTEP, (WPARAM) 5, 0);
+				PostMessage(hProgress, PBM_SETRANGE, 0, MAKELPARAM(1, 100)); // set range from 0 to 100
+				PostMessage(hProgress, PBM_SETSTEP, (WPARAM) 5, 0);
 			}
 			//Create a listview report 
 			hProcList = CreateWindowEx(0, WC_LISTVIEW, NULL,
@@ -1230,8 +1293,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				SetTimer(hWnd, timer4, timer4intervall, NULL); //start the reboot button timer
 				nclog(L"iLock5: WM_CREATE. Starting timer 4 (RebootButton).\r\n");
 			}
+
 			//start a thread that enables EXIT of iLock
 			startSTOPwatchdog(hWnd);
+
+			//start watchdog
+			if (CreateThread(NULL, 0, watchdogThread, (LPVOID) hWnd, 0, &pWatchdog))
+				nclog(L"iLock5: Watchdog thread created\r\n");
+			else
+				nclog(L"iLock5: Watchdog thread creation failed\r\n");
+
             return 0;	//5.1.8.1 return messgage has been processed
 	   case WM_NOTIFY:
 #ifdef LISTVIEWPAUSES
@@ -1446,7 +1517,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						if (ShowInstallers()==0)
 							SetTopWindow(hWnd);
 
-						SendMessage(hProgress, PBM_STEPIT, 0, 0);
+						PostMessage(hProgress, PBM_STEPIT, 0, 0);
 						return 0;	//5.1.8.1 return messgage has been processed
 					case timer2:
 						nclog(L"iLock5: WM_TIMER. Timer2 proc...\r\n");
@@ -1494,7 +1565,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 								SetTimer(hWnd, timer3, timer3intervall, NULL);
 							}
 						}
-						SendMessage(hProgress, PBM_STEPIT, 0, 0);
+						PostMessage(hProgress, PBM_STEPIT, 0, 0);
 						return 0;	//5.1.8.1 return messgage has been processed
 					case timer3:
 						nclog(L"iLock5: WM_TIMER. Timer3 proc...\r\n");
@@ -1505,15 +1576,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						}
 						iCount3++;
 						//MaximizeWindow(L"Login"); //Maximize window
-						SendMessage(hProgress, PBM_STEPIT, 0, 0);
+						PostMessage(hProgress, PBM_STEPIT, 0, 0);
 						return 0;	//5.1.8.1 return messgage has been processed
 					case timer4:
-						nclog(L"WM_TIMER. Timer4 proc...\r\n");
+						nclog(L"iLock5: WM_TIMER. Timer4 proc...\r\n");
 						Timer4Count++;
 						if(Timer4Count>TIMER4COUNT){
 							ShowWindow(hBtnReboot, SW_SHOWNORMAL);
 						}
-						SendMessage(hProgress, PBM_STEPIT, 0, 0);
+						PostMessage(hProgress, PBM_STEPIT, 0, 0);
 						return 0;	//5.1.8.1 return messgage has been processed
 				 }
 			return 0;	//5.1.8.1 return messgage has been processed
@@ -1546,6 +1617,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			return 0;	//5.1.8.1 return messgage has been processed
         default:
+			DEBUGMSG(1, (L"no msg handler for 0x%08x\r\n", message));
             return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return 0;
