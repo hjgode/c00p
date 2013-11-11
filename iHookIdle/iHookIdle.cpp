@@ -9,6 +9,10 @@ TCHAR szAppName[MAX_PATH] = L"iHookIdle v3.6.0";
 
 #define STOPEVENTNAME L"STOPILOCK"
 
+// Names for scan events
+#define ITC_SCAN_STATE			_T("StateLeftScan") // 	StateCenterScan
+#define ITC_SCAN_DELTA			_T("DeltaLeftScan") // 	DeltaCenterScan
+
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -22,6 +26,10 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
 //#####################################################################
+HANDLE watchScanEventThreadHandle=NULL;
+DWORD  watchScanEventThreadID=0;
+HANDLE watchScanEventThreadSTOP=NULL;
+
 #include "hooks.h"
 #include  <nled.h>
 #include "keymap.h"	//the char to vkey mapping
@@ -59,6 +67,7 @@ BYTE* pForbiddenKeyList = NULL;
 
 LONG FAR PASCAL WndProc (HWND , UINT , UINT , LONG) ;
 
+void startWatchScanThread(HWND hWnd);
 int ReadReg();
 void WriteReg();
 
@@ -76,6 +85,7 @@ HINSTANCE	g_hHookApiDLL	= NULL;			// Handle to loaded library (system DLL where 
 //using 3 gives immediate left green LED light
 //using 4 gives slow responsive right green LED light
 int LEDid=3; //which LED to use
+int VibrateID = 0;	//which LED ID to use for vibrate
 
 // Global functions: The original Open Source
 BOOL g_HookDeactivate();
@@ -94,8 +104,8 @@ void RemoveIcon(HWND hWnd);
 
 // from the platform builder <Pwinuser.h>
 extern "C" {
-BOOL WINAPI NLedGetDeviceInfo( UINT     nInfoId, void   *pOutput );
-BOOL WINAPI NLedSetDevice( UINT nDeviceId, void *pInput );
+	BOOL WINAPI NLedGetDeviceInfo( UINT     nInfoId, void   *pOutput );
+	BOOL WINAPI NLedSetDevice( UINT nDeviceId, void *pInput );
 };
 
 //control the LEDs
@@ -134,6 +144,56 @@ void LedOn(int id, int onoff) //onoff=0 LED is off, onoff=1 LED is on, onoff=2 L
 	else
 		DEBUGMSG(true,(L"NLedSetDevice(NLED_SETTINGS_INFO_ID) success\n"));
 }
+
+DWORD WINAPI watchScanEvent(LPVOID lpParam){
+	HWND hWnd=(HWND)lpParam;
+	BOOL isReady=FALSE;
+	BOOL bStop=FALSE;
+	HANDLE hBarcodeEvent = NULL;
+	//wait for datacollection engine is ready
+	DEBUGMSG(1, (L"watchScanEvent: attaching to SCAN EVENT\r\n"));
+	do{
+		hBarcodeEvent = CreateEvent(NULL, FALSE, FALSE, ITC_SCAN_STATE);
+		if(hBarcodeEvent!=NULL){
+			if(GetLastError()==ERROR_ALREADY_EXISTS)
+				isReady=TRUE;
+		}
+		Sleep(1000);
+	}while(!isReady);
+	DEBUGMSG(1, (L"watchScanEvent: SCAN EVENT found\r\n"));
+
+	DWORD dwWait;
+	HANDLE hWaitHandles[2];
+	hWaitHandles[0]=hBarcodeEvent;
+	hWaitHandles[1]=watchScanEventThreadSTOP;
+	do{
+		dwWait = WaitForSingleObject(hBarcodeEvent, INFINITE);
+		switch(dwWait){
+			case WAIT_OBJECT_0:
+				DEBUGMSG(1, (L"watchScanEvent: got Scan EVENT\r\n"));
+				resetIdleThread();
+				break;
+			case WAIT_OBJECT_0+1:
+				DEBUGMSG(1, (L"watchScanEvent: got STOP EVENT\r\n"));
+				bStop=TRUE;
+				break;
+			default:
+				DEBUGMSG(1, (L"watchScanEvent: unknown handle: 0x%08x\r\n", dwWait));
+				break;
+		}
+		Sleep(1);
+	}while(!bStop);
+	DEBUGMSG(1, (L"watchScanEvent: thread ended\r\n"));
+	return 0;
+}
+
+//thread to look for barcode scan event
+void startWatchScanThread(HWND hWnd){
+	DEBUGMSG(1, (L"startWatchScanThread...\r\n"));
+	watchScanEventThreadSTOP=CreateEvent(NULL, FALSE, FALSE, L"watchScanEventThreadSTOP");
+	watchScanEventThreadHandle = CreateThread(NULL, 0, watchScanEvent, hWnd, 0, &watchScanEventThreadID);
+}
+
 
 //timer proc which resets isStickyOn after a period
 VOID CALLBACK Timer2Proc(
@@ -445,7 +505,7 @@ void WriteReg()
 	if (rc != 0)
 		ShowError(rc);
 
-	if (rc=OpenKey(L"Software\\Intermec\\iHookIdle") != 0)
+	if (rc=OpenKey(REGKEY) != 0)
 		ShowError(rc);
 	
 	//timeout
@@ -459,6 +519,12 @@ void WriteReg()
 	rc = RegWriteDword(L"LEDid", &dwVal);
 	if (rc != 0)
 		ShowError(rc);
+
+	dwVal=1;
+	rc = RegWriteDword(L"VibrateID", &dwVal);
+	if (rc != 0)
+		ShowError(rc);
+
 
 	//vkey sequence
 	rc=RegWriteStr(L"KeySeq", szKeySeq);
@@ -575,6 +641,18 @@ int ReadReg()
     {
         LEDid = 1;
         DEBUGMSG(true,(L"Reading LEDid from REG = FAILED, using default LedID\n"));
+    }
+
+	//read VibrateID to use for signaling
+    if (RegReadDword(L"VibrateID", &dwVal)==0)
+    {
+        VibrateID = dwVal;
+        DEBUGMSG(true,(L"Reading VibrateID from REG = OK\n"));
+    }
+    else
+    {
+        VibrateID = 1;
+        DEBUGMSG(true,(L"Reading VibrateID from REG = FAILED, using default LedID\n"));
     }
 
 	TCHAR szTemp[10];
@@ -1083,6 +1161,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // Initialize the shell activate info structure
             memset(&s_sai, 0, sizeof (s_sai));
             s_sai.cbSize = sizeof (s_sai);
+
+			startWatchScanThread(hWnd);
+
             break;
         case WM_PAINT:
             hdc = BeginPaint(hWnd, &ps);
@@ -1100,6 +1181,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if(g_hDlgInfo)
 				DestroyWindow(g_hDlgInfo);
 			
+			if(watchScanEventThreadSTOP!=NULL)
+				SetEvent(watchScanEventThreadSTOP);
+
 			PostQuitMessage(0);
             break;
 

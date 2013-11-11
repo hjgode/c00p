@@ -2,7 +2,9 @@
 
 == Function ==
 
-Define a key sequence to bring up a dialog to enable the user to Shutdown/Reboot a CN50
+1. Define a key sequence to bring up a dialog to enable the user to Shutdown/Reboot a CN50
+
+2. Watch user activity and issue a alarm if IdleTime exceeded
 
 == Configuration ==
 

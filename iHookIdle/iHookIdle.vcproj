@@ -5,6 +5,10 @@
 	Name="iHookIdle"
 	ProjectGUID="{B348C6C0-8756-417C-9259-510A9CB4D3DF}"
 	RootNamespace="iHookIdle"
+	SccProjectName="Svn"
+	SccAuxPath="Svn"
+	SccLocalPath="Svn"
+	SccProvider="SubversionScc"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -97,7 +101,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory=""
+				RemoteDirectory="\windows"
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>

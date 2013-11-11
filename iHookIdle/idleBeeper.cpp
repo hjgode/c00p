@@ -12,6 +12,7 @@
 extern DWORD regValEnableInfo;
 
 extern int LEDid;		//which LED to use
+extern int VibrateID;
 extern void LedOn(int id, int onoff); //onoff=0 LED is off, onoff=1 LED is on
 
 //events to control beeper and idle thread
@@ -168,6 +169,8 @@ void resetIdleThread(){
 	SetEvent(h_resetIdleThread);	
 }
 
+BOOL bToggleVibrate=TRUE;
+
 void doAlarm(){
 	LedOn(LEDid,2); //blink LED
 
@@ -175,6 +178,11 @@ void doAlarm(){
 		SetWindowPos(g_hDlgInfo, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
 		//ShowWindow(g_hDlgInfo, SW_SHOW);
 	}
+	if(bToggleVibrate)
+		LedOn(VibrateID,1);
+	else
+		LedOn(VibrateID,0);
+	bToggleVibrate=!bToggleVibrate;
 
 	//issue some sound
 #ifdef DEBUG
@@ -231,6 +239,7 @@ DWORD WINAPI beeperThread(LPVOID lParam){
 	DEBUGMSG(1,(L"beeperThread stopped\n"));
 	h_BeeperThread=NULL;
 	LedOn(LEDid, 0);	//shut off blinking LED
+	LedOn(VibrateID, 0);
 	return 0;
 }
 

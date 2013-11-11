@@ -5,7 +5,7 @@
 
 //global
 HKEY g_hkey=NULL;
-TCHAR g_subkey[MAX_PATH+1]=L"Software\\Intermec\\KeyToggleBoot";
+TCHAR g_subkey[MAX_PATH+1]=L"Software\\Intermec\\iHookIdle";
 
 int ReadBuildNumber(TCHAR *szBuildNumber)
 {
