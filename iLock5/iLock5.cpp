@@ -383,7 +383,7 @@ void ReadRegistry(void)
 	dwVal=60;
 	if(RegReadDword(L"ShowRebootTimeout", &dwVal)==ERROR_SUCCESS)
 	{
-		if(dwVal>0 && dwVal<601)
+		if(dwVal>=0 && dwVal<601)
 			TIMER4COUNT=dwVal;
 		else
 			TIMER4COUNT=60;
@@ -1141,7 +1141,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						nclog(L"iLock5: Password dialog canceled. Starting timers.\r\n");
 						SetTimer (hWnd, timer1, timer1intervall, NULL) ;
 						SetTimer (hWnd, timer2, timer2intervall, NULL) ; //refresh process list all 2 seconds
-						SetTimer (hWnd, timer4, timer4intervall, NULL) ; //enable reboot button timeout
+						if(TIMER4COUNT!=0)
+							SetTimer (hWnd, timer4, timer4intervall, NULL) ; //enable reboot button timeout
 						//redraw
 						//UpdateWindow(hWnd);
 						//return DefWindowProc(hWnd, message, wParam, lParam); //5.1.8.0
@@ -1290,8 +1291,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				NULL, //(HINSTANCE)GetWindowLong(insert, GWL_HINSTANCE),
 				NULL);
 			if(hBtnReboot!=NULL){
-				SetTimer(hWnd, timer4, timer4intervall, NULL); //start the reboot button timer
-				nclog(L"iLock5: WM_CREATE. Starting timer 4 (RebootButton).\r\n");
+				if(TIMER4COUNT!=0){
+					SetTimer(hWnd, timer4, timer4intervall, NULL); //start the reboot button timer
+					nclog(L"iLock5: WM_CREATE. Starting timer 4 (RebootButton).\r\n");
+				}else
+					nclog(L"iLock5: WM_CREATE. RebootButton disabled.\r\n");
+
 			}
 
 			//start a thread that enables EXIT of iLock
@@ -1580,6 +1585,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						return 0;	//5.1.8.1 return messgage has been processed
 					case timer4:
 						nclog(L"iLock5: WM_TIMER. Timer4 proc...\r\n");
+						if(TIMER4COUNT==0)	//reboot button will never show
+							return 0;
 						Timer4Count++;
 						if(Timer4Count>TIMER4COUNT){
 							ShowWindow(hBtnReboot, SW_SHOWNORMAL);

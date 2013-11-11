@@ -12,6 +12,8 @@ iLock5 version history
 		close iLock by key sequence		->	to be done using iToggleBoot using the named event?
 		close iLock by barcode			->	use barcode to start stopIlock (new app that will set the new named event)
 		close iLock by remote			->	just run stopIlock remotely
+		logging							->	see registry: UseLogging
+		no reboot button				->	use registry: ShowRebootTimeout=0
 		
 	in progress		
 		moved RETAILMSG(1, (buf)); outside if(UseLogging) in nclog.cpp. So it is always active.
