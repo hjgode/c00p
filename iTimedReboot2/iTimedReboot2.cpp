@@ -7,6 +7,7 @@
 /*
 			[HKEY_LOCAL_MACHINE\SOFTWARE\Intermec\iTimedReboot2]
 			"Interval"="0"			//0=OFF, seconds between time checks, do not use >30000
+			"RebootDays"="0"		//days between reboots
 			"RebootTime"="00:00"	//time to reboot in hh:mm
 			"PingInterval"="0"		//0=OFF, seconds between pings
 			"PingTarget"="127.0.0.1"//target IP to ping
@@ -14,15 +15,20 @@
 			"LastBootDate"=yyyymmdd	//date of last boot
 */
 
-
 #include "stdafx.h"
 #include "registry.h"
 #include "resource.h"
 #include "ping.h"
 
-#include "log2file.h"
+//#include "log2file.h"
+#include "nclog.h"
 
 #include "time.h"
+
+   #define _SECOND ((ULONGLONG) 10000000)
+   #define _MINUTE (60 * _SECOND)
+   #define _HOUR   (60 * _MINUTE)
+   #define _DAY    (24 * _HOUR)
 
 #define		MAX_LOADSTRING			100
 
@@ -82,6 +88,7 @@ int				g_iRebootTimerCheck;			//0=OFF, seconds between time checks
 SYSTEMTIME		g_stRebootTime;
 TCHAR			g_sRebootTime[MAX_PATH];		//time to reboot in hh:mm
 int				g_iPingTimeInterval;
+int				g_iRebootDays;
 TCHAR			g_sPingTarget[MAX_PATH];		//target IP to ping
 bool			g_bEnableLogging=false;
 TCHAR			g_sEnableLogging[MAX_PATH];	//0=disable logging file, 1=enable
@@ -103,10 +110,11 @@ enum REGKEYS{
 	RebootExt=6,
 	RebootExtApp=7,
 	RebootExtParms=8,
+	RebootDays=9,
 };
 
 //number of entries in the registry
-const int		RegEntryCount=9;				//how many entries are in the registry, with v2 changed from 6 to 9
+const int		RegEntryCount=10;				//how many entries are in the registry, with v2 changed from 6 to 9
 TCHAR*			g_regName = L"Software\\Intermec\\iTimedReboot2";
 
 //struct to hold reg names and values
@@ -124,7 +132,7 @@ extern "C" __declspec(dllimport) BOOL KernelIoControl(DWORD dwIoControlCode, LPV
 extern "C" __declspec(dllimport) void SetCleanRebootFlag(void);
 
 //predefined functions
-void Log2File (TCHAR * t);
+void nclog (TCHAR * t);
 BOOL DoBootAction();
 
 
@@ -152,19 +160,19 @@ BOOL WarmBoot()
 //
 BOOL DoBootAction(){
 	if(g_DoReboot){
-		Log2File(L"Rebooting now...");
+		nclog(L"Rebooting now...",NULL);
 		Sleep(1000);
 		#ifndef DEBUG
 			return KernelIoControl(IOCTL_HAL_REBOOT, NULL, 0, NULL, 0, NULL);
 		#else
-			Log2File(L"DEBUGMODE no warmboot");
+			nclog(L"DEBUGMODE no warmboot",NULL);
 		#endif
 	}
 	TCHAR str[MAX_PATH];
 	PROCESS_INFORMATION pi;
 	if(CreateProcess(g_ExeName, g_ExeArgs, NULL, NULL, FALSE, 0, NULL, NULL, NULL, &pi)==0){
 		wsprintf(str, L"CreateProcess ('%s'/'%s') failed with 0x%08x\r\n", g_ExeName, g_ExeArgs, GetLastError());
-		Log2File(str);
+		nclog(str,NULL);
 		return FALSE;
 	}
 	else{
@@ -172,23 +180,36 @@ BOOL DoBootAction(){
 		wsprintf(str, L"CreateProcess ('%s'/'%s') OK. pid=0x%08x\r\n", g_ExeName, g_ExeArgs, pi.dwProcessId);
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
-		Log2File(str);
+		nclog(str,NULL);
 		return TRUE;
 	}
 }
 
-//=====================================================================================================
-//
-//  FUNCTION:	Log2File(TCHAR)
-//
-//  PURPOSE:	Add text to the logfile if logging=true
-//
-//  COMMENTS:	none
-//
-void Log2File (TCHAR * t)
-{
-	if (g_bEnableLogging)
-		Add2Log(t, false);
+SYSTEMTIME getRandomTime(SYSTEMTIME lt){
+	// we need some var to add a random time (0 to 120 minutes)
+	// see also http://support.microsoft.com/kb/188768
+	static SYSTEMTIME newTime;
+	memset(&newTime, 0, sizeof(SYSTEMTIME));
+
+	FILETIME ft;
+	ULONGLONG ut;
+	BOOL bRes = SystemTimeToFileTime(&lt, &ft);	//convert SystemTime to FileTime
+	//convert FileTime to ULONG
+	ut = (((ULONGLONG) ft.dwHighDateTime) << 32) + ft.dwLowDateTime;
+	// add some time
+	//RAND_MAX; //0x7fff	
+	srand((int)GetTickCount());	//initialize random seed:
+	int randomMinutes = rand() % 120 + 1;
+	nclog(L"### TimedReboot: Using random minutes: %i\r\n", randomMinutes); 
+
+	ut += (ULONGLONG) (randomMinutes * _MINUTE);
+	// Copy the result back into the FILETIME structure.
+	ft.dwLowDateTime  = (DWORD) (ut & 0xFFFFFFFF );
+	ft.dwHighDateTime = (DWORD) (ut >> 32 );
+	//convert back to filetime and systemtime
+	bRes=FileTimeToSystemTime(&ft, &newTime);
+
+	return newTime;	
 }
 
 //=================================================================================
@@ -221,31 +242,30 @@ void TimedReboot(void)
 		er=GetLastError();
 		ShowError(er);
 		DEBUGMSG(true, (L"TimedReboot: Error in GetDateFormat()\r\n"));
-		Log2File(L"### TimedReboot: Error in GetDateFormat(). Exiting TimedReboot function.\n");
+		nclog(L"### TimedReboot: Error in GetDateFormat(). Exiting TimedReboot function.\n",NULL);
 		return;
 	}
 	lDateNow=_wtol(sDateNow);
 	lDateBooted=_wtol(g_LastBootDate);
-	if (lDateNow > lDateBooted)
+	//test if we are past next boot time
+	if (lDateNow > lDateBooted + g_iRebootDays)
 	{
-		Log2File(L"__TimedReboot Check__\n\tDate now is greater than last boot date!\n");
+		nclog(L"__TimedReboot Check__\n\tDate now is greater than last boot date!\n",NULL);
 		if (g_stRebootTime.wHour <= lt.wHour) 
 		{
-			Log2File(L"\tHour now is greater than hour to reboot!\n");
+			nclog(L"\tHour now is greater than hour to reboot!\n",NULL);
 			if (g_stRebootTime.wMinute <= lt.wMinute)
 			{
-				Log2File(L"\tMinutes now is greater than minute to reboot!\n");
+				nclog(L"\tMinutes now is greater than minute to reboot!\n",NULL);
 				DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
 				//update registry with new boot date
  				RegWriteStr(rkeys[5].kname, sDateNow);
 				wsprintf(rkeys[5].ksval, sDateNow);
 				wsprintf(g_LastBootDate, sDateNow);
+
 				AnimateIcon(g_hInstance, g_hwnd, NIM_MODIFY, ico_redbomb);
 				Sleep(3000);
-				Log2File(L"Will reboot now. Next reboot on:\n\t");
-				Log2File(sDateNow);Log2File(L", ");
-				Log2File(g_sRebootTime);
-				Log2File(L"\n");
+				nclog(L"Will reboot now. Next reboot on:\n\t%s, %s\n",sDateNow,g_sRebootTime);
 
 
 //				if (!g_bEnableLogging)		//we only boot if no logging is defined
@@ -286,6 +306,10 @@ void initRKEYS()
 	wsprintf(rkeys[7].ksval, L"\\Windows\\fexplore.exe");
 	wsprintf(rkeys[8].kname, L"RebootExtParms");
 	wsprintf(rkeys[8].ksval, L"\\Flash File Store");
+	//new with v3
+	wsprintf(rkeys[6].kname, L"RebootDays");
+	wsprintf(rkeys[6].ksval, L"0");
+
 }
 //=================================================================================
 //
@@ -302,7 +326,7 @@ void TimedPing(void)
 	{
 		//Bad IP!
 		AnimateIcon(g_hInstance, g_hwnd , NIM_MODIFY, ico_question);	//show a question mark
-		Log2File(L"### Bad IP address\n");
+		nclog(L"### Bad IP address\n");
 		DEBUGMSG(true, (L"Bad IP address format?\r\n"));
 	}
 	else
@@ -467,19 +491,15 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		ReadReg();
 
 		if (g_bEnableLogging)
-			newfile(L"\\iTimedReboot2.log.txt");
-		Log2File(szWindowClass);
-		Log2File(L"\n\n");
+			; //newfile(L"\\iTimedReboot2.log.txt");
+		nclog(L"WM_CREATE: szWindowClass: %s\n\n", szWindowClass);
 		if (g_bEnableLogging)
-			Log2File(L"ReadReg:\r\n");
+			nclog(L"WM_CREATE: ReadReg:\r\n", NULL);
 		if (g_bEnableLogging)
 		{
 			for (int i=0; i<RegEntryCount; i++)
 			{
-				Log2File(rkeys[i].kname);
-				Log2File(L"\t");
-				Log2File(rkeys[i].ksval );
-				Log2File(L"\n");
+				nclog(L"%s\t%s\n", rkeys[i].kname, rkeys[i].ksval );
 			}
 		}
 
@@ -515,8 +535,9 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		// the command bar height.    
 		GetClientRect (hwnd, &rect);    
 		hdc = BeginPaint (hwnd, &ps);
-		wsprintf(str, L"%s loaded.\nBoottime: %s\nLast Boot date: %s\nPing Target: %s\nLogging: %i\nTime check interval: %i\nPing time interval: %i", 
-						szWindowClass,			
+		wsprintf(str, L"%s loaded.\nDays interval: %i\nBoottime: %s\nLast Boot date: %s\nPing Target: %s\nLogging: %i\nTime check interval: %i\nPing time interval: %i", 
+						szWindowClass,
+						g_iRebootDays,
 						g_sRebootTime,
 						g_LastBootDate,
 						g_sPingTarget, 
@@ -532,6 +553,7 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		    switch (lParam) {
 				case WM_LBUTTONUP:
 					SetWindowPos(hwnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE | SWP_NOREPOSITION | SWP_SHOWWINDOW);
+					ShowWindow(hwnd, SW_MAXIMIZE);
 					if (MessageBox(hwnd, L"iTimedReboot2 is loaded. End Application?", szTitle , 
 						MB_YESNO | MB_ICONQUESTION | MB_APPLMODAL | MB_SETFOREGROUND | MB_TOPMOST)==IDYES)
 					{
@@ -595,7 +617,7 @@ int ReadReg()
 	TCHAR name[MAX_PATH+1];
 	LONG rc;
 	if(OpenKey(g_regName)!=0){
-		Log2File(L"Could not open registry key!\r\n");
+		nclog(L"Could not open registry key '%s'!\r\n", g_regName);
 		return -1;
 	}
 	for (i=0; i<RegEntryCount; i++)
@@ -611,8 +633,7 @@ int ReadReg()
 		{
 			wsprintf(rkeys[i].ksval, L"error in RegRead");
 			ShowError(rc);
-			Log2File(L"Error in ReadReg-RegReadStr. Missing Key or value? Last key read:\n\t");	
-			Log2File(rkeys[i].kname);
+			nclog(L"Error in ReadReg-RegReadStr. Missing Key or value? Last key read: '%s'\n\t", rkeys[i].kname);
 			break; //no reg vals !!!
 		}
 	}
@@ -634,17 +655,17 @@ int ReadReg()
 	if (_wtol(rkeys[0].ksval) > 30000)
 	{	
 		DEBUGMSG(true, (L"g_iRebootTimerCheck limited to 30000\n"));
-		Log2File(L"g_iRebootTimerCheck limited to 30000\n");
 		g_iRebootTimerCheck = 30000;
+		nclog(L"g_iRebootTimerCheck limited to %i\n", g_iRebootTimerCheck);
 	}
 	else
 	{
 		g_iRebootTimerCheck = _wtoi(rkeys[0].ksval) * 1000;	 //timer uses milliseconds, registry has seconds
-		wsprintf(str, L"Using Time Check Interval:\t%i seconds\n", g_iRebootTimerCheck/1000);
-		Log2File(str);
+		nclog(L"Using Time Check Interval:\t%i seconds\n", g_iRebootTimerCheck/1000);
 		DEBUGMSG(true,(str));
 	}
 
+	//process boot time (hh:mm)
 	//convert the string to a systemtime
 	SYSTEMTIME lt;
 	memset(&lt, 0, sizeof(lt));
@@ -655,25 +676,30 @@ int ReadReg()
 	wcsncpy(str, rkeys[1].ksval + 3, 2);			//get minutes part of string
 	str[2]=0;
 	lt.wMinute = (ushort) _wtoi(str);
-	g_stRebootTime=lt;	//store RebootTime in global time var
-	wsprintf(str, L"Reboot time will be:\t%00i:%00i\n", lt.wHour, lt.wMinute);  
-	Log2File(str);
-	DEBUGMSG(true,(str));
-	wsprintf(g_sRebootTime, L"%s", rkeys[1].ksval); 
+	//get random time within timespan
+	SYSTEMTIME newTime = getRandomTime(lt);
 
+	//g_stRebootTime=lt;	//store RebootTime in global time var
+	g_stRebootTime=newTime;	//store RebootTime including a random time offset
+	nclog(L"Reboot time will be:\t%00i:%00i\n", newTime.wHour, newTime.wMinute); 
+	//convert the newTime to a string 'hh:mm'
+	wsprintf(rkeys[1].ksval, L"%02i:%02i", newTime.wHour, newTime.wMinute);
+	//store reboot time in global var
+	wsprintf(g_sRebootTime, L"%s", rkeys[1].ksval); 
+	
 	//ping interval
 	//test if >30000
 	if (_wtol(rkeys[2].ksval) > 30000)
 	{
 		DEBUGMSG(true, (L"g_iPingTimeInterval limited to 30000\n"));
-		Log2File(L"g_iPingTimeInterval limited to 30000\n");
 		g_iPingTimeInterval = 30*1000;
+		nclog(L"g_iPingTimeInterval limited to %i\n", g_iPingTimeInterval);
 	}
 	else
 	{
 		g_iPingTimeInterval = _wtoi(rkeys[2].ksval) * 1000; //timer uses milliseconds, registry has seconds
 		wsprintf(str, L"Using Ping Interval:\t%i seconds\n", g_iPingTimeInterval/1000);
-		Log2File(str);
+		nclog(L"Using Ping Interval:\t%i seconds\n", g_iPingTimeInterval/1000);
 		DEBUGMSG(true,(str));
 	}
 	//enable logging?
@@ -686,13 +712,13 @@ int ReadReg()
 	{
 		wsprintf(g_LastBootDate, rkeys[5].ksval);
 		wsprintf(str, L"Using date:\t%s\n", g_LastBootDate);
-		Log2File(str);
+		nclog(L"Using date:\t%s\n", g_LastBootDate);
 		DEBUGMSG(true, (L"Found valid date string in reg\n"));
 	}
 	else
 	{
 		DEBUGMSG(true, (L"### Error in date string in reg. Replaced by 19800101\n"));
-		Log2File(L"### Error in date string in reg. Replaced by 19800101\n");
+		nclog(L"### Error in date string in reg. Replaced by 19800101\n", NULL);
 		wsprintf(rkeys[5].ksval, L"19800101");
 	}
 
@@ -707,6 +733,22 @@ int ReadReg()
 		g_DoReboot=FALSE;
 		wsprintf(g_ExeName, L"%s", rkeys[RebootExtApp].ksval);
 		wsprintf(g_ExeArgs, L"%s", rkeys[RebootExtParms].ksval);
+	}
+
+	//days interval
+	//test if >28 //4 weeks
+	if (_wtol(rkeys[RebootDays].ksval) > 28)
+	{
+		DEBUGMSG(true, (L"g_iRebootDays limited to 28\n"));
+		nclog(L"g_iRebootDays limited to 28. Now using %i.\n",0);
+		g_iRebootDays = 0;
+	}
+	else
+	{
+		g_iRebootDays = _wtoi(rkeys[RebootDays].ksval); //days between reboots
+		wsprintf(str, L"Using Days Interval:\t%i\n", g_iRebootDays);
+		nclog( L"Using Days Interval:\t%i\n", g_iRebootDays );
+		DEBUGMSG(true,(str));
 	}
 
 	return 0;

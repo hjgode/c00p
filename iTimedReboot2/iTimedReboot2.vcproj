@@ -2161,7 +2161,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory=""
+				RemoteDirectory="\windows"
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>
@@ -2326,6 +2326,10 @@
 			</File>
 			<File
 				RelativePath="iTimedReboot2.rc"
+				>
+			</File>
+			<File
+				RelativePath=".\nclog.cpp"
 				>
 			</File>
 			<File
@@ -2530,7 +2534,7 @@
 			Filter="h;hpp;hxx;hm;inl"
 			>
 			<File
-				RelativePath="log2file.h"
+				RelativePath=".\nclog.h"
 				>
 			</File>
 			<File
@@ -2621,6 +2625,10 @@
 		</Filter>
 		<File
 			RelativePath=".\history.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\iTimedReboot2.reg"
 			>
 		</File>
 		<File

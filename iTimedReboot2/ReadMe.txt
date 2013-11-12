@@ -33,7 +33,9 @@
 			date string is in format YYYYMMDD
 		"RebootTime","02:00"
 			define the time of when to reboot, uses 24 hours format
-		"PingTarget","10.1.104.228"
+		"RebootDays",="0"
+			the number of days between reboots
+		"PingTarget","127.0.0.1"
 			define the IP address of the host to ping periodically
 		"PingInterva,"600"
 			define how often to test the host

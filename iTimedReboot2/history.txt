@@ -1,11 +1,19 @@
 iTimedReboot2
 
-	v0.1:
-		initial release with functional changes based on iTimedReboot
+	v0.3:
+		TODO: add day param to enable 24h, 48h, 7 days intervals
+			DONE
+			added new regsitry entry and changed TimedReboot to look for days too
+		TODO: add randomize function within given time frame
+			DONE
+			the random part will be added when the tool starts
+			the next boot will be displayed on screen
 	v0.2:
 		added a resource string for WindowClassName as other app TaskbarAddon4 relies on the Class Name
 		changed 
 			LoadString(hInstance, IDC_iTimedReboot2, szWindowClass, MAX_LOADSTRING); 
 		to
 			LoadString(hInstance, IDS_WINDOWCLASSNAME, szWindowClass, MAX_LOADSTRING);
+	v0.1:
+		initial release with functional changes based on iTimedReboot
 			
