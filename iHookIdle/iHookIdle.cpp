@@ -139,7 +139,12 @@ void LedOn(int id, int onoff) //onoff=0 LED is off, onoff=1 LED is on, onoff=2 L
 		1 On 
 		2 Blink */
     settings.OffOnBlink= onoff;
-    if (!NLedSetDevice(NLED_SETTINGS_INFO_ID, &settings))
+	settings.TotalCycleTime=1000;
+	settings.OnTime = 500;
+	settings.OffTime=500;
+	settings.MetaCycleOn=5;
+	settings.MetaCycleOff=5;
+	if (!NLedSetDevice(NLED_SETTINGS_INFO_ID, &settings))
         DEBUGMSG(true,(L"NLedSetDevice(NLED_SETTINGS_INFO_ID) failed\n"));
 	else
 		DEBUGMSG(true,(L"NLedSetDevice(NLED_SETTINGS_INFO_ID) success\n"));
