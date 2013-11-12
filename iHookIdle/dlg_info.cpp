@@ -25,8 +25,14 @@ HWND createDlgInfo(HWND hwnd, TCHAR* szMsg, TCHAR* szButton1, TCHAR* szButton2){
         ShowWindow(hDlgInfo, SW_HIDE);
 		HWND hEdit = GetDlgItem(hDlgInfo, IDC_EDIT1);
 		SetDlgItemText(hDlgInfo, IDC_EDIT1, szMsg);
-		SetDlgItemText(hDlgInfo, ID_BUTTON1, szButton1);
-		SetDlgItemText(hDlgInfo, ID_BUTTON2, szButton2);
+		if(wcslen(szButton1)>0)
+			SetDlgItemText(hDlgInfo, ID_BUTTON1, szButton1);
+		else
+			ShowWindow(GetDlgItem(hDlgInfo, ID_BUTTON1), SW_HIDE);
+		if(wcslen(szButton2)>0)
+			SetDlgItemText(hDlgInfo, ID_BUTTON2, szButton2);
+		else
+			ShowWindow(GetDlgItem(hDlgInfo, ID_BUTTON2), SW_HIDE);
     }
     else
     {

@@ -1,8 +1,8 @@
 REGEDIT4
 
 [HKEY_LOCAL_MACHINE\Software\Intermec\iHookIdle]
-"LEDid"=dword:0000000F
-"VibrateID"=dword:00000009
+"LEDid"=dword:00000007
+"VibrateID"=dword:00000005
 "EnableAlarm"=dword:00000001
 "IdleTimeout"=dword:0000012C
 "InfoText"="Idle time elapsed alarm!"

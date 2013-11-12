@@ -799,7 +799,7 @@ int ReadReg()
 		DEBUGMSG(1, (L"Read InfoButton1 ='%s'\n", regVal_InfoButton1));
 	}			
 	else
-		wsprintf(regVal_InfoButton1, L"Snooze");
+		wsprintf(regVal_InfoButton1, L"");//SNOOZE
 	//button2
 	wsprintf(szTemp2, L"");
 	if(RegReadStr(L"InfoButton2", szTemp2)==ERROR_SUCCESS)
@@ -808,7 +808,7 @@ int ReadReg()
 		DEBUGMSG(1, (L"Read InfoButton2 ='%s'\n", regVal_InfoButton2));
 	}			
 	else
-		wsprintf(regVal_InfoButton2, L"Dismiss");
+		wsprintf(regVal_InfoButton2, L"");//DISMISS
 
 	//convert from ANSI sequence to vkCode + shift
 	initVkCodeSeq();

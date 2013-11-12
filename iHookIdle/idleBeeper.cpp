@@ -11,11 +11,21 @@
 //extern BOOL bInfoDlgVisible;	//show/hide DlgInfo
 extern DWORD regValEnableInfo;
 
+/*
+	LED CN51
+	4	red blink
+	7   red
+	5	vibrate
+	15	vibrate
+*/
 extern int LEDid;		//which LED to use
 extern int VibrateID;
 extern void LedOn(int id, int onoff); //onoff=0 LED is off, onoff=1 LED is on
 
 //events to control beeper and idle thread
+DWORD vibrateThreadID=0;
+HANDLE vibrateThreadHandle=NULL;
+
 //	Idle thread control
 HANDLE	h_resetIdleThread=NULL;	//event handle
 HANDLE	h_stopIdleThread=NULL;	//event handle
@@ -169,6 +179,24 @@ void resetIdleThread(){
 	SetEvent(h_resetIdleThread);	
 }
 
+DWORD WINAPI vibrate(LPVOID lpParam){
+	int id=(int)lpParam;
+	DEBUGMSG(1, (L"vibrate START, vibrateID=%i...\r\n", id));
+	LedOn(id,1);
+	Sleep(300);
+	LedOn(id,0);
+	Sleep(300);
+	LedOn(id,1);
+	Sleep(300);
+	LedOn(id,0);
+	Sleep(300);
+	LedOn(id,1);
+	Sleep(300);
+	LedOn(id,0);
+	DEBUGMSG(1, (L"vibrate END...\r\n"));
+	return 0;
+}
+
 BOOL bToggleVibrate=TRUE;
 
 void doAlarm(){
@@ -178,20 +206,16 @@ void doAlarm(){
 		SetWindowPos(g_hDlgInfo, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
 		//ShowWindow(g_hDlgInfo, SW_SHOW);
 	}
-	if(bToggleVibrate)
-		LedOn(VibrateID,1);
-	else
-		LedOn(VibrateID,0);
-	bToggleVibrate=!bToggleVibrate;
+	vibrateThreadHandle = CreateThread(NULL, 0, vibrate, (LPVOID)VibrateID, 0, &vibrateThreadID);
 
 	//issue some sound
 #ifdef DEBUG
-	MessageBeep(MB_ICONASTERISK);
-	Sleep(700);
-	MessageBeep(MB_ICONASTERISK);
-	Sleep(300);
-	MessageBeep(MB_ICONERROR);
-	Sleep(700);
+	//MessageBeep(MB_ICONASTERISK);
+	//Sleep(700);
+	//MessageBeep(MB_ICONASTERISK);
+	//Sleep(300);
+	//MessageBeep(MB_ICONERROR);
+	//Sleep(700);
 	MessageBeep(MB_ICONERROR);
 #else
 	if( ITCIsAudioToneSupported() )

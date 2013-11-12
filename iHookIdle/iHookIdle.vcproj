@@ -300,26 +300,16 @@
 			<File
 				RelativePath=".\iHookIdleppc.rc"
 				>
-				<FileConfiguration
-					Name="Debug|Windows Mobile 6.5.3 Professional DTK (ARMV4I)"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Windows Mobile 6.5.3 Professional DTK (ARMV4I)"
-					>
-					<Tool
-						Name="VCResourceCompilerTool"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\iHookIdleppc.rc2"
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\iHookIdle_cn51.reg"
+			>
+		</File>
 		<File
 			RelativePath=".\ReadMe.txt"
 			>
