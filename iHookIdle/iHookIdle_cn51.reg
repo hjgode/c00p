@@ -4,6 +4,7 @@ REGEDIT4
 "LEDid"=dword:00000007
 "VibrateID"=dword:00000005
 "EnableAlarm"=dword:00000001
+"alarmLEDid"=dword:00000002
 "IdleTimeout"=dword:0000012C
 "InfoText"="Idle time elapsed alarm!"
 "InfoButton2"="Dismiss"

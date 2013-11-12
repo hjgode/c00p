@@ -20,6 +20,7 @@ extern DWORD regValEnableInfo;
 */
 extern int LEDid;		//which LED to use
 extern int VibrateID;
+extern int alarmLEDid;
 extern void LedOn(int id, int onoff); //onoff=0 LED is off, onoff=1 LED is on
 
 //events to control beeper and idle thread
@@ -183,16 +184,22 @@ DWORD WINAPI vibrate(LPVOID lpParam){
 	int id=(int)lpParam;
 	DEBUGMSG(1, (L"vibrate START, vibrateID=%i...\r\n", id));
 	LedOn(id,1);
+	LedOn(alarmLEDid,1);
 	Sleep(300);
 	LedOn(id,0);
+	LedOn(alarmLEDid,0);
 	Sleep(300);
 	LedOn(id,1);
+	LedOn(alarmLEDid,1);
 	Sleep(300);
 	LedOn(id,0);
+	LedOn(alarmLEDid,0);
 	Sleep(300);
 	LedOn(id,1);
+	LedOn(alarmLEDid,1);
 	Sleep(300);
 	LedOn(id,0);
+	LedOn(alarmLEDid,0);
 	DEBUGMSG(1, (L"vibrate END...\r\n"));
 	return 0;
 }
@@ -200,7 +207,8 @@ DWORD WINAPI vibrate(LPVOID lpParam){
 BOOL bToggleVibrate=TRUE;
 
 void doAlarm(){
-	LedOn(LEDid,2); //blink LED
+	//moved to vibrate alarm thread
+	//LedOn(alarmLEDid,2); //blink LED
 
 	if(g_hDlgInfo && bInfoDlgVisible){
 		SetWindowPos(g_hDlgInfo, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
@@ -262,8 +270,8 @@ DWORD WINAPI beeperThread(LPVOID lParam){
 	}while(!bStopThread);
 	DEBUGMSG(1,(L"beeperThread stopped\n"));
 	h_BeeperThread=NULL;
-	LedOn(LEDid, 0);	//shut off blinking LED
-	LedOn(VibrateID, 0);
+	LedOn(alarmLEDid, 0);	//shut off alarm LED
+	LedOn(VibrateID, 0);	//shut off vibrate
 	return 0;
 }
 

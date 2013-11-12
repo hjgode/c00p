@@ -78,14 +78,9 @@ NOTIFYICONDATA nid;
 HWND g_hWnd = NULL;
 HINSTANCE	g_hHookApiDLL	= NULL;			// Handle to loaded library (system DLL where the API is located)
 
-//ITC 7xx supports 5 LEDs?
-//using 0 gives slow responsive by left amber LED light
-//using 1 gives slow responsive by left red LED light
-//using 2 gives immediate left red LED light
-//using 3 gives immediate left green LED light
-//using 4 gives slow responsive right green LED light
-int LEDid=3; //which LED to use
+int LEDid=3;		//which LED to use for key in sequence active
 int VibrateID = 0;	//which LED ID to use for vibrate
+int alarmLEDid=5;	//which LED ID to use for alarm
 
 // Global functions: The original Open Source
 BOOL g_HookDeactivate();
@@ -524,6 +519,11 @@ void WriteReg()
 	rc = RegWriteDword(L"LEDid", &dwVal);
 	if (rc != 0)
 		ShowError(rc);
+	
+	dwVal=2;
+	rc = RegWriteDword(L"alarmLEDid", &dwVal);
+	if (rc != 0)
+		ShowError(rc);
 
 	dwVal=1;
 	rc = RegWriteDword(L"VibrateID", &dwVal);
@@ -645,8 +645,21 @@ int ReadReg()
     else
     {
         LEDid = 1;
-        DEBUGMSG(true,(L"Reading LEDid from REG = FAILED, using default LedID\n"));
+        DEBUGMSG(true,(L"Reading LEDid from REG = FAILED, using default 1\n"));
     }
+
+	//read LEDid to use for alarm
+    if (RegReadDword(L"alarmLEDid", &dwVal)==0)
+    {
+        alarmLEDid = dwVal;
+        DEBUGMSG(true,(L"Reading alarmLEDid from REG = OK\n"));
+    }
+    else
+    {
+        alarmLEDid = 2;
+        DEBUGMSG(true,(L"Reading alarmLEDid from REG = FAILED, using default 2\n"));
+    }
+
 
 	//read VibrateID to use for signaling
     if (RegReadDword(L"VibrateID", &dwVal)==0)

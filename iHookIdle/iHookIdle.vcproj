@@ -135,9 +135,10 @@
 				ExecutionBucket="7"
 				Optimization="2"
 				FavorSizeOrSpeed="2"
+				AdditionalIncludeDirectories="C:\Program Files (x86)\Intermec\Developer Library\Include"
 				PreprocessorDefinitions="NDEBUG;_WIN32_WCE=$(CEVER);UNDER_CE;$(PLATFORMDEFINES);WINCE;_WINDOWS;$(ARCHFAM);$(_ARCHFAM_);_UNICODE;UNICODE;POCKETPC2003_UI_MODEL"
 				RuntimeLibrary="0"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -158,6 +159,7 @@
 				AdditionalOptions=" /subsystem:windowsce,5.02"
 				OutputFile="$(OutDir)/iHookIdle.exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;C:\Program Files (x86)\Intermec\Developer Library\Lib\WCE600\WM6\Armv4i&quot;"
 				DelayLoadDLLs="$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/iHookIdle.pdb"
@@ -189,7 +191,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory=""
+				RemoteDirectory="\windows"
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>
