@@ -1062,6 +1062,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	RECT rectScreen;
 	DWORD dwC=0;
 	UINT uResult;               // SetTimer's return value 
+	
+	LOGFONT logFont;
+	HFONT hFontSmall;
 
 	nclog(L"iLock5: Inside MsgLoop. hWnd=0x%08x\r\n", hWnd);
     switch (message) 
@@ -1214,19 +1217,29 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				PostMessage(hProgress, PBM_SETRANGE, 0, MAKELPARAM(1, 100)); // set range from 0 to 100
 				PostMessage(hProgress, PBM_SETSTEP, (WPARAM) 5, 0);
 			}
+
+
 			//Create a listview report for IP addresses
 			hIPList = CreateWindowEx(0, WC_LISTVIEW, NULL,
 							WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | 
 							LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
-							20*(screenXmax/240),	//x pos
+							40*(screenXmax/240),	//x pos
 							60*(screenYmax/320),// 235,  //y pos
-							screenXmax - (screenXmax/240)*40,// 200, //width
+							screenXmax - (screenXmax/240)*80,// 200, //width
 							(screenYmax/320)*320/5,// 60,		//height
 							hWnd, 
 							//NULL, //hMenu or child window identifier zB 
 							(HMENU)IDC_LVIEW, //hMenu or child window identifier
 							hInst, NULL);
 			if(hIPList!=NULL){
+				// set font
+				//hFontSmall = (HFONT)GetStockObject(SYSTEM_FONT);
+				memset(&logFont, 0, sizeof(LOGFONT));
+				logFont.lfHeight=12 * (screenXmax/240);
+				wsprintf(logFont.lfFaceName, L"Tahoma");
+				hFontSmall=CreateFontIndirect(&logFont);
+				SendMessage(hIPList, WM_SETFONT, (WPARAM)hFontSmall, TRUE);
+
 				//listenzeilenfarbe
 				ListView_SetTextBkColor(hIPList, TextBackColor);
 				//boxhintergrundfarbe
@@ -1238,7 +1251,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				LVCOLUMN LvCol; // Make Coluom struct for ListView
                 memset(&LvCol,0,sizeof(LvCol)); // Reset Coluom
 				LvCol.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; // Type of mask
-				LvCol.cx=screenXmax - (screenXmax/240)*40;//200;                                // width between each coloum
+				LvCol.cx=screenXmax - (screenXmax/240)*80;//200;                                // width between each coloum
 				LvCol.pszText=L"IP address";                     // First Header
 				SendMessage(hIPList,LVM_INSERTCOLUMN,0,(LPARAM)&LvCol); // Insert/Show the coloum
 #if DEBUG
@@ -1373,7 +1386,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
         case WM_PAINT:
 			PAINTSTRUCT ps;
-            hdc = BeginPaint(hWnd, &ps);
+			hdc = BeginPaint(hWnd, &ps);
             
             // TODO: Add any drawing code here...
 			// Calling BeginPaint clears the update region that was set by calls
@@ -1390,6 +1403,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			// device context.
 
 			hdcMem = CreateCompatibleDC(NULL);
+
+
 			//HBITMAP hbmT = ::SelectBitmap(hdcMem,hbm);
 			// Select the bitmap into the compatible device context.
 			hbm = SHLoadDIBitmap(ILOCKBMP);
