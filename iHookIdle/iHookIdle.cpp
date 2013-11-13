@@ -940,6 +940,13 @@ int WINAPI WinMain(HINSTANCE hInstance,
 
 	//info dialog creation
 	bInfoDlgVisible=regValEnableInfo;
+	
+	if(wcsstr(regVal_InfoText, L"%")!=NULL){
+		TCHAR newStr[MAX_PATH];
+		wsprintf(newStr, regVal_InfoText, regValIdleTimeout/60);
+		wsprintf(regVal_InfoText, L"%s", newStr);
+	}
+
 	g_hDlgInfo = createDlgInfo(g_hWnd, regVal_InfoText, regVal_InfoButton1, regVal_InfoButton2);
 
 	while (GetMessage (&msg , NULL , 0 , 0))   

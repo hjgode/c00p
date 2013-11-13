@@ -6,7 +6,7 @@ REGEDIT4
 "EnableAlarm"=dword:00000001
 "alarmLEDid"=dword:00000002
 "IdleTimeout"=dword:0000012C
-"InfoText"="Idle time elapsed alarm!"
+"InfoText"="ALARM\r\nSystem has been idle for at least %i minutes!"
 "InfoButton2"="Dismiss"
 "InfoButton1"="Snooze"
 "InfoEnabled"=dword:00000001
