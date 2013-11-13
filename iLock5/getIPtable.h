@@ -10,6 +10,7 @@
 #include <winsock2.h>
 #pragma comment (lib, "ws2.lib")
 
-int getIpTable(TCHAR* sIPtable);
+//int getIpTable(TCHAR* sIPtable);
+int getIpTable(TCHAR strIPlist[10][64]);
 
 #endif

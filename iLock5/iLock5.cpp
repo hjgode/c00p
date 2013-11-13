@@ -21,6 +21,8 @@
 #include "registry.h"
 #include "nclog.h"
 
+#include "getIPtable.h"
+
 #pragma comment (user , "version 5.4.0.0")	//see also iLock5ppc.rc !
 
 //START stop watchdog code
@@ -1034,6 +1036,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	LRESULT a;
 	static HWND hProgress=NULL;
 	static HWND hProcList=NULL;
+	static HWND hIPList=NULL;
+	int iIPcount=0;
 	static HWND hBtnReboot=NULL; //handle to reboot button
 	TCHAR tstr[2*MAX_PATH];
 //	HWND hMenuBar;
@@ -1210,7 +1214,39 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				PostMessage(hProgress, PBM_SETRANGE, 0, MAKELPARAM(1, 100)); // set range from 0 to 100
 				PostMessage(hProgress, PBM_SETSTEP, (WPARAM) 5, 0);
 			}
-			//Create a listview report 
+			//Create a listview report for IP addresses
+			hIPList = CreateWindowEx(0, WC_LISTVIEW, NULL,
+							WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | 
+							LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
+							20*(screenXmax/240),	//x pos
+							60*(screenYmax/320),// 235,  //y pos
+							screenXmax - (screenXmax/240)*40,// 200, //width
+							(screenYmax/320)*320/5,// 60,		//height
+							hWnd, 
+							//NULL, //hMenu or child window identifier zB 
+							(HMENU)IDC_LVIEW, //hMenu or child window identifier
+							hInst, NULL);
+			if(hIPList!=NULL){
+				//listenzeilenfarbe
+				ListView_SetTextBkColor(hIPList, TextBackColor);
+				//boxhintergrundfarbe
+				ListView_SetBkColor(hIPList, TextListColor);
+				//textvordergrundfarbe
+				ListView_SetTextColor(hIPList, TextColor);
+
+				//Add one column
+				LVCOLUMN LvCol; // Make Coluom struct for ListView
+                memset(&LvCol,0,sizeof(LvCol)); // Reset Coluom
+				LvCol.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; // Type of mask
+				LvCol.cx=screenXmax - (screenXmax/240)*40;//200;                                // width between each coloum
+				LvCol.pszText=L"IP address";                     // First Header
+				SendMessage(hIPList,LVM_INSERTCOLUMN,0,(LPARAM)&LvCol); // Insert/Show the coloum
+#if DEBUG
+				Add2List(hIPList, L"127.0.0.1");
+#endif
+			}
+
+			//Create a listview report for messages
 			hProcList = CreateWindowEx(0, WC_LISTVIEW, NULL,
 							WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | 
 							LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
@@ -1523,6 +1559,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							SetTopWindow(hWnd);
 
 						PostMessage(hProgress, PBM_STEPIT, 0, 0);
+
+						//build and show IP list
+						TCHAR strIPlist[10][64];
+						//for(iIPcount=0; iIPcount<10; iIPcount++)
+						//	strIPlist[iIPcount]=new TCHAR(64);
+						iIPcount=getIpTable(strIPlist);
+						ListView_DeleteAllItems(hIPList);
+						for(int i=0; i<iIPcount; i++)
+							Add2List(hIPList, strIPlist[i]);
+						//for(iIPcount=0; iIPcount<10; iIPcount++)
+						//	delete strIPlist[iIPcount];
+
+
 						return 0;	//5.1.8.1 return messgage has been processed
 					case timer2:
 						nclog(L"iLock5: WM_TIMER. Timer2 proc...\r\n");
