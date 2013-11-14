@@ -1,6 +1,7 @@
 REGEDIT4
 
 [HKEY_LOCAL_MACHINE\Software\Intermec\iTimedReboot2]
+"newTime"="00:34"
 "LastBootDate"="20131112"
 @=""
 "RebootExtParms"="\\Flash File Store"

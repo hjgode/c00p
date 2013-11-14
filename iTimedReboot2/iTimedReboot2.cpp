@@ -688,7 +688,11 @@ int ReadReg()
 	wsprintf(rkeys[1].ksval, L"%02i:%02i", newTime.wHour, newTime.wMinute);
 	//store reboot time in global var
 	wsprintf(g_sRebootTime, L"%s", rkeys[1].ksval); 
-	
+	//save to reg for review
+	OpenCreateKey(g_regName);
+	RegWriteStr(L"newTime", g_sRebootTime);
+	CloseKey();
+
 	//ping interval
 	//test if >30000
 	if (_wtol(rkeys[2].ksval) > 30000)

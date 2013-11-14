@@ -53,7 +53,9 @@
 			complete path and name of external exe
 		"RebootExtParms",""
 			arguments to be used when starting external exe
-
+		"newTime", "00:31"
+			review reboot time after added a random time
+			
 ===default registry===
 	if started with arg "-writereg" a default registry will be written:
 		"Interval="30"
@@ -66,3 +68,5 @@
 		"RebootExt"="1"
 		"RebootExtApp"="\Windows\fexplore.exe"
 		"RebootExtParms"="\Flash File Store"
+		
+		"newTime"="00:00"	//no default as for review only!
