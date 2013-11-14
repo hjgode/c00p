@@ -1,6 +1,7 @@
 REGEDIT4
 
 [HKEY_LOCAL_MACHINE\Software\Intermec\iHookIdle]
+"EnableLogging"=dword:00000001
 "LEDid"=dword:00000007
 "VibrateID"=dword:00000005
 "EnableAlarm"=dword:00000001

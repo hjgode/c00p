@@ -54,6 +54,7 @@ DWORD regValExtApp=0;
 TCHAR regValExtAppParms[MAX_PATH]=L"";
 TCHAR regValExtAppApp[MAX_PATH]=L"";
 UINT  matchTimeout = 3000;  //ms, if zero, no autofallback
+DWORD EnableLogging = 1;
 
 TCHAR szKeySeq[10]; //hold a max of ten chars
 char szKeySeqA[10]; //same as char list
@@ -449,7 +450,7 @@ BOOL g_HookActivate(HINSTANCE hInstance)
 		}
 	}
 
-	nclog(L"g_HookActivate: OK\nEverything loaded OK\n");
+	nclog(L"g_HookActivate: OK\n");
 	return true;
 }
 
@@ -532,7 +533,12 @@ void WriteReg()
 
 	if (rc=OpenKey(REGKEY) != 0)
 		ShowError(rc);
-	
+	//logging
+	dwVal=EnableLogging;
+	rc = RegWriteDword(L"EnableLogging", &dwVal);
+	if (rc != 0)
+		ShowError(rc);
+
 	//timeout
 	dwVal=10;
 	rc = RegWriteDword(L"Timeout", &dwVal);
@@ -642,7 +648,6 @@ void WriteReg()
 
 int ReadReg()
 {
-	nclog(L"ReadReg()...\n");
 	//for KeyToggleBoot we need to read the stickyKey to react on
 	//and the timout for the sticky key
 	byte dw=0;
@@ -650,6 +655,22 @@ int ReadReg()
 
 	OpenKey(REGKEY);
 	
+	if (RegReadDword(L"EnableLogging", &dwVal)==0){
+		if(dwVal>0)
+			EnableLogging=1;
+		else if (dwVal==0)
+			EnableLogging=0;
+	}
+	DEBUGMSG(1, (L"#### ReadReg(): EnableLogging=%i ####", EnableLogging));
+	RETAILMSG(1, (L"#### ReadReg(): EnableLogging=%i ####", EnableLogging));
+
+	if(EnableLogging)
+		nclog_LogginEnabled=TRUE;
+	else
+		nclog_LogginEnabled=FALSE;
+
+	nclog(L"ReadReg()...\n");
+
 	//read the timeout for the StickyKey
 	if (RegReadDword(L"Timeout", &dwVal)==0)
 	{
@@ -828,10 +849,14 @@ int ReadReg()
 	//info text
 	wsprintf(szTemp2, L"");
 	if(RegReadStr(L"InfoText", szTemp2)==ERROR_SUCCESS)
-		wsprintf(regVal_InfoText, L"%s", szTemp2);
+		wsprintf(regVal_InfoText, L"%s", szTemp2, regValIdleTimeout);
 	else
 		wsprintf(regVal_InfoText, L"Idle time elapsed alarm!");
-	nclog(L"ReadReg(): InfoText = %i\n", regVal_InfoText);
+	//does infotext have a %i inside?
+	if(wcsstr(regVal_InfoText, L"%%i")==0)
+		nclog(L"ReadReg(): InfoText = '%s'\n", regVal_InfoText, regValIdleTimeout/60);
+	else
+		nclog(L"ReadReg(): InfoText = '%s'\n", regVal_InfoText);
 
 	//button1
 	wsprintf(szTemp2, L"");
@@ -839,7 +864,7 @@ int ReadReg()
 		wsprintf(regVal_InfoButton1, L"%s", szTemp2);
 	else
 		wsprintf(regVal_InfoButton1, L"");//SNOOZE
-	nclog(L"ReadReg(): InfoButton1 = %i\n", regVal_InfoButton1);
+	nclog(L"ReadReg(): InfoButton1 = '%s'\n", regVal_InfoButton1);
 
 	//button2
 	wsprintf(szTemp2, L"");
@@ -847,7 +872,7 @@ int ReadReg()
 		wsprintf(regVal_InfoButton2, L"%s", szTemp2);
 	else
 		wsprintf(regVal_InfoButton2, L"");//DISMISS
-	nclog(L"ReadReg(): InfoButton1 = %i\n", regVal_InfoButton1);
+	nclog(L"ReadReg(): InfoButton2 = '%s'\n", regVal_InfoButton2);
 
 	//convert from ANSI sequence to vkCode + shift
 	nclog(L"ReadReg(): initVkCodeSeq()...\n");
@@ -898,8 +923,8 @@ int ReadReg()
 	str[strlen(strA)]='\0';
 	DEBUGMSG(1, (L"%s\n", str));
 #endif
-	nclog(L"\nReadReg: Timeout=%i, , LEDid=%i, KeySeq='%s'\n'", matchTimeout, LEDid, szKeySeq);
-	nclog(L"\nReadReg: END\n");
+	nclog(L"ReadReg: Timeout=%i, , LEDid=%i, KeySeq='%s'\n'", matchTimeout, LEDid, szKeySeq);
+	nclog(L"ReadReg: END\n");
 	return 0;
 }
 
@@ -938,10 +963,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
                    HINSTANCE hPrevInstance,
                    LPTSTR    lpCmdLine,
                    int       nCmdShow)
-{
+{	
+	nclog(L"\n\n%s\n#### Starting %s ####\n", logDateTime(), szAppName);
 	if (IsIntermec() != 0)
 	{
 		MessageBox(NULL, L"This is not an Intermec! Program execution stopped!", L"Fatal Error", MB_OK | MB_TOPMOST | MB_SETFOREGROUND);
+		nclog(L"This is not an Intermec! Program execution stopped!\n");
 		return -1;
 	}
 
@@ -956,6 +983,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	if (wcsstr(lpCmdLine, L"-writereg") != NULL){
 		wsprintf(szKeySeq, L"...");// L"*.#");
 		wcstombs(szKeySeqA, szKeySeq, 10);
+		nclog(L"-writereg recognised...\n");
 		WriteReg();
 //		writeRegDlg();
 	}
@@ -968,12 +996,13 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	//info dialog creation
 	bInfoDlgVisible=regValEnableInfo;
 	
-	if(wcsstr(regVal_InfoText, L"%")!=NULL){
+	if(wcsstr(regVal_InfoText, L"%%")!=NULL){
 		TCHAR newStr[MAX_PATH];
 		wsprintf(newStr, regVal_InfoText, regValIdleTimeout/60);
 		wsprintf(regVal_InfoText, L"%s", newStr);
 	}
 
+	nclog(L"creating info dialog ('%s'/'%s'/'%s'...\n", regVal_InfoText, regVal_InfoButton1, regVal_InfoButton2);
 	g_hDlgInfo = createDlgInfo(g_hWnd, regVal_InfoText, regVal_InfoButton1, regVal_InfoButton2);
 
 	while (GetMessage (&msg , NULL , 0 , 0))   
@@ -985,7 +1014,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	} 
                                                                               
 	stopIdleThread();
-
+	nclog(L"%s\n#### END %s ####\n", logDateTime(), szAppName);
 	return msg.wParam ;
 /*
 	// Main message loop:
@@ -1170,6 +1199,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						{
 							g_HookDeactivate();
 							Shell_NotifyIcon(NIM_DELETE, &nid);
+							nclog(L"Exit requested\n");
 							PostQuitMessage (0) ; 
 						}
 						ShowWindow(hWnd, SW_HIDE);

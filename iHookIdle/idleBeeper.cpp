@@ -8,6 +8,8 @@
 #include "idleBeeper.h"
 
 #include "dlg_info.h"
+#include "nclog.h"
+
 //extern BOOL bInfoDlgVisible;	//show/hide DlgInfo
 extern DWORD regValEnableInfo;
 
@@ -121,7 +123,8 @@ DWORD WINAPI powerWatchThread(LPVOID lParam){
 ///start a timer with a interval of x seconds
 void startIdleThread(UINT iTimeOut){
 	DEBUGMSG(1,(L"startIdleThread entered\n"));
-#ifdef DEBUG
+	nclog(L"startIdleThread entered with timeout=%i\n", iTimeOut);
+#ifdef DEBUG1
 	iTimeOut=5*1000;	//we need seconds
 #else
 	iTimeOut=iTimeOut*1000;	//we need seconds
@@ -136,7 +139,8 @@ void startIdleThread(UINT iTimeOut){
 
 	if(!h_IdleThread){
 		h_IdleThread = CreateThread(NULL, 0, idleThread, (LPVOID)iTimeOut, 0, &threadIdleID);
-		DEBUGMSG(1, (L"idle thread started with handle=0x%x\n", h_IdleThread));
+		//DEBUGMSG(1, (L"idle thread started with handle=0x%x\n", h_IdleThread));
+		nclog(L"idle thread started with handle=0x%x\n", h_IdleThread);
 	}
 
 	//start power watch thread
@@ -145,9 +149,10 @@ void startIdleThread(UINT iTimeOut){
 	DWORD dwPowerTimeout=1000; //check power every 1 second
 	if(!h_PowerThread){
 		h_PowerThread=CreateThread(NULL, 0, powerWatchThread, (LPVOID)dwPowerTimeout, 0, &threadPowerID);
-		DEBUGMSG(1, (L"power thread started with handle=0x%x\n", h_PowerThread));
+		//DEBUGMSG(1, (L"power thread started with handle=0x%x\n", h_PowerThread));
+		nclog(L"power thread started with handle=0x%x\n", h_PowerThread);
 	}
-
+	nclog(L"startIdleThread() done\n");
 }
 
 
@@ -174,7 +179,8 @@ void stopBeeper(){
 }
 
 void resetIdleThread(){
-	logTime(); DEBUGMSG(1, (L"resetIdleThread entered\n"));
+	logTime(); 
+	DEBUGMSG(1, (L"resetIdleThread entered\n"));
 	if(h_IdleThread==NULL)	//is thread running
 		return;	//no timer running
 	SetEvent(h_resetIdleThread);	
@@ -247,7 +253,7 @@ void doAlarm(){
 }
 
 DWORD WINAPI beeperThread(LPVOID lParam){
-	DEBUGMSG(1, (L"beeperThread entered\n"));
+	nclog(L"beeperThread entered\n");
 	BOOL bStopThread=FALSE;
 	HANDLE waitHandles[1];
 	waitHandles[0]=h_stopBeeperThread;
@@ -281,7 +287,8 @@ DWORD WINAPI idleThread(LPVOID lParam){
 	waitHandles[1]=h_stopIdleThread;
 	BOOL bStopThread=FALSE;
 	DWORD dwTimeout=(DWORD) lParam;
-	DEBUGMSG(1,(L"idleThread starting with %i\n", dwTimeout));
+	//DEBUGMSG(1,(L"idleThread starting with %i\n", dwTimeout));
+	nclog(L"idleThread starting with %i\n", dwTimeout);
 	do{
 		DWORD dwWait = WaitForMultipleObjects(2, waitHandles, FALSE, dwTimeout);
 		switch(dwWait){
@@ -291,6 +298,7 @@ DWORD WINAPI idleThread(LPVOID lParam){
 				break;
 			case WAIT_OBJECT_0+1:
 				DEBUGMSG(1,(L"idleThread stop signaled\n"));
+				nclog(L"idleThread stop signaled\n");
 				bStopThread=TRUE;
 				break;
 			case WAIT_TIMEOUT:
@@ -299,6 +307,7 @@ DWORD WINAPI idleThread(LPVOID lParam){
 					//start beeper if not running
 					DEBUGMSG(1,(L"idleThread timeout...\n"));
 					if(h_BeeperThread==NULL){
+						nclog(L"idleThread timeout reached at %s. Creating beeperThread\n", logDateTime());
 						DEBUGMSG(1,(L"idleThread Create Beeper Thread...\n"));
 						h_BeeperThread = CreateThread(NULL, 0, beeperThread, NULL, 0, &threadIdleID);
 					}
@@ -306,11 +315,11 @@ DWORD WINAPI idleThread(LPVOID lParam){
 						DEBUGMSG(1,(L"idleThread Beeper Thread already running\n"));
 				}
 				else
-					DEBUGMSG(1, (L"idleThread timeout, skipped start beeper as on AC power\n"));
+					nclog(L"idleThread timeout, skipped start beeper as on AC power\n");
 				break;
 		}
 	}while (!bStopThread);
 	h_IdleThread=NULL;
-	DEBUGMSG(1,(L"idleThread ended\n"));
+	nclog(L"idleThread ended\n");
 	return 0;
 }

@@ -2,6 +2,8 @@
 
 #ifndef NCLOG_INCLUDED
 #define NCLOG_INCLUDED
+
+static BOOL nclog_LogginEnabled=FALSE;
 extern void nclog (const wchar_t *fmt, ...);
 extern int purgeFile(void);
 

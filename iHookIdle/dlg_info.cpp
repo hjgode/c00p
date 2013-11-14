@@ -5,11 +5,11 @@
 #include "dlg_info.h"
 #include "idleBeeper.h"
 #include "resourceppc.h"
+#include "nclog.h"
 
 HWND hDlgInfo;	//local window handle
 HWND g_hDlgInfo;	//global window handle
 BOOL bInfoDlgVisible=FALSE;	//show/hide DlgInfo
-
 
 //forward declaration
 BOOL CALLBACK InfoDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
@@ -61,11 +61,13 @@ BOOL CALLBACK InfoDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
             switch(LOWORD(wParam))
             {
                 case ID_BUTTON1:	//Snooze button
+					nclog(L"Button1 clicked\n");
 					stopBeeper();
 					resetIdleThread();
                     //MessageBox(hwnd, L"Hi!", L"This is a message", MB_OK | MB_ICONEXCLAMATION);
                 break;
                 case ID_BUTTON2:
+					nclog(L"Button2 clicked\n");
 					ShowWindow(hDlgInfo, SW_HIDE);
 					bInfoDlgVisible=FALSE;
                     //MessageBox(hwnd, L"Bye!", L"This is also a message", MB_OK | MB_ICONEXCLAMATION);

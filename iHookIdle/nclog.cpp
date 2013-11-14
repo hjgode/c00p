@@ -28,6 +28,7 @@ static unsigned short theLogPort;
 static char		logFileName[MAX_PATH];
 static TCHAR	logFileNameW[MAX_PATH];
 static BOOL		bFirstFileCall = true;
+//static BOOL		nclog_LogginEnabled = FALSE;
 
 #ifdef USEWINSOCK
 // bind the log socket to a specific port.
@@ -199,6 +200,9 @@ TCHAR* logDateTime(){
 
 static int writefile(TCHAR *filetext){
 
+	if(!nclog_LogginEnabled)
+		return 0;
+	
 //	EnterCriticalSection(pCriticalAction);
 
 	/* File Write Function, written by professor chemicalX */
@@ -242,7 +246,7 @@ static int writefile(TCHAR *filetext){
 // format input, convert to 8-bit and send.
 void nclog (const wchar_t *fmt, ...)
 {
-        va_list vl;
+	va_list vl;
         va_start(vl,fmt);
         wchar_t bufW[1024]; // to bad CE hasn't got wvnsprintf
         wvsprintf(bufW,fmt,vl);

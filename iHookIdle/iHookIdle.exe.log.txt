@@ -1,0 +1,39 @@
+Date and Time: 14.11.2013 13:56:16
+#### Starting iHookIdle v3.6.0 ####
+0xb6aba30e: startWatchScanThread...
+
+0xb6aba30e: ReadReg()...
+0xb6aba30e: ReadReg(): Timeout=10000
+0xb6aba30e: ReadReg(): LEDid=7
+0xb6aba30e: ReadReg(): alarmLEDid =2
+0xb6aba30e: ReadReg(): VibrateID =5
+0xb6aba30e: ReadReg(): Read KeySeq OK: '...'
+0xb6aba30e: ReadReg(): EnableAlarm=1
+0xb6aba30e: ReadReg(): IdleTimeout=300
+0xb6aba30e: ReadReg(): AlarmOffKey=0x73
+0xb6aba30e: ReadReg(): ReadReg AppExt failed
+0xb6aba30e: ReadReg(): InfoEnabled = 1
+0xb6aba30e: ReadReg(): InfoText = 'ALARM\r\nSystem has been idle for at least %i minutes!'
+0xb6aba30e: ReadReg(): InfoButton1 = 'Snooze'
+0xb6aba30e: ReadReg(): InfoButton2 = ''
+0xb6aba30e: ReadReg(): initVkCodeSeq()...
+0xb6aba30e: ReadReg(): Reading ForbiddenKeys from REG = OK
+0xb6aba30e: ReadReg(): CloseKey()
+0xb6aba30e: ReadReg: Timeout=10000, , LEDid=7, KeySeq='...'
+'0xb6aba30e: ReadReg: END
+0xb6aba30e: LoadLibrary(coredll.dll)...
+0xb6aba30e: g_HookActivate: OK
+Everything loaded OK
+0xb6aba30e: startIdleThread entered with timeout=300
+0xb6aba30e: idle thread started with handle=0xd67aae4e
+0xb6aba30e: power thread started with handle=0x766ecf2a
+0xb6aba30e: startIdleThread() done
+0xb6aba30e: creating info dialog ('ALARM\r\nSystem has been idle for at least 5 minutes!'/'Snooze'/''...
+0xb6aba30e: idleThread starting with 5000
+0xb6aba30e: idleThread timeout reached at Date and Time: 14.11.2013 13:56:23. Creating beeperThread
+0xb6aba30e: beeperThread entered
+0xb6aba30e: idleThread timeout reached at Date and Time: 14.11.2013 13:56:30. Creating beeperThread
+0xb6aba30e: beeperThread entered
+0xb6aba30e: Exit requested
+0xb6aba30e: Date and Time: 14.11.2013 13:56:34
+#### END iHookIdle v3.6.0 ####
