@@ -1037,6 +1037,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static HWND hProgress=NULL;
 	static HWND hProcList=NULL;
 	static HWND hIPList=NULL;
+	static int iShowIP=10;	//only update IP list every ten seconds
 	int iIPcount=0;
 	static HWND hBtnReboot=NULL; //handle to reboot button
 	TCHAR tstr[2*MAX_PATH];
@@ -1575,17 +1576,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 						PostMessage(hProgress, PBM_STEPIT, 0, 0);
 
-						//build and show IP list
-						TCHAR strIPlist[10][64];
-						//for(iIPcount=0; iIPcount<10; iIPcount++)
-						//	strIPlist[iIPcount]=new TCHAR(64);
-						iIPcount=getIpTable(strIPlist);
-						ListView_DeleteAllItems(hIPList);
-						for(int i=0; i<iIPcount; i++)
-							Add2List(hIPList, strIPlist[i]);
-						//for(iIPcount=0; iIPcount<10; iIPcount++)
-						//	delete strIPlist[iIPcount];
-
+						if(iShowIP==10){	//update IP list all 10 seconds only
+							//build and show IP list
+							TCHAR strIPlist[10][64];
+							//for(iIPcount=0; iIPcount<10; iIPcount++)
+							//	strIPlist[iIPcount]=new TCHAR(64);
+							iIPcount=getIpTable(strIPlist);
+							ListView_DeleteAllItems(hIPList);
+							for(int i=0; i<iIPcount; i++)
+								Add2List(hIPList, strIPlist[i]);
+							//for(iIPcount=0; iIPcount<10; iIPcount++)
+							//	delete strIPlist[iIPcount];
+							iShowIP=0;
+						}
+						iShowIP++;
 
 						return 0;	//5.1.8.1 return messgage has been processed
 					case timer2:
