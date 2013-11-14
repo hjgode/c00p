@@ -490,17 +490,11 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 	case WM_CREATE:
 		ReadReg();
 
-		if (g_bEnableLogging)
-			; //newfile(L"\\iTimedReboot2.log.txt");
 		nclog(L"WM_CREATE: szWindowClass: %s\n\n", szWindowClass);
-		if (g_bEnableLogging)
-			nclog(L"WM_CREATE: ReadReg:\r\n", NULL);
-		if (g_bEnableLogging)
+		nclog(L"WM_CREATE: ReadReg:\r\n", NULL);
+		for (int i=0; i<RegEntryCount; i++)
 		{
-			for (int i=0; i<RegEntryCount; i++)
-			{
-				nclog(L"%s\t%s\n", rkeys[i].kname, rkeys[i].ksval );
-			}
+			nclog(L"%s\t%s\n", rkeys[i].kname, rkeys[i].ksval );
 		}
 
 		//set the timer that checks the clock for reboot
@@ -617,9 +611,17 @@ int ReadReg()
 	TCHAR name[MAX_PATH+1];
 	LONG rc;
 	if(OpenKey(g_regName)!=0){
-		nclog(L"Could not open registry key '%s'!\r\n", g_regName);
+		DEBUGMSG(1, (L"Could not open registry key '%s'!\r\n", g_regName));
+		RETAILMSG(1, (L"Could not open registry key '%s'!\r\n", g_regName));
 		return -1;
 	}
+	
+	//enable logging?
+	g_bEnableLogging = true;
+	if (wcscmp(rkeys[4].ksval, L"0") == 0)
+		g_bEnableLogging=false;
+	nclog_LogginEnabled=g_bEnableLogging;
+
 	for (i=0; i<RegEntryCount; i++)
 	{
 		wsprintf(name, rkeys[i].kname);
@@ -702,11 +704,7 @@ int ReadReg()
 		nclog(L"Using Ping Interval:\t%i seconds\n", g_iPingTimeInterval/1000);
 		DEBUGMSG(true,(str));
 	}
-	//enable logging?
-	g_bEnableLogging = true;
-	if (wcscmp(rkeys[4].ksval, L"0") == 0)
-		g_bEnableLogging=false;
-	
+
 	//lastBootDate
 	if (StrIsNumber(rkeys[5].ksval))
 	{

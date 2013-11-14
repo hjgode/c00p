@@ -28,6 +28,7 @@ static unsigned short theLogPort;
 static char		logFileName[MAX_PATH];
 static TCHAR	logFileNameW[MAX_PATH];
 static BOOL		bFirstFileCall = true;
+BOOL		nclog_LogginEnabled = FALSE;
 
 #ifdef USEWINSOCK
 // bind the log socket to a specific port.
@@ -175,6 +176,8 @@ TCHAR* logDateTime(){
 }
 
 static int writefile(TCHAR *filetext){
+	if(!nclog_LogginEnabled)
+		return 0;
 
 //	EnterCriticalSection(pCriticalAction);
 
