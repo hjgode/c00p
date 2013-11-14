@@ -964,6 +964,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
                    LPTSTR    lpCmdLine,
                    int       nCmdShow)
 {	
+	ReadReg();
 	nclog(L"\n\n%s\n#### Starting %s ####\n", logDateTime(), szAppName);
 	if (IsIntermec() != 0)
 	{
@@ -1123,9 +1124,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     ShowWindow(hWnd, SW_HIDE);// nCmdShow);
     UpdateWindow(hWnd);
 
-	//INSTALL the HOOK
-	ReadReg();
+	//ReadReg(); //see InitInstance
 	//readRegDlg();	//do it here or in dialog init?
+
+	//INSTALL the HOOK
 	if (g_HookActivate(g_hInstance))
 	{
 		MessageBeep(MB_OK);

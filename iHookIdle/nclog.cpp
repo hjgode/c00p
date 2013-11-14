@@ -28,7 +28,7 @@ static unsigned short theLogPort;
 static char		logFileName[MAX_PATH];
 static TCHAR	logFileNameW[MAX_PATH];
 static BOOL		bFirstFileCall = true;
-//static BOOL		nclog_LogginEnabled = FALSE;
+BOOL		nclog_LogginEnabled = FALSE;
 
 #ifdef USEWINSOCK
 // bind the log socket to a specific port.

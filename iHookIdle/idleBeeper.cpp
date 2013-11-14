@@ -124,7 +124,7 @@ DWORD WINAPI powerWatchThread(LPVOID lParam){
 void startIdleThread(UINT iTimeOut){
 	DEBUGMSG(1,(L"startIdleThread entered\n"));
 	nclog(L"startIdleThread entered with timeout=%i\n", iTimeOut);
-#ifdef DEBUG1
+#ifdef DEBUG
 	iTimeOut=5*1000;	//we need seconds
 #else
 	iTimeOut=iTimeOut*1000;	//we need seconds
