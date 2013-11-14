@@ -2,7 +2,7 @@
     WIN32 APPLICATION : iHookIdle Project Overview
 ========================================================================
 
-iHookIdle
+iHookIdle (based on KeyToggleBoot)
 
 	1.
 	watch keyboard and barcode scan events

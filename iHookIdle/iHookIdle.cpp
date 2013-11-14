@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "hooks.h"
 #include "iHookIdle.h"
+#include "nclog.h"
 
 TCHAR szAppName[MAX_PATH] = L"iHookIdle v3.6.0";
 
@@ -103,6 +104,19 @@ extern "C" {
 	BOOL WINAPI NLedSetDevice( UINT nDeviceId, void *pInput );
 };
 
+//start process
+void startProcess(TCHAR* szImage, TCHAR* szParms){
+	//start external app
+	PROCESS_INFORMATION pi;
+	if(CreateProcess(szImage, szParms, NULL, NULL, FALSE, 0, NULL, NULL, NULL, &pi)==0){
+		nclog(L"CreateProcess ('%s'/'%s') failed with 0x%08x\r\n", szImage, szParms, GetLastError());
+	}
+	else{
+		//OK
+		nclog(L"CreateProcess ('%s'/'%s') OK\r\n", szImage, szParms);
+	}
+}
+
 //control the LEDs
 void LedOn(int id, int onoff) //onoff=0 LED is off, onoff=1 LED is on, onoff=2 LED blink
 {
@@ -140,9 +154,9 @@ void LedOn(int id, int onoff) //onoff=0 LED is off, onoff=1 LED is on, onoff=2 L
 	settings.MetaCycleOn=5;
 	settings.MetaCycleOff=5;
 	if (!NLedSetDevice(NLED_SETTINGS_INFO_ID, &settings))
-        DEBUGMSG(true,(L"NLedSetDevice(NLED_SETTINGS_INFO_ID) failed\n"));
+        DEBUGMSG(1,(L"NLedSetDevice(NLED_SETTINGS_INFO_ID) failed\n"));
 	else
-		DEBUGMSG(true,(L"NLedSetDevice(NLED_SETTINGS_INFO_ID) success\n"));
+		DEBUGMSG(1,(L"NLedSetDevice(NLED_SETTINGS_INFO_ID) success\n"));
 }
 
 DWORD WINAPI watchScanEvent(LPVOID lpParam){
@@ -190,6 +204,7 @@ DWORD WINAPI watchScanEvent(LPVOID lpParam){
 //thread to look for barcode scan event
 void startWatchScanThread(HWND hWnd){
 	DEBUGMSG(1, (L"startWatchScanThread...\r\n"));
+	nclog(L"startWatchScanThread...\r\n");
 	watchScanEventThreadSTOP=CreateEvent(NULL, FALSE, FALSE, L"watchScanEventThreadSTOP");
 	watchScanEventThreadHandle = CreateThread(NULL, 0, watchScanEvent, hWnd, 0, &watchScanEventThreadID);
 }
@@ -267,6 +282,7 @@ __declspec(dllexport) LRESULT CALLBACK g_LLKeyboardHookCallback(
 				{
 					bForbidden=true;
 					DEBUGMSG(1, (L"suppressing forbidden key: 0x%0x\n",pkbhData->vkCode));
+					nclog(L"suppressing forbidden key: 0x%0x\n",pkbhData->vkCode);
 					continue;
 				}
 				j++;
@@ -350,21 +366,23 @@ __declspec(dllexport) LRESULT CALLBACK g_LLKeyboardHookCallback(
 				//are all keys matched
 				if (iMatched == iKeyCount){
 					//show modeless dialog
-					DEBUGMSG(1, (L"FULL MATCH, starting ...\n"));
-						//DO ACTION
+					nclog(L"FULL MATCH, starting ...\n");
+					//DO ACTION
+					if(regValExtApp==1 && wcslen(regValExtAppApp)>0){
+						//start external process
+						nclog(L"\trun ext. process '%s'\n", regValExtAppApp);
+						startProcess(regValExtAppApp, regValExtAppParms);
+					}
+					else{
+						nclog(L"\tfireing named event\n");
 						HANDLE hEvent = CreateEvent(NULL, FALSE,FALSE, STOPEVENTNAME);
 						if(hEvent!=NULL){
 							SetEvent(hEvent);
 							CloseHandle(hEvent);
 						}
-						//show modeless dialog
-						//if(!g_bRebootDialogOpen){
-						//	PostMessage(g_hWnd, WM_SHOWMYDIALOG, 0, 0);
-						//}
-						//else
-						//	DEBUGMSG(1, (L"\n## Reboot dialog already open\n"));
+					}
 					//reset match pos and stop timer
-					DEBUGMSG(1, (L"FULL MATCH: Reset matching\n"));
+					nclog(L"FULL MATCH: Reset matching\n");
 					LedOn(LEDid,0);
 					iMatched=0; //reset match pos
 					KillTimer(NULL, tID);
@@ -391,23 +409,25 @@ BOOL g_HookActivate(HINSTANCE hInstance)
 	CallNextHookEx			= NULL;
 	UnhookWindowsHookEx	= NULL;
 
-	// Load the core library. If it's not found, you've got CErious issues :-O
-	DEBUGMSG(1,(_T("LoadLibrary(coredll.dll)...")));
+	// Load the core library. If it's not found, you've got serious issues :-O
+	nclog(L"LoadLibrary(coredll.dll)...\n");
 	g_hHookApiDLL = LoadLibrary(_T("coredll.dll"));
 	if(g_hHookApiDLL == NULL) return false;
 	else {
 		// Load the SetWindowsHookEx API call (wide-char)
 		//TRACE(_T("OK\nGetProcAddress(SetWindowsHookExW)..."));
 		SetWindowsHookEx = (_SetWindowsHookExW)GetProcAddress(g_hHookApiDLL, _T("SetWindowsHookExW"));
-		if(SetWindowsHookEx == NULL) 
+		if(SetWindowsHookEx == NULL) {
+			nclog(L"could not load SetWindowsHookEx");
 			return false;
+		}
 		else
 		{
 			// Load the hook.  Save the handle to the hook for later destruction.
 			//TRACE(_T("OK\nCalling SetWindowsHookEx..."));
 			g_hInstalledLLKBDhook = SetWindowsHookEx(WH_KEYBOARD_LL, g_LLKeyboardHookCallback, hInstance, 0);
 			if(g_hInstalledLLKBDhook == NULL){
-				DEBUGMSG(1, (L"\n######## SetWindowsHookEx failed, GetLastError=%i\n", GetLastError()));
+				nclog(L"\n######## SetWindowsHookEx failed, GetLastError=%i\n", GetLastError());
 				return false;
 			}
 		}
@@ -415,17 +435,21 @@ BOOL g_HookActivate(HINSTANCE hInstance)
 		// Get pointer to CallNextHookEx()
 		//TRACE(_T("OK\nGetProcAddress(CallNextHookEx)..."));
 		CallNextHookEx = (_CallNextHookEx)GetProcAddress(g_hHookApiDLL, _T("CallNextHookEx"));
-		if(CallNextHookEx == NULL) 
+		if(CallNextHookEx == NULL) {
+			nclog(L"could not load CallNextHookEx");
 			return false;
+		}
 
 		// Get pointer to UnhookWindowsHookEx()
 		//TRACE(_T("OK\nGetProcAddress(UnhookWindowsHookEx)..."));
 		UnhookWindowsHookEx = (_UnhookWindowsHookEx)GetProcAddress(g_hHookApiDLL, _T("UnhookWindowsHookEx"));
-		if(UnhookWindowsHookEx == NULL) 
+		if(UnhookWindowsHookEx == NULL)  {
+			nclog(L"could not load UnhookWindowsHookEx");
 			return false;
+		}
 	}
 
-	DEBUGMSG(1, (L"g_HookActivate: OK\nEverything loaded OK\n"));
+	nclog(L"g_HookActivate: OK\nEverything loaded OK\n");
 	return true;
 }
 
@@ -499,6 +523,7 @@ void initVkCodeSeq(){
 
 void WriteReg()
 {
+	nclog(L"WriteReg()...\n");
 	DWORD rc=0;
 	DWORD dwVal=0;
 	rc = OpenCreateKey(REGKEY);
@@ -546,7 +571,7 @@ void WriteReg()
 		ShowError(rc);
 		pForbiddenKeyList=NULL;
 	}
-/*
+
 	dwVal=regValExtApp;
 	rc = RegWriteDword(L"AppExt", &dwVal);
     if (rc != 0)
@@ -557,7 +582,7 @@ void WriteReg()
 	rc=RegWriteStr(L"AppExtParms", regValExtAppParms);
     if (rc != 0)
         ShowError(rc);
-*/
+
 
 /*
 	dwVal=regValShutdownExt;
@@ -617,6 +642,7 @@ void WriteReg()
 
 int ReadReg()
 {
+	nclog(L"ReadReg()...\n");
 	//for KeyToggleBoot we need to read the stickyKey to react on
 	//and the timout for the sticky key
 	byte dw=0;
@@ -628,36 +654,36 @@ int ReadReg()
 	if (RegReadDword(L"Timeout", &dwVal)==0)
 	{
 		matchTimeout = (UINT) dwVal * 1000;
-		DEBUGMSG(true,(L"Reading Timeout from REG = OK\n"));
+		nclog(L"ReadReg(): Timeout=%i\n",matchTimeout);
 	}
 	else
 	{
 		matchTimeout = 5 * 1000;
-		DEBUGMSG(true,(L"Reading Timeout from REG = FAILED, assigned 5 seconds\n"));
+		nclog(L"ReadReg(): failed reading, Timeout =%i\n",matchTimeout);
 	}
 
     //read LEDid to use for signaling
     if (RegReadDword(L"LEDid", &dwVal)==0)
     {
         LEDid = dwVal;
-        DEBUGMSG(true,(L"Reading LEDid from REG = OK\n"));
+		nclog(L"ReadReg(): LEDid=%i\n",LEDid);
     }
     else
     {
         LEDid = 1;
-        DEBUGMSG(true,(L"Reading LEDid from REG = FAILED, using default 1\n"));
+		nclog(L"ReadReg(): failed reading LEDid default=%i\n",LEDid);
     }
 
 	//read LEDid to use for alarm
     if (RegReadDword(L"alarmLEDid", &dwVal)==0)
     {
         alarmLEDid = dwVal;
-        DEBUGMSG(true,(L"Reading alarmLEDid from REG = OK\n"));
+		nclog(L"ReadReg(): alarmLEDid =%i\n", alarmLEDid);
     }
     else
     {
         alarmLEDid = 2;
-        DEBUGMSG(true,(L"Reading alarmLEDid from REG = FAILED, using default 2\n"));
+		nclog(L"ReadReg(): failed reading alarmLEDid default=%i\n", alarmLEDid);
     }
 
 
@@ -665,12 +691,12 @@ int ReadReg()
     if (RegReadDword(L"VibrateID", &dwVal)==0)
     {
         VibrateID = dwVal;
-        DEBUGMSG(true,(L"Reading VibrateID from REG = OK\n"));
+		nclog(L"ReadReg(): VibrateID =%i\n", VibrateID);
     }
     else
     {
         VibrateID = 1;
-        DEBUGMSG(true,(L"Reading VibrateID from REG = FAILED, using default LedID\n"));
+		nclog(L"ReadReg(): failed reading VibrateID default=%i\n", VibrateID);
     }
 
 	TCHAR szTemp[10];
@@ -680,17 +706,17 @@ int ReadReg()
 	int iSize=RegReadByteSize(L"KeySeq", iSize);
 	int iTableSizeOUT=iSize;
     if(iSize > 20){ //0x14 = 20 bytes, do we have more than 10 bytes?
-        DEBUGMSG(1, (L"Failed reading KeyTable (iSize>20), using default\n"));
+		nclog(L"ReadReg(): failed reading KeyTable (iSize>20), using default\n");
     }
     else{
         if (RegReadStr(L"KeySeq", szTemp)==ERROR_SUCCESS){
-            DEBUGMSG(1, (L"Read KeySeq OK\n"));
 			wcscpy(szKeySeq, szTemp);
 			wcstombs(szKeySeqA, szKeySeq, 10);
+			nclog(L"ReadReg(): Read KeySeq OK: '%s'\n", szKeySeq);
             //memcpy(szKeySeq, bTemp, iSize);
         }
         else{
-            DEBUGMSG(1, (L"Failed reading KeySeq, using default\n"));
+            nclog(L"ReadReg(): Failed reading KeySeq, using default '%s'\n", szKeySeq);
         }
     }
 
@@ -723,6 +749,8 @@ int ReadReg()
 	else
 		regValEnableAlarm=0;	//default is 0 = no Alarm
 
+	nclog(L"ReadReg(): EnableAlarm=%i\n", regValEnableAlarm);
+
 	//read beeper alarm idle timeout
 	dwVal=regValIdleTimeout;
 	if(RegReadDword(L"IdleTimeout", &dwVal)==ERROR_SUCCESS){
@@ -730,6 +758,7 @@ int ReadReg()
 	}
 	else
 		regValIdleTimeout=300;	//default is 5 minutes
+	nclog(L"ReadReg(): IdleTimeout=%i\n", regValIdleTimeout);
 
 	//read Allarm Off key
 	dwVal=regValAlarmOffKey;
@@ -737,31 +766,31 @@ int ReadReg()
 		regValAlarmOffKey=dwVal;
 	else
 		regValAlarmOffKey=0x73;	//default is F4 (Phone End key)
-/*
+	nclog(L"ReadReg(): AlarmOffKey=0x%02x\n", regValAlarmOffKey);
+
 	if(RegReadDword(L"AppExt", &dwVal)==ERROR_SUCCESS){
 		DEBUGMSG(1, (L"AppExt = %i\n", dwVal));
 		regValExtApp=dwVal;
+		nclog(L"ReadReg(): AppExt = %i\n", regValExtApp);
 		if(regValExtApp==1){
 			if(RegReadStr(L"AppExtApp", szTemp2)==ERROR_SUCCESS)
-			{
 				wsprintf(regValExtAppApp, L"%s", szTemp2);
-				DEBUGMSG(1, (L"Read AppExtApp ='%s'\n", regValExtAppApp));
-			}			
 			else
 				wsprintf(regValExtAppApp, L"");
+			nclog(L"ReadReg(): Read AppExtApp ='%s'\n", regValExtAppApp);
 
 			if(RegReadStr(L"AppExtParms", szTemp2)==ERROR_SUCCESS)
-			{
 				wsprintf(regValExtAppParms, L"%s", szTemp2);
-				DEBUGMSG(1, (L"Read AppExtParms ='%s'\n", regValExtAppParms));
-			}			
 			else
 				wsprintf(regValExtAppParms, L"");
+			nclog(L"ReadReg(): Read AppExtParms ='%s'\n", regValExtAppParms);
 		}
+		else
+			nclog(L"ReadReg(): rest skipped\n");
+
 	}
 	else
-		DEBUGMSG(1, (L"ReadReg AppExt failed\n"));
-*/
+		nclog(L"ReadReg(): ReadReg AppExt failed\n");
 
 /*
 	if(RegReadDword(L"ShutdownExt", &dwVal)==ERROR_SUCCESS){
@@ -790,40 +819,38 @@ int ReadReg()
 */
 
 	//### INFO dialog strings etc ###
-	if(RegReadDword(L"InfoEnabled", &dwVal)==ERROR_SUCCESS){
+	if(RegReadDword(L"InfoEnabled", &dwVal)==ERROR_SUCCESS)
 		regValEnableInfo=dwVal;
-	}
 	else
 		regValEnableInfo=TRUE;
+	nclog(L"ReadReg(): InfoEnabled = %i\n", regValEnableInfo);
+
 	//info text
 	wsprintf(szTemp2, L"");
 	if(RegReadStr(L"InfoText", szTemp2)==ERROR_SUCCESS)
-	{
 		wsprintf(regVal_InfoText, L"%s", szTemp2);
-		DEBUGMSG(1, (L"Read TextInfo ='%s'\n", regVal_InfoText));
-	}			
 	else
 		wsprintf(regVal_InfoText, L"Idle time elapsed alarm!");
+	nclog(L"ReadReg(): InfoText = %i\n", regVal_InfoText);
+
 	//button1
 	wsprintf(szTemp2, L"");
 	if(RegReadStr(L"InfoButton1", szTemp2)==ERROR_SUCCESS)
-	{
 		wsprintf(regVal_InfoButton1, L"%s", szTemp2);
-		DEBUGMSG(1, (L"Read InfoButton1 ='%s'\n", regVal_InfoButton1));
-	}			
 	else
 		wsprintf(regVal_InfoButton1, L"");//SNOOZE
+	nclog(L"ReadReg(): InfoButton1 = %i\n", regVal_InfoButton1);
+
 	//button2
 	wsprintf(szTemp2, L"");
 	if(RegReadStr(L"InfoButton2", szTemp2)==ERROR_SUCCESS)
-	{
 		wsprintf(regVal_InfoButton2, L"%s", szTemp2);
-		DEBUGMSG(1, (L"Read InfoButton2 ='%s'\n", regVal_InfoButton2));
-	}			
 	else
 		wsprintf(regVal_InfoButton2, L"");//DISMISS
+	nclog(L"ReadReg(): InfoButton1 = %i\n", regVal_InfoButton1);
 
 	//convert from ANSI sequence to vkCode + shift
+	nclog(L"ReadReg(): initVkCodeSeq()...\n");
 	initVkCodeSeq();
 
 	iKeyCount=wcslen(szKeySeq);
@@ -838,18 +865,19 @@ int ReadReg()
 			ShowError(rc);
 			delete(pForbiddenKeyList);
 			pForbiddenKeyList=NULL;
-			DEBUGMSG(1,(L"Reading ForbiddenKeys from REG failed\n"));
+			nclog(L"ReadReg(): Reading ForbiddenKeys from REG failed\n");
 		}
 		else{
-			DEBUGMSG(1,(L"Reading ForbiddenKeys from REG = OK\n"));
+			nclog(L"ReadReg(): Reading ForbiddenKeys from REG = OK\n");
 			pForbiddenKeyList[iSize+1]=0x00; //end marker
 		}
 	}
 	else{
 		pForbiddenKeyList=NULL;
-		DEBUGMSG(1,(L"Reading ForbiddenKeys from REG failed\n"));
+		nclog(L"ReadReg(): Reading ForbiddenKeys from REG failed\n");
 	}
 
+	nclog(L"ReadReg(): CloseKey()\n");
 	CloseKey();
 
 	TCHAR str[MAX_PATH];
@@ -870,9 +898,8 @@ int ReadReg()
 	str[strlen(strA)]='\0';
 	DEBUGMSG(1, (L"%s\n", str));
 #endif
-
-	wsprintf(str,L"\nReadReg: Timeout=%i, , LEDid=%i, KeySeq='%s'\n'", matchTimeout, LEDid, szKeySeq);
-	DEBUGMSG(true,(str));
+	nclog(L"\nReadReg: Timeout=%i, , LEDid=%i, KeySeq='%s'\n'", matchTimeout, LEDid, szKeySeq);
+	nclog(L"\nReadReg: END\n");
 	return 0;
 }
 

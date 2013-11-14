@@ -2,6 +2,7 @@
 #include<windows.h>
 
 #include "registry.h"
+#include "nclog.h"
 
 //global
 HKEY g_hkey=NULL;
@@ -352,6 +353,7 @@ void ShowError(LONG er)
 	// ...
 #ifdef DEBUG
 	DEBUGMSG( 1, ( temp ) ); 
+	nclog(temp);
 #else
 	// Display the string.
 	MessageBox( NULL, (LPCTSTR)lpMsgBuf, L"Error", MB_OK | MB_ICONINFORMATION );

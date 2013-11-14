@@ -220,6 +220,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\nclog.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\registry.cpp"
 				>
 			</File>
@@ -267,6 +271,10 @@
 			</File>
 			<File
 				RelativePath=".\keymap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\nclog.h"
 				>
 			</File>
 			<File
