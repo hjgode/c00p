@@ -25,12 +25,21 @@
 
 #include "time.h"
 
+#define IDC_BUTTON_OK 201 
+#define IDC_BUTTON_CANCEL 202 
+
+#ifndef WM_TIMECHANGE
+	#define WM_TIMECHANGE 0x1E
+#endif
+
    #define _SECOND ((ULONGLONG) 10000000)
    #define _MINUTE (60 * _SECOND)
    #define _HOUR   (60 * _MINUTE)
    #define _DAY    (24 * _HOUR)
 
 #define		MAX_LOADSTRING			100
+
+RECT rect;
 
 // Foward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -111,10 +120,11 @@ enum REGKEYS{
 	RebootExtApp=7,
 	RebootExtParms=8,
 	RebootDays=9,
+	NewTime=10,
 };
 
 //number of entries in the registry
-const int		RegEntryCount=10;				//how many entries are in the registry, with v2 changed from 6 to 9
+const int		RegEntryCount=11;				//how many entries are in the registry, with v2 changed from 6 to 9
 TCHAR*			g_regName = L"Software\\Intermec\\iTimedReboot2";
 
 //struct to hold reg names and values
@@ -122,6 +132,7 @@ typedef struct
 {
 	TCHAR kname[MAX_PATH];
 	TCHAR ksval[MAX_PATH];
+	DWORD kstype;
 } rkey;
 rkey			rkeys[RegEntryCount];	//an array with the reg settings
 
@@ -265,7 +276,7 @@ void TimedReboot(void)
 
 				AnimateIcon(g_hInstance, g_hwnd, NIM_MODIFY, ico_redbomb);
 				Sleep(3000);
-				nclog(L"Will reboot now. Next reboot on:\n\t%s, %s\n",sDateNow,g_sRebootTime);
+				nclog(L"Will reboot now. Next reboot on:\n\t%s, %s\n", sDateNow, g_sRebootTime);
 
 
 //				if (!g_bEnableLogging)		//we only boot if no logging is defined
@@ -287,28 +298,49 @@ void initRKEYS()
 {
 	//init array with registry keys and vals
 	memset(&rkeys, 0, sizeof(rkeys));
+
 	wsprintf(rkeys[0].kname, L"Interval");
 	wsprintf(rkeys[0].ksval, L"30");
+	rkeys[0].kstype=REG_SZ;
+
 	wsprintf(rkeys[1].kname, L"RebootTime");
 	wsprintf(rkeys[1].ksval, L"00:00");
+	rkeys[1].kstype=REG_SZ;
+
 	wsprintf(rkeys[2].kname, L"PingInterval");
 	wsprintf(rkeys[2].ksval, L"60");
+	rkeys[2].kstype=REG_SZ;
+
 	wsprintf(rkeys[3].kname, L"PingTarget");
 	wsprintf(rkeys[3].ksval, L"127.0.0.1");
+	rkeys[3].kstype=REG_SZ;
+
 	wsprintf(rkeys[4].kname, L"EnableLogging");
 	wsprintf(rkeys[4].ksval, L"1");
+	rkeys[4].kstype=REG_SZ;
+
 	wsprintf(rkeys[5].kname, L"LastBootDate");
 	wsprintf(rkeys[5].ksval, L"19800101");
+	rkeys[5].kstype=REG_SZ;
 	//new with v2
 	wsprintf(rkeys[6].kname, L"RebootExt");
 	wsprintf(rkeys[6].ksval, L"1");
+	rkeys[6].kstype=REG_SZ;
 	wsprintf(rkeys[7].kname, L"RebootExtApp");
 	wsprintf(rkeys[7].ksval, L"\\Windows\\fexplore.exe");
+	rkeys[7].kstype=REG_SZ;
+
 	wsprintf(rkeys[8].kname, L"RebootExtParms");
 	wsprintf(rkeys[8].ksval, L"\\Flash File Store");
+	rkeys[8].kstype=REG_SZ;
 	//new with v3
-	wsprintf(rkeys[6].kname, L"RebootDays");
-	wsprintf(rkeys[6].ksval, L"0");
+	wsprintf(rkeys[9].kname, L"RebootDays");
+	wsprintf(rkeys[9].ksval, L"0");
+	rkeys[9].kstype=REG_SZ;
+
+	wsprintf(rkeys[10].kname, L"NewTime");
+	wsprintf(rkeys[10].ksval, L"00:11");
+	rkeys[10].kstype=REG_SZ;
 
 }
 //=================================================================================
@@ -334,6 +366,8 @@ void TimedPing(void)
 	Sleep(1000);
 	AnimateIcon(g_hInstance, g_hwnd , NIM_MODIFY, ico_app);
 }
+
+
 
 //=================================================================================
 //
@@ -485,8 +519,13 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
                          UINT wParam , LONG lParam)                
 { 
 
+	static HWND hButtonOK=NULL;
+	static HWND hButtonCancel=NULL;
   switch (message)         
   {
+	case WM_WININICHANGE:
+		DEBUGMSG(1, (L"Got WM_MYTIMECHANGED mesg\n"));
+		break;
 	case WM_CREATE:
 		ReadReg();
 
@@ -504,7 +543,39 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		}
 		if (g_iPingTimeInterval != 0)
 			g_iTimerPing = SetTimer(hwnd, ID_PingIntervalTimer, g_iPingTimeInterval, NULL); 
+
+		if(GetClientRect(hwnd, &rect)){
+			hButtonOK = CreateWindow(L"BUTTON", L"eXit", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON, 
+				rect.left+10 , rect.bottom-30-10, //x, y pos
+				60,30,	//width and height
+				hwnd,
+				(HMENU)IDC_BUTTON_OK,
+				g_hInstance,
+				NULL);
+			hButtonCancel = CreateWindow(L"BUTTON", L"CANCEL", WS_TABSTOP|WS_VISIBLE|WS_CHILD|BS_DEFPUSHBUTTON, 
+				rect.left+10+10+60 , rect.bottom-30-10, //x, y pos
+				60,30,	//width and height
+				hwnd,
+				(HMENU)IDC_BUTTON_CANCEL,
+				g_hInstance,
+				NULL);
+		}
+		else
+			DEBUGMSG(1, (L"#### GetWindowRect failed %i ####\n", GetLastError()));
+
 		return 0;
+		break;
+	case WM_COMMAND:
+		switch(LOWORD(wParam))
+		{
+			case IDC_BUTTON_OK:
+				Shell_NotifyIcon(NIM_DELETE, &IconData);
+				PostQuitMessage (0) ; 
+				break;
+			case IDC_BUTTON_CANCEL:
+				ShowWindow(hwnd, SW_HIDE);
+				break;
+		}
 		break;
 	case WM_TIMER:
 		switch (wParam)
@@ -548,13 +619,13 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 				case WM_LBUTTONUP:
 					SetWindowPos(hwnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE | SWP_NOREPOSITION | SWP_SHOWWINDOW);
 					ShowWindow(hwnd, SW_MAXIMIZE);
-					if (MessageBox(hwnd, L"iTimedReboot2 is loaded. End Application?", szTitle , 
-						MB_YESNO | MB_ICONQUESTION | MB_APPLMODAL | MB_SETFOREGROUND | MB_TOPMOST)==IDYES)
-					{
-						Shell_NotifyIcon(NIM_DELETE, &IconData);
-						PostQuitMessage (0) ; 
-					}
-					ShowWindow(hwnd, SW_HIDE);
+					//if (MessageBox(hwnd, L"iTimedReboot2 is loaded. End Application?", szTitle , 
+					//	MB_YESNO | MB_ICONQUESTION | MB_APPLMODAL | MB_SETFOREGROUND | MB_TOPMOST)==IDYES)
+					//{
+					//	Shell_NotifyIcon(NIM_DELETE, &IconData);
+					//	PostQuitMessage (0) ; 
+					//}
+					//ShowWindow(hwnd, SW_HIDE);
 				}
 		return 0;
 		break;
@@ -611,9 +682,15 @@ int ReadReg()
 	TCHAR name[MAX_PATH+1];
 	LONG rc;
 	if(OpenKey(g_regName)!=0){
-		DEBUGMSG(1, (L"Could not open registry key '%s'!\r\n", g_regName));
 		RETAILMSG(1, (L"Could not open registry key '%s'!\r\n", g_regName));
-		return -1;
+		//create default reg
+		RETAILMSG(1, (L"Creating default registry keys '%s'!\r\n", g_regName));
+		WriteReg();
+		//second try
+		if(OpenKey(g_regName)!=0){
+			RETAILMSG(1, (L"2nd try: Could not open registry key '%s'!\r\n", g_regName));
+			return -1;
+		}
 	}
 	
 	//enable logging?
@@ -685,9 +762,9 @@ int ReadReg()
 	g_stRebootTime=newTime;	//store RebootTime including a random time offset
 	nclog(L"Reboot time will be:\t%00i:%00i\n", newTime.wHour, newTime.wMinute); 
 	//convert the newTime to a string 'hh:mm'
-	wsprintf(rkeys[1].ksval, L"%02i:%02i", newTime.wHour, newTime.wMinute);
+	wsprintf(rkeys[NewTime].ksval, L"%02i:%02i", newTime.wHour, newTime.wMinute);
 	//store reboot time in global var
-	wsprintf(g_sRebootTime, L"%s", rkeys[1].ksval); 
+	wsprintf(g_sRebootTime, L"%s", rkeys[NewTime].ksval); 
 	//save to reg for review
 	OpenCreateKey(g_regName);
 	RegWriteStr(L"newTime", g_sRebootTime);

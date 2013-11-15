@@ -1,7 +1,15 @@
 ========================================================================
        Windows CE APPLICATION : iTimedReboot2
 ========================================================================
-
+	
+	iTimedReboot will reboot a device at a specified time in a specified
+	day interval.
+	It also supports watching the keyboard input for a givven sequence and 
+	then launches an external app or fires a hard-coded event to close
+	iLock5.
+	You will see a small bomb icon on home/today screen. The icon will
+	change from time to time to show the response of a ping to a specified
+	IP address.
 
 ===purpose===
 	v1 based
@@ -58,6 +66,7 @@
 			
 ===default registry===
 	if started with arg "-writereg" a default registry will be written:
+	
 		"Interval="30"
 		"RebootTime="00:00"
 		"PingInterval"="60"
@@ -69,4 +78,4 @@
 		"RebootExtApp"="\Windows\fexplore.exe"
 		"RebootExtParms"="\Flash File Store"
 		
-		"newTime"="00:00"	//no default as for review only!
+		"newTime"="00:11"	//no default as for review only!

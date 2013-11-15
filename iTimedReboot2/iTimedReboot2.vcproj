@@ -1320,7 +1320,7 @@
 			/>
 			<DeploymentTool
 				ForceDirty="-1"
-				RemoteDirectory="\windows\iTimedReboot2"
+				RemoteDirectory="\windows"
 				RegisterOutput="0"
 				AdditionalFiles=""
 			/>
