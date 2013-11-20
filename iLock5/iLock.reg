@@ -54,9 +54,19 @@ REGEDIT4
 ;		disable/enable logging
 "UseSocket"=dword:00000000
 ;		disable/enable logging via a socket broadcast
-"ipListXpos"=dword:00000028;
+
+"ipListXpos"=dword:00000028
 ;		pos X of IP list
-"ipListYpos"=dword:0000003C;
+"ipListYpos"=dword:0000003C
 ;		pos Y of IP list
-"ipListEnabled"=dword:00000001;
+"ipListEnabled"=dword:00000001
 ;		show / hide IP list
+"ipListWidth"=dword:000000A0
+;		width of IP list
+
+"progListXpos"=dword:00000014
+;		pos X of progr list
+"progListYpos"=dword:000000c8
+;		pos Y of progr list
+"progListWidth"=dword:000000C8
+;		width of prog list

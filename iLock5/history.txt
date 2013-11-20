@@ -3,6 +3,17 @@
 iLock5 version history
 
 	version 5.4.0.0
+		width and pos values are adjusted to QVGA screen
+		added reg settings to adjust width of IP and progress list
+		ipListWidth=160;
+		progListWidth=200;
+	
+		font size of progress list changed
+		
+		added progListXpos and progListYpos to enable move of the progress list
+		progListXpos=20;		
+		progListYpos=200;
+		
 		added ipListPos registry values to enable position of IP list on screen
 		"ipListXpos"	=	40;
 		"ipListYpos"	=	60;
@@ -256,6 +267,11 @@ REGEDIT4
 
 "UseSocket"=dword:00000000
 
+"ipListEnabled"=dword:00000001;
 "ipListXpos"=dword:00000028;
 "ipListYpos"=dword:0000003C;
-"ipListEnabled"=dword:00000001;
+"ipListWidth"=dword:000000A0;
+
+"progListXpos"=dword:00000014;
+"progListYpos"=dword:000000c8;
+"progListWidth"=dword:000000C8;

@@ -171,6 +171,11 @@ TCHAR szRebootExtParms[MAX_PATH]=L"\\My Documents";	// args for external 'warmbo
 DWORD ipListXpos=40;
 DWORD ipListYpos=60;
 DWORD ipListEnabled=1;
+DWORD ipListWidth=160;
+
+DWORD progListXpos=20;	//0x14
+DWORD progListYpos=200;	//0xC8
+DWORD progListWidth=200;
 
 RECT theRect; //store screen size
 
@@ -511,6 +516,44 @@ void ReadRegistry(void)
 	else
 		ipListEnabled = 1;
 	nclog(L"iLock5: ipListEnabled=%i\r\n", ipListEnabled);
+
+	//IP list width
+	dwVal=0;
+	if(RegReadDword(L"ipListWidth", &dwVal)==ERROR_SUCCESS)
+	{
+		if(dwVal>0)
+			ipListWidth = dwVal;
+	}
+	nclog(L"iLock5: ipListWidth=%i\r\n", ipListWidth);
+
+	//progress list pos X
+	dwVal=0;
+	if(RegReadDword(L"progListXpos", &dwVal)==ERROR_SUCCESS)
+	{
+		if(dwVal>0)
+			progListXpos = dwVal;
+	}
+	else
+		progListXpos = 20;
+	nclog(L"iLock5: progListXpos=%i\r\n", progListXpos);
+
+	//progress list pos Y
+	dwVal=0;
+	if(RegReadDword(L"progListYpos", &dwVal)==ERROR_SUCCESS)
+	{
+		if(dwVal>0)
+			progListYpos = dwVal;
+	}
+	nclog(L"iLock5: progListYpos=%i\r\n", progListYpos);
+
+	//progress list width
+	dwVal=0;
+	if(RegReadDword(L"progListWidth", &dwVal)==ERROR_SUCCESS)
+	{
+		if(dwVal>0)
+			progListWidth = dwVal;
+	}
+	nclog(L"iLock5: progListWidth=%i\r\n", progListWidth);
 
 #ifdef MYDEBUG
 	TIMER4COUNT=3;
@@ -1269,7 +1312,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 								LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
 								ipListXpos *(screenXmax/240),	//x pos
 								ipListYpos *(screenYmax/320),// 235,  //y pos
-								screenXmax - (screenXmax/240)*80,// 200, //width
+								//screenXmax - (screenXmax/240)* 80,// 200, //width
+								(screenXmax/240)* ipListWidth,// 200, //width
 								(screenYmax/320)*320/5,// 60,		//height
 								hWnd, 
 								//NULL, //hMenu or child window identifier zB 
@@ -1296,7 +1340,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					LVCOLUMN LvCol; // Make Coluom struct for ListView
 					memset(&LvCol,0,sizeof(LvCol)); // Reset Coluom
 					LvCol.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; // Type of mask
-					LvCol.cx=screenXmax - (screenXmax/240)*80;//200;                                // width between each coloum
+					//LvCol.cx=screenXmax - (screenXmax/240)*80;//200;
+					LvCol.cx=screenXmax - (screenXmax/240)*ipListWidth; // width between each coloum
 					LvCol.pszText=L"IP address";                     // First Header
 					SendMessage(hIPList,LVM_INSERTCOLUMN,0,(LPARAM)&LvCol); // Insert/Show the coloum
 #if DEBUG
@@ -1310,7 +1355,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
 							20*(screenXmax/240),	//x pos
 							200*(screenYmax/320),// 235,  //y pos
-							screenXmax - (screenXmax/240)*40,// 200, //width
+							//screenXmax - (screenXmax/240)*progListWidth,// 40, //width
+							(screenXmax/240)*progListWidth,// 40, //width
 							(screenYmax/320)*320/5,// 60,		//height
 							hWnd, 
 							//NULL, //hMenu or child window identifier zB 
@@ -1324,7 +1370,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				logFont.lfHeight=12 * (screenXmax/240);
 				wsprintf(logFont.lfFaceName, L"Tahoma");
 				hFontSmall=CreateFontIndirect(&logFont);
-				SendMessage(hIPList, WM_SETFONT, (WPARAM)hFontSmall, TRUE);
+				SendMessage(hProcList, WM_SETFONT, (WPARAM)hFontSmall, TRUE);
 
 				//setup colors of listview
 				//ListView_SetBkColor(hProcList, 0x001F1F1F);
@@ -1342,7 +1388,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				LVCOLUMN LvCol; // Make Coluom struct for ListView
                 memset(&LvCol,0,sizeof(LvCol)); // Reset Coluom
 				LvCol.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; // Type of mask
-				LvCol.cx=screenXmax - (screenXmax/240)*40;//200;                                // width between each coloum
+				//LvCol.cx=screenXmax - (screenXmax/240)*progListWidth;//40;  // width between each coloum
+				LvCol.cx=(screenXmax/240)*progListWidth;// width between each coloum
 				LvCol.pszText=L"Item";                     // First Header
 				SendMessage(hProcList,LVM_INSERTCOLUMN,0,(LPARAM)&LvCol); // Insert/Show the coloum
 			
