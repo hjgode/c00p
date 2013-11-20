@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 
-BOOL myGetFileVersionInfo(HMODULE hLib, TCHAR* szVersion);
+BOOL myGetFileVersionInfo(HMODULE hLib, TCHAR* szVersion, TCHAR* defaultVersion);
 BOOL myGetFileVersionInfo(TCHAR* szVersion);
 
 BOOL myGetProductVersionInfo(HMODULE hLib, TCHAR* szVersion);

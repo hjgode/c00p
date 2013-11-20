@@ -3,13 +3,22 @@
 iLock5 version history
 
 	version 5.4.0.0
+		added ipListPos registry values to enable position of IP list on screen
+		"ipListXpos"	=	40;
+		"ipListYpos"	=	60;
+		
+		added ipListEnabled to disable/enable showing the IP list
+		"ipListEnabled"=0x01
+
+		if ShowRebootTimeout is 0 then there will be no Reboot button!
+	
 		adding event thread and stopEvent code to be able to stop iLock5 from extern
 			iLock can now be quit by setting a named event "STOPILOCK"
 		fixed EnumWindow function
 		added bak copy for log file
 		
 		TODO:
-		show IP adress of device
+		show IP adress of device, DONE
 
 		DONE:
 		close iLock by key sequence		->	to be done using code of KeyToggleBoot in new app 'iHookIdle' using the named event?
@@ -246,3 +255,7 @@ REGEDIT4
 "RebootExtParms"=""
 
 "UseSocket"=dword:00000000
+
+"ipListXpos"=dword:00000028;
+"ipListYpos"=dword:0000003C;
+"ipListEnabled"=dword:00000001;

@@ -1,4 +1,4 @@
-#define DEFAULT_VERINFO L"5.3.2.0"
+#define DEFAULT_VERINFO L"0.0.0.0"
 #define DEFAULT_PRODNAME L"iLock5"
 
 //ver_info.cpp
@@ -14,17 +14,17 @@
 #include "ver_info.h"
 
 BOOL myGetFileVersionInfo(TCHAR* szVersion){
-	return myGetFileVersionInfo(GetModuleHandle(NULL), szVersion);
+	return myGetFileVersionInfo(GetModuleHandle(NULL), szVersion, DEFAULT_VERINFO);
 }
 
-BOOL myGetFileVersionInfo(HMODULE hLib, TCHAR* szVersion)
+BOOL myGetFileVersionInfo(HMODULE hLib, TCHAR* szVersion, TCHAR* defaultVersion)
 {
 	BOOL bRet=FALSE;
 	DWORD  verHandle = NULL;
 	UINT   size      = 0;
 	LPBYTE lpBuffer  = NULL;
 	//get the app name and path
-	TCHAR strPath[MAX_PATH];
+	LPCTSTR strPath[MAX_PATH];
 
 	//#########################
 	//HINSTANCE hLib1 = LoadLibrary(L"coredll.dll");
@@ -33,17 +33,17 @@ BOOL myGetFileVersionInfo(HMODULE hLib, TCHAR* szVersion)
 	//GetFileVersionInfoSize = (PFN_GetFileVersionInfoSize) GetProcAddress(hLib1, L"GetFileVersionInfoSize");
 	//#########################
 
-	if(GetModuleFileName (hLib, strPath, MAX_PATH)==0){
+	if(GetModuleFileName (hLib, (TCHAR*)strPath, MAX_PATH)==0){
 		DEBUGMSG(1, (L"GetModuleFileName() failed with %i. USING default version number\n", GetLastError())); //1814
 		wsprintf(szVersion, DEFAULT_VERINFO);
 		bRet=FALSE;
 		return bRet;
 	}
 
-	DWORD  verSize   = GetFileVersionInfoSize( strPath, &verHandle);
+	DWORD  verSize   = GetFileVersionInfoSize( (TCHAR*)strPath, &verHandle);
 	if(verSize==0){
 		DEBUGMSG(1, (L"GetFileVersionInfoSize() failed with %i. USING default version number\n", GetLastError())); //1814
-		wsprintf(szVersion, DEFAULT_VERINFO);
+		wsprintf(szVersion, defaultVersion);
 		bRet=FALSE;
 	}
 
@@ -53,7 +53,7 @@ BOOL myGetFileVersionInfo(HMODULE hLib, TCHAR* szVersion)
 	{
 		LPTSTR verData = new TCHAR[verSize];
 
-		if (GetFileVersionInfo( strPath, verHandle, verSize, verData))
+		if (GetFileVersionInfo( (TCHAR*)strPath, verHandle, verSize, verData))
 		{
 			if (VerQueryValue(verData,L"\\",(VOID FAR* FAR*)&lpBuffer,&size))
 			{

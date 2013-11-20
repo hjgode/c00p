@@ -168,6 +168,10 @@ BOOL bRebootExt=FALSE;				// use external app instead of direct warmboot
 TCHAR szRebootExtApp[MAX_PATH]=L"\\windows\\fexplore.exe";	//external app to start instead of warmboot
 TCHAR szRebootExtParms[MAX_PATH]=L"\\My Documents";	// args for external 'warmboot' application
 
+DWORD ipListXpos=40;
+DWORD ipListYpos=60;
+DWORD ipListEnabled=1;
+
 RECT theRect; //store screen size
 
 bool foundSetupWindow=false;
@@ -469,6 +473,45 @@ void ReadRegistry(void)
 		nclog(L"iLock5: RebootExtParms='%s'\r\n", szRebootExtParms);
 	}
 
+	//IP list pos X
+	dwVal=0;
+	if(RegReadDword(L"ipListXpos", &dwVal)==ERROR_SUCCESS)
+	{
+		if(dwVal>0)
+			ipListXpos = dwVal;
+		else
+			ipListXpos = 40;
+	}
+	else
+		ipListXpos = 40;
+	nclog(L"iLock5: ipListXpos=%i\r\n", ipListXpos);
+
+	//IP list pos Y
+	dwVal=0;
+	if(RegReadDword(L"ipListYpos", &dwVal)==ERROR_SUCCESS)
+	{
+		if(dwVal>0)
+			ipListYpos = dwVal;
+		else
+			ipListYpos = 60;
+	}
+	else
+		ipListYpos = 60;
+	nclog(L"iLock5: ipListYpos=%i\r\n", ipListYpos);
+
+	//ipListEnabled, default = 1
+	dwVal=0;
+	if(RegReadDword(L"ipListEnabled", &dwVal)==ERROR_SUCCESS)
+	{
+		if(dwVal>0)
+			ipListEnabled = 1;
+		else
+			ipListEnabled = 0;
+	}
+	else
+		ipListEnabled = 1;
+	nclog(L"iLock5: ipListEnabled=%i\r\n", ipListEnabled);
+
 #ifdef MYDEBUG
 	TIMER4COUNT=3;
 	iUseLogging=1;
@@ -532,7 +575,7 @@ int startSTOPwatchdog(HWND hWndMain){
 
 int stopSTOPwatchdog(){
 	if(_hStopThread!=NULL){
-		nclog(L"setting stop STOP watchdog");
+		nclog(L"setting stop STOP watchdog\r\n");
 		SetEvent(_hStopThread);
 	}
 	return 0;
@@ -1219,47 +1262,48 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				PostMessage(hProgress, PBM_SETSTEP, (WPARAM) 5, 0);
 			}
 
+			if(ipListEnabled==1){
+				//Create a listview report for IP addresses
+				hIPList = CreateWindowEx(0, WC_LISTVIEW, NULL,
+								WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | 
+								LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
+								ipListXpos *(screenXmax/240),	//x pos
+								ipListYpos *(screenYmax/320),// 235,  //y pos
+								screenXmax - (screenXmax/240)*80,// 200, //width
+								(screenYmax/320)*320/5,// 60,		//height
+								hWnd, 
+								//NULL, //hMenu or child window identifier zB 
+								(HMENU)IDC_LVIEW, //hMenu or child window identifier
+								hInst, NULL);
 
-			//Create a listview report for IP addresses
-			hIPList = CreateWindowEx(0, WC_LISTVIEW, NULL,
-							WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | 
-							LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
-							40*(screenXmax/240),	//x pos
-							60*(screenYmax/320),// 235,  //y pos
-							screenXmax - (screenXmax/240)*80,// 200, //width
-							(screenYmax/320)*320/5,// 60,		//height
-							hWnd, 
-							//NULL, //hMenu or child window identifier zB 
-							(HMENU)IDC_LVIEW, //hMenu or child window identifier
-							hInst, NULL);
-			if(hIPList!=NULL){
-				// set font
-				//hFontSmall = (HFONT)GetStockObject(SYSTEM_FONT);
-				memset(&logFont, 0, sizeof(LOGFONT));
-				logFont.lfHeight=12 * (screenXmax/240);
-				wsprintf(logFont.lfFaceName, L"Tahoma");
-				hFontSmall=CreateFontIndirect(&logFont);
-				SendMessage(hIPList, WM_SETFONT, (WPARAM)hFontSmall, TRUE);
+				if(hIPList!=NULL){
+					// set font
+					//hFontSmall = (HFONT)GetStockObject(SYSTEM_FONT);
+					memset(&logFont, 0, sizeof(LOGFONT));
+					logFont.lfHeight=12 * (screenXmax/240);
+					wsprintf(logFont.lfFaceName, L"Tahoma");
+					hFontSmall=CreateFontIndirect(&logFont);
+					SendMessage(hIPList, WM_SETFONT, (WPARAM)hFontSmall, TRUE);
 
-				//listenzeilenfarbe
-				ListView_SetTextBkColor(hIPList, TextBackColor);
-				//boxhintergrundfarbe
-				ListView_SetBkColor(hIPList, TextListColor);
-				//textvordergrundfarbe
-				ListView_SetTextColor(hIPList, TextColor);
+					//listenzeilenfarbe
+					ListView_SetTextBkColor(hIPList, TextBackColor);
+					//boxhintergrundfarbe
+					ListView_SetBkColor(hIPList, TextListColor);
+					//textvordergrundfarbe
+					ListView_SetTextColor(hIPList, TextColor);
 
-				//Add one column
-				LVCOLUMN LvCol; // Make Coluom struct for ListView
-                memset(&LvCol,0,sizeof(LvCol)); // Reset Coluom
-				LvCol.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; // Type of mask
-				LvCol.cx=screenXmax - (screenXmax/240)*80;//200;                                // width between each coloum
-				LvCol.pszText=L"IP address";                     // First Header
-				SendMessage(hIPList,LVM_INSERTCOLUMN,0,(LPARAM)&LvCol); // Insert/Show the coloum
+					//Add one column
+					LVCOLUMN LvCol; // Make Coluom struct for ListView
+					memset(&LvCol,0,sizeof(LvCol)); // Reset Coluom
+					LvCol.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; // Type of mask
+					LvCol.cx=screenXmax - (screenXmax/240)*80;//200;                                // width between each coloum
+					LvCol.pszText=L"IP address";                     // First Header
+					SendMessage(hIPList,LVM_INSERTCOLUMN,0,(LPARAM)&LvCol); // Insert/Show the coloum
 #if DEBUG
-				Add2List(hIPList, L"127.0.0.1");
+					Add2List(hIPList, L"127.0.0.1");
 #endif
+				}
 			}
-
 			//Create a listview report for messages
 			hProcList = CreateWindowEx(0, WC_LISTVIEW, NULL,
 							WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | 
@@ -1274,6 +1318,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 							hInst, NULL);
 			if (hProcList != NULL)
 			{
+				// set font
+				//hFontSmall = (HFONT)GetStockObject(SYSTEM_FONT);
+				memset(&logFont, 0, sizeof(LOGFONT));
+				logFont.lfHeight=12 * (screenXmax/240);
+				wsprintf(logFont.lfFaceName, L"Tahoma");
+				hFontSmall=CreateFontIndirect(&logFont);
+				SendMessage(hIPList, WM_SETFONT, (WPARAM)hFontSmall, TRUE);
+
 				//setup colors of listview
 				//ListView_SetBkColor(hProcList, 0x001F1F1F);
 				//ListView_SetTextColor(hProcList, 0x00FFFFFF);
@@ -1297,7 +1349,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				//read productversion from resources!
 				TCHAR szVersionInfo[MAX_PATH];
 				TCHAR szProductName[MAX_PATH];
-				myGetFileVersionInfo(hInst, szVersionInfo);
+				myGetFileVersionInfo(hInst, szVersionInfo, L"5.4.0.0");
 				myGetFileProductNameInfo(NULL, szProductName);
 				wsprintf(szVersion, L"%s v%s", szProductName, szVersionInfo);
 
@@ -1576,20 +1628,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 						PostMessage(hProgress, PBM_STEPIT, 0, 0);
 
-						if(iShowIP==10){	//update IP list all 10 seconds only
-							//build and show IP list
-							TCHAR strIPlist[10][64];
-							//for(iIPcount=0; iIPcount<10; iIPcount++)
-							//	strIPlist[iIPcount]=new TCHAR(64);
-							iIPcount=getIpTable(strIPlist);
-							ListView_DeleteAllItems(hIPList);
-							for(int i=0; i<iIPcount; i++)
-								Add2List(hIPList, strIPlist[i]);
-							//for(iIPcount=0; iIPcount<10; iIPcount++)
-							//	delete strIPlist[iIPcount];
-							iShowIP=0;
+						if(ipListEnabled==1){
+							if(iShowIP==10){	//update IP list all 10 seconds only
+								//build and show IP list
+								TCHAR strIPlist[10][64];
+								//for(iIPcount=0; iIPcount<10; iIPcount++)
+								//	strIPlist[iIPcount]=new TCHAR(64);
+								iIPcount=getIpTable(strIPlist);
+								ListView_DeleteAllItems(hIPList);
+								for(int i=0; i<iIPcount; i++)
+									Add2List(hIPList, strIPlist[i]);
+								//for(iIPcount=0; iIPcount<10; iIPcount++)
+								//	delete strIPlist[iIPcount];
+								iShowIP=0;
+							}
+							iShowIP++;
 						}
-						iShowIP++;
 
 						return 0;	//5.1.8.1 return messgage has been processed
 					case timer2:
