@@ -1238,7 +1238,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 						if(TIMER4COUNT!=0)
 							SetTimer (hWnd, timer4, timer4intervall, NULL) ; //enable reboot button timeout
 						//redraw
-						//UpdateWindow(hWnd);
+						UpdateWindow(hWnd);
 						//return DefWindowProc(hWnd, message, wParam, lParam); //5.1.8.0
 					}
 					else	//5.1.8.0 added else
@@ -1341,8 +1341,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					memset(&LvCol,0,sizeof(LvCol)); // Reset Coluom
 					LvCol.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; // Type of mask
 					//LvCol.cx=screenXmax - (screenXmax/240)*80;//200;
-					LvCol.cx=screenXmax - (screenXmax/240)*ipListWidth; // width between each coloum
-					LvCol.pszText=L"IP address";                     // First Header
+					LvCol.cx=(screenXmax/240)*ipListWidth;			// width between each coloum
+					LvCol.pszText=L"IP address";                    // First Header
 					SendMessage(hIPList,LVM_INSERTCOLUMN,0,(LPARAM)&LvCol); // Insert/Show the coloum
 #if DEBUG
 					Add2List(hIPList, L"127.0.0.1");
@@ -1353,8 +1353,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hProcList = CreateWindowEx(0, WC_LISTVIEW, NULL,
 							WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | 
 							LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
-							20*(screenXmax/240),	//x pos
-							200*(screenYmax/320),// 235,  //y pos
+							progListXpos*(screenXmax/240),	//x pos
+							progListYpos*(screenYmax/320),// 235,  //y pos
 							//screenXmax - (screenXmax/240)*progListWidth,// 40, //width
 							(screenXmax/240)*progListWidth,// 40, //width
 							(screenYmax/320)*320/5,// 60,		//height
@@ -1767,12 +1767,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case WM_LBUTTONDOWN:
 			x = LOWORD(lParam);
 			y = HIWORD(lParam);
-			nclog(L"iLock5: WM_LBUTTONDOWN at x/y: %i/%i\n",x,y);
+			nclog(L"iLock5: WM_LBUTTONDOWN at x/y: %i/%i\r\n",x,y);
+			if(iUseLogging>0){
+				wsprintf(tstr, L"click: %i/%i", x*(screenXmax/240), y*(screenYmax/320));
+				Add2List(hProcList, tstr);
+			}
 			return 0;	//5.1.8.1 return messgage has been processed
 		case WM_LBUTTONDBLCLK:
 			x = LOWORD(lParam);
 			y = HIWORD(lParam);
-			nclog(L"iLock5: WM_LBUTTONDBLCLK at x/y: %i/%i\n",x,y);
+			nclog(L"iLock5: WM_LBUTTONDBLCLK at x/y: %i/%i\r\n",x,y);
 			if(x<iHotSpotX+10 && x>iHotSpotX-10 && y<iHotSpotY+10 && y>iHotSpotY-10)
 			{
 				KillTimer(hWnd, timer1);
