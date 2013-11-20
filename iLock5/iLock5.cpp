@@ -3,6 +3,7 @@
 /*
 	see history.txt
 */
+#pragma warning (disable: 4244)
 
 //custom DEBUG coding?
 #undef MYDEBUG
@@ -1310,10 +1311,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				hIPList = CreateWindowEx(0, WC_LISTVIEW, NULL,
 								WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | 
 								LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
-								ipListXpos *(screenXmax/240),	//x pos
-								ipListYpos *(screenYmax/320),// 235,  //y pos
+								ipListXpos *(screenXmax/240.0),	//x pos
+								ipListYpos *(screenYmax/320.0),// 235,  //y pos
 								//screenXmax - (screenXmax/240)* 80,// 200, //width
-								(screenXmax/240)* ipListWidth,// 200, //width
+								(screenXmax/240.0)* ipListWidth,// 200, //width
 								(screenYmax/320)*320/5,// 60,		//height
 								hWnd, 
 								//NULL, //hMenu or child window identifier zB 
@@ -1341,7 +1342,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					memset(&LvCol,0,sizeof(LvCol)); // Reset Coluom
 					LvCol.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; // Type of mask
 					//LvCol.cx=screenXmax - (screenXmax/240)*80;//200;
-					LvCol.cx=(screenXmax/240)*ipListWidth;			// width between each coloum
+					LvCol.cx=(screenXmax/240.0)*ipListWidth;			// width between each coloum
 					LvCol.pszText=L"IP address";                    // First Header
 					SendMessage(hIPList,LVM_INSERTCOLUMN,0,(LPARAM)&LvCol); // Insert/Show the coloum
 #if DEBUG
@@ -1353,10 +1354,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hProcList = CreateWindowEx(0, WC_LISTVIEW, NULL,
 							WS_CHILD | WS_VISIBLE | LVS_REPORT | LVS_SINGLESEL | 
 							LVS_NOCOLUMNHEADER, // | LVS_SORTDESCENDING,
-							progListXpos*(screenXmax/240),	//x pos
-							progListYpos*(screenYmax/320),// 235,  //y pos
+							progListXpos*(screenXmax/240.0),	//x pos
+							progListYpos*(screenYmax/320.0),// 235,  //y pos
 							//screenXmax - (screenXmax/240)*progListWidth,// 40, //width
-							(screenXmax/240)*progListWidth,// 40, //width
+							(screenXmax/240.0)*progListWidth,// 40, //width
 							(screenYmax/320)*320/5,// 60,		//height
 							hWnd, 
 							//NULL, //hMenu or child window identifier zB 
@@ -1389,7 +1390,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 memset(&LvCol,0,sizeof(LvCol)); // Reset Coluom
 				LvCol.mask=LVCF_TEXT|LVCF_WIDTH|LVCF_SUBITEM; // Type of mask
 				//LvCol.cx=screenXmax - (screenXmax/240)*progListWidth;//40;  // width between each coloum
-				LvCol.cx=(screenXmax/240)*progListWidth;// width between each coloum
+				LvCol.cx=(screenXmax/240.0)*progListWidth;// width between each coloum
 				LvCol.pszText=L"Item";                     // First Header
 				SendMessage(hProcList,LVM_INSERTCOLUMN,0,(LPARAM)&LvCol); // Insert/Show the coloum
 			
@@ -1768,10 +1769,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			x = LOWORD(lParam);
 			y = HIWORD(lParam);
 			nclog(L"iLock5: WM_LBUTTONDOWN at x/y: %i/%i\r\n",x,y);
-			if(iUseLogging>0){
-				wsprintf(tstr, L"click: %i/%i", x*(screenXmax/240), y*(screenYmax/320));
-				Add2List(hProcList, tstr);
-			}
+			//if(iUseLogging>0){
+			//	wsprintf(tstr, L"click: %i/%i", x*(screenXmax/240), y*(screenYmax/320));
+			//	Add2List(hProcList, tstr);
+			//}
 			return 0;	//5.1.8.1 return messgage has been processed
 		case WM_LBUTTONDBLCLK:
 			x = LOWORD(lParam);
