@@ -105,6 +105,49 @@ extern "C" {
 	BOOL WINAPI NLedSetDevice( UINT nDeviceId, void *pInput );
 };
 
+int mystrstr(wchar_t *txt1,wchar_t *txt2)
+{
+    wchar_t *posstr=wcsstr(txt1,txt2);
+    if(posstr!=NULL)
+    {
+        return (posstr-txt1);
+    }else
+    {
+        return -1;
+    }
+}
+
+// assume: supplied buff is enough to hold generated text
+void StringReplace(wchar_t *buff, wchar_t *txt1, wchar_t *txt2)
+{
+    wchar_t *tmp;
+    wchar_t *nextStr;
+    int pos;
+    tmp=wcsdup(buff);
+    pos=mystrstr(tmp,txt1);
+    if(pos!=-1)
+    {
+        buff[0]=0;
+        wcsncpy(buff,tmp,pos);
+        buff[pos]=0;
+        wcscat(buff,txt2);
+        nextStr=tmp+pos+wcslen(txt1);
+        while(wcslen(nextStr)!=0)
+        {
+            pos=mystrstr(nextStr,txt1);
+            if(pos==-1)
+            {
+                wcscat(buff,nextStr);
+                break;
+            }
+            wcsncat(buff,nextStr,pos);
+            wcscat(buff,txt2);
+            nextStr=nextStr+pos+wcslen(txt1);   
+        }
+    }
+    free(tmp);
+}
+
 //start process
 void startProcess(TCHAR* szImage, TCHAR* szParms){
 	//start external app
@@ -848,8 +891,12 @@ int ReadReg()
 
 	//info text
 	wsprintf(szTemp2, L"");
-	if(RegReadStr(L"InfoText", szTemp2)==ERROR_SUCCESS)
+	if(RegReadStr(L"InfoText", szTemp2)==ERROR_SUCCESS){
 		wsprintf(regVal_InfoText, L"%s", szTemp2, regValIdleTimeout);
+		StringReplace(szTemp2, L"\\r", L"\r");
+		StringReplace(szTemp2, L"\\n", L"\n");
+		wsprintf(regVal_InfoText, L"%s", szTemp2);
+	}
 	else
 		wsprintf(regVal_InfoText, L"Idle time elapsed alarm!");
 	//does infotext have a %i inside?

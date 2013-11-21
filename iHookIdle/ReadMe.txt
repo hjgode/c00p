@@ -67,6 +67,9 @@ logging
 history:
 	v 3.6.0
 		initial version based on KeyToggleBoot
-		
+		added 		
+		StringReplace(szTemp2, L"\\r", L"\r");
+		StringReplace(szTemp2, L"\\n", L"\n");
+		for infoText
 
 /////////////////////////////////////////////////////////////////////////////
