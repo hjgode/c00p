@@ -24,6 +24,7 @@
 #include "nclog.h"
 
 #include "time.h"
+#include "SimpleDateTime.h"
 
 #define IDC_BUTTON_OK 201 
 #define IDC_BUTTON_CANCEL 202 
@@ -32,6 +33,7 @@
 	#define WM_TIMECHANGE 0x1E
 #endif
 
+//FILETIME helpers
    #define _SECOND ((ULONGLONG) 10000000)
    #define _MINUTE (60 * _SECOND)
    #define _HOUR   (60 * _MINUTE)
@@ -146,6 +148,45 @@ extern "C" __declspec(dllimport) void SetCleanRebootFlag(void);
 void nclog (TCHAR * t);
 BOOL DoBootAction();
 
+//--------------------------------------------------------------------
+// Function name  : dumpST
+// Description    : dump a SYSTEMTIME to DEBUG out 
+// Argument       : TCHAR *szNote, string to prepend to output
+// Argument       : SYSTEMTIME st, the time to dump
+// Return type    : VOID
+//--------------------------------------------------------------------
+void dumpST(TCHAR* szNote, SYSTEMTIME st){
+#if !DEBUG
+	return;
+#endif
+	TCHAR szStr[MAX_PATH];
+	wsprintf(szStr, L"%04i%02i%02i %02i:%02i:%02i",
+		st.wYear, st.wMonth, st.wDay,
+		st.wHour, st.wMinute, st.wSecond);
+	DEBUGMSG(1, (L"%s: %s\n", szNote, szStr));
+}
+//--------------------------------------------------------------------
+// Function name  : dumpST
+// Description    : dump a SYSTEMTIME to DEBUG out 
+// Argument       : SYSTEMTIME st, the time to dump
+// Return type    : VOID
+//--------------------------------------------------------------------
+void dumpST(SYSTEMTIME st){
+#if !DEBUG
+	return;
+#endif
+	TCHAR szStr[MAX_PATH];
+	wsprintf(szStr, L"%04i%02i%02i %02i:%02i:%02i",
+		st.wYear, st.wMonth, st.wDay,
+		st.wHour, st.wMinute, st.wSecond);
+	DEBUGMSG(1, (L"%s\n", szStr));
+}
+
+void dumpFT(FILETIME ft){
+	SYSTEMTIME st;
+	if(FileTimeToSystemTime(&ft, &st))
+		dumpST(st);
+}
 
 //=================================================================================
 //
@@ -258,6 +299,33 @@ void TimedReboot(void)
 	}
 	lDateNow=_wtol(sDateNow);
 	lDateBooted=_wtol(g_LastBootDate);
+	//for calculating filetime is easier to use
+	FILETIME ftDateTimeNow;
+	FILETIME ftDateTimeBoot;
+	FILETIME ft;
+	//convert systemtimes to filetimes
+	BOOL bRes = SystemTimeToFileTime(&lt,&ftDateTimeNow);
+	bRes = SystemTimeToFileTime(&g_stRebootTime, &ftDateTimeBoot);
+	DEBUGMSG(1, (L"DateTimeNow: "));
+	dumpST(lt);
+	DEBUGMSG(1, (L"DateTimeReboot: "));
+	dumpST(g_stRebootTime);
+	ULONGLONG ulDateTimeNow = (((ULONGLONG) ftDateTimeNow.dwHighDateTime) << 32)+ftDateTimeNow.dwLowDateTime;
+	ULONGLONG ulDateTimeBoot = (((ULONGLONG) ftDateTimeBoot.dwHighDateTime) << 32)+ftDateTimeBoot.dwLowDateTime;
+	ULONGLONG ulDayDiff = ulDateTimeNow/_DAY - (ulDateTimeBoot/_DAY + g_iRebootDays * _DAY);
+	ULONGLONG ulMinuteDiff = (ulDateTimeNow/_DAY - ulDateTimeBoot/_DAY)/_MINUTE;
+	// Copy the result back into the FILETIME structure.
+	ft.dwLowDateTime  = (DWORD) (ulMinuteDiff & 0xFFFFFFFF );
+	ft.dwHighDateTime = (DWORD) (ulMinuteDiff >> 32 );
+	DEBUGMSG(1, (L"\nMinutes Diff as filetime: "));
+	dumpFT(ft);
+	ft.dwLowDateTime  = (DWORD) (ulDayDiff & 0xFFFFFFFF );
+	ft.dwHighDateTime = (DWORD) (ulDayDiff >> 32 );
+	DEBUGMSG(1, (L"\nDay Diff as filetime: "));
+	dumpFT(ft);
+#if DEBUG
+	nclog(L"DayDiff=%i, MinuteDiff=%i\n", ulDayDiff, ulMinuteDiff);
+#endif
 	//test if we are past next boot time
 	if (lDateNow > lDateBooted + g_iRebootDays)
 	{
@@ -265,22 +333,34 @@ void TimedReboot(void)
 		if (g_stRebootTime.wHour <= lt.wHour) 
 		{
 			nclog(L"\tHour now is greater than hour to reboot!\n",NULL);
-			if (g_stRebootTime.wMinute <= lt.wMinute)
+			//check if reboot time is reached within a tolrance of 3 minutes
+			//what happens for reboot time 00:59 !!!!
+			if (lt.wMinute-g_stRebootTime.wMinute>0 && lt.wMinute-g_stRebootTime.wMinute<3) //(g_stRebootTime.wMinute <= lt.wMinute)
 			{
-				nclog(L"\tMinutes now is greater than minute to reboot!\n",NULL);
+				//nclog(L"\tMinutes now is greater than minute to reboot!\n",NULL);
+				nclog(L"\tMinutes now within timeframe of reboot time! Current Minute:%02i, Boot minute:%02i\n", lt.wMinute, g_stRebootTime.wMinute);
 				DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
 				//update registry with new boot date
  				RegWriteStr(rkeys[5].kname, sDateNow);
 				wsprintf(rkeys[5].ksval, sDateNow);
 				wsprintf(g_LastBootDate, sDateNow);
+				nclog(L"Updated registry with next boot date: '%s'\n", g_LastBootDate);
 
 				AnimateIcon(g_hInstance, g_hwnd, NIM_MODIFY, ico_redbomb);
 				Sleep(3000);
 				nclog(L"Will reboot now. Next reboot on:\n\t%s, %s\n", sDateNow, g_sRebootTime);
 
 
-//				if (!g_bEnableLogging)		//we only boot if no logging is defined
+				DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
 					WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
+			}
+			else if (lt.wMinute-g_stRebootTime.wMinute>2){
+				//do not reboot but set new boot date
+				nclog(L"\tTime greater than timeframe with reboot time! Current Minute:%02i, Boot minute:%02i\n", lt.wMinute, g_stRebootTime.wMinute);
+ 				RegWriteStr(rkeys[5].kname, sDateNow);
+				wsprintf(rkeys[5].ksval, sDateNow);
+				wsprintf(g_LastBootDate, sDateNow);
+				nclog(L"Updated registry with next reboot on:\n\t%s, %s\n", sDateNow, g_sRebootTime);
 			}
 		}
 	}
