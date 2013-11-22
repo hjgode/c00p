@@ -265,6 +265,15 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 }
 
 //=================================================================================
+DWORD getDayDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
+	DWORD dwReturn = 0;
+	CSimpleDateTime csOld = CSimpleDateTime(stOld);
+	CSimpleDateTime csNew = CSimpleDateTime(stNew);
+	CSimpleDateTime csDiff = csNew-csOld;
+	return dwReturn;
+}
+
+//=================================================================================
 //
 //  FUNCTION:	TimedReboot()
 //
@@ -322,6 +331,22 @@ void TimedReboot(void)
 	ft.dwLowDateTime  = (DWORD) (ulDayDiff & 0xFFFFFFFF );
 	ft.dwHighDateTime = (DWORD) (ulDayDiff >> 32 );
 	DEBUGMSG(1, (L"\nDay Diff as filetime: "));
+	//date diff
+	ULARGE_INTEGER t1, t2;
+	memcpy(&t1, &ftDateTimeBoot, sizeof(t1));
+	memcpy(&t2, &ftDateTimeNow, sizeof(t2));
+	ULONGLONG diff = (t1.QuadPart<t2.QuadPart)?
+		(t2.QuadPart-t1.QuadPart):
+		(t1.QuadPart-t2.QuadPart);
+	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
+	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
+	ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
+	DEBUGMSG(1, (L"### day diff=%i\n", diffDays));
+	DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
+	DEBUGMSG(1, (L"### min diff=%i\n", diffMinutes));
+//	if(diff>30*24*60*60*(ULONGLONG)10000000)//checks for 30 days diff
+//		return true;
+
 	dumpFT(ft);
 #if DEBUG
 	nclog(L"DayDiff=%i, MinuteDiff=%i\n", ulDayDiff, ulMinuteDiff);

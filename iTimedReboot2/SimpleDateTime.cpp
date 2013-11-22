@@ -470,6 +470,7 @@ SYSTEMTIME CSimpleDateTime::DT_AddDays(const SYSTEMTIME st, int days){
 	return stNew;
 }
 
+
 // save inTime, get LocalTime and then set DAY, hour and minute of inTime
 // added support for negaitive days, hours and minutes in v2.34
 SYSTEMTIME CSimpleDateTime::DT_Add(const SYSTEMTIME& Date, short Years, short Months, short Days, short Hours, short Minutes, short Seconds, short Milliseconds) 
@@ -542,6 +543,78 @@ SYSTEMTIME CSimpleDateTime::DT_Add(const SYSTEMTIME& Date, short Years, short Mo
 	return st;
 }
 
+// save inTime, get LocalTime and then set DAY, hour and minute of inTime
+// added support for negaitive days, hours and minutes in v2.34
+SYSTEMTIME CSimpleDateTime::DT_Sub(const SYSTEMTIME& Date, short Years, short Months, short Days, short Hours, short Minutes, short Seconds, short Milliseconds) 
+{
+	FILETIME ft; SYSTEMTIME st; ULARGE_INTEGER ul1;
+	/*### DO NOT CHANGE OR NORMALIZE INPUT ###*/
+	//create a new systime and copy the single values to it	
+	//SYSTEMTIME inTime;
+	//memset(&inTime, 0, sizeof(SYSTEMTIME));
+	//inTime.wDay = Date.wDay;
+	//inTime.wHour = Date.wHour;
+	//inTime.wMinute = Date.wMinute;
+
+	//memcpy((void*)&Date, &inTime, sizeof(SYSTEMTIME));
+
+	//convert INPUT to filetime
+	SYSTEMTIME stStart;
+	//memset(&stStart, 0, sizeof(SYSTEMTIME));
+	memcpy(&stStart, &Date, sizeof(SYSTEMTIME));
+	if (!SystemTimeToFileTime(&Date, &ft))
+	{
+		DEBUGMSG(1, (L"DT_Add: error in SystemTimeToFileTime: %i\n", GetLastError()));
+		return Date;
+	}
+	ul1.HighPart = ft.dwHighDateTime;
+	ul1.LowPart = ft.dwLowDateTime;
+	 
+	if (Milliseconds) 
+		ul1.QuadPart -= (Milliseconds * 10000); 
+
+	if (Seconds)
+		ul1.QuadPart -= (Seconds * (__int64)10000000); 
+
+	if (Minutes>0)
+		ul1.QuadPart -= (Minutes * (__int64)10000000 * 60); 
+	else if (Minutes<0)
+		ul1.QuadPart -= (Minutes * (__int64)10000000 * 60); 
+
+	if (Hours>0) 
+		ul1.QuadPart -= (Hours * (__int64)10000000 * 60 * 60);
+	else if (Hours<0)
+		ul1.QuadPart -= (Hours * (__int64)10000000 * 60 * 60);
+
+	if (Days>0)
+		ul1.QuadPart -= (Days * (__int64)10000000 * 60 * 60 * 24); 
+	else if (Days<0)
+		ul1.QuadPart -= (Days * (__int64)10000000 * 60 * 60 * 24); 
+	 
+	ft.dwHighDateTime = ul1.HighPart;
+	ft.dwLowDateTime = ul1.LowPart;
+	
+	//try to convert filetime back to a systemtime
+	if (!FileTimeToSystemTime(&ft,&st)) {
+		return Date;
+	}
+	 
+	if (Months<0) {
+		if ((Months -= st.wMonth) <= 0) {
+			Months *= (-1);
+			st.wYear += ((Months / 12) + 1);
+			st.wMonth = 12 + (Months % 12);
+		} else {
+			st.wMonth = Months % 12;
+			st.wYear -= Months / 12;
+		}
+		while (!SystemTimeToFileTime(&st, &ft)) {
+			st.wDay += 1;
+		}
+	}
+	return st;
+}
+
 //--------------------------------------------------------------------
 // Function name	: +
 // Description	    : 
@@ -575,6 +648,21 @@ const CSimpleDateTime& CSimpleDateTime::operator +(CSimpleDateTime& DateTime)
 {
 	SYSTEMTIME stStart = this->m_systemTime;
 	SYSTEMTIME stNew = DT_Add(stStart, DateTime.m_systemTime.wYear, DateTime.m_systemTime.wMonth, DateTime.m_systemTime.wDay, 
+		DateTime.m_systemTime.wHour, DateTime.m_systemTime.wMinute, DateTime.m_systemTime.wSecond, 0);
+	//CSimpleDateTime newTime = CSimpleDateTime(sysTime);
+	this->m_systemTime=stNew;
+	return *this;//CSimpleDateTime(stNew);// *this;
+}
+
+//--------------------------------------------------------------------
+// Function name	: +
+// Description	    : 
+// Return type		: CSimpleDateTime::operator 
+//--------------------------------------------------------------------
+const CSimpleDateTime& CSimpleDateTime::operator -(CSimpleDateTime& DateTime)
+{
+	SYSTEMTIME stStart = this->m_systemTime;
+	SYSTEMTIME stNew = DT_Sub(stStart, DateTime.m_systemTime.wYear, DateTime.m_systemTime.wMonth, DateTime.m_systemTime.wDay, 
 		DateTime.m_systemTime.wHour, DateTime.m_systemTime.wMinute, DateTime.m_systemTime.wSecond, 0);
 	//CSimpleDateTime newTime = CSimpleDateTime(sysTime);
 	this->m_systemTime=stNew;

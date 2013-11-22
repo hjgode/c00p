@@ -122,7 +122,9 @@ public:
 
 	const CSimpleDateTime& operator + (LPCWSTR Date);
 	const CSimpleDateTime& operator + (SYSTEMTIME Date);
+	const CSimpleDateTime& operator - (SYSTEMTIME Date);
 	const CSimpleDateTime& operator + (CSimpleDateTime& Date);
+	const CSimpleDateTime& operator - (CSimpleDateTime& DateTime);
 
 	BOOL operator > (const CSimpleDateTime& Date);
 	BOOL operator < (const CSimpleDateTime& Date);
@@ -142,6 +144,7 @@ public:
 protected:
 	//	internal class stuff
 	SYSTEMTIME		DT_Add(const SYSTEMTIME& Date, short Years, short Months, short Days, short Hours, short Minutes, short Seconds, short Milliseconds);
+	SYSTEMTIME		DT_Sub(const SYSTEMTIME& Date, short Years, short Months, short Days, short Hours, short Minutes, short Seconds, short Milliseconds); 
 	SYSTEMTIME		DT_AddDay(const SYSTEMTIME st);
 	SYSTEMTIME		DT_AddDiff (	const __int64 datepart, /*datepart with we want to manipulate, 
 					{nano100SecInDay ...}*/
