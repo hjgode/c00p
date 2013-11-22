@@ -2332,10 +2332,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SimpleDateTime.cpp"
-				>
-			</File>
-			<File
 				RelativePath="StdAfx.cpp"
 				>
 				<FileConfiguration
@@ -2550,10 +2546,6 @@
 			</File>
 			<File
 				RelativePath="resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SimpleDateTime.h"
 				>
 			</File>
 			<File

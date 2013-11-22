@@ -24,7 +24,6 @@
 #include "nclog.h"
 
 #include "time.h"
-#include "SimpleDateTime.h"
 
 #define IDC_BUTTON_OK 201 
 #define IDC_BUTTON_CANCEL 202 
@@ -265,11 +264,32 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 }
 
 //=================================================================================
-DWORD getDayDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
+int getDayDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
 	DWORD dwReturn = 0;
-	CSimpleDateTime csOld = CSimpleDateTime(stOld);
-	CSimpleDateTime csNew = CSimpleDateTime(stNew);
-	CSimpleDateTime csDiff = csNew-csOld;
+	FILETIME ftNew;
+	FILETIME ftOld;
+	//convert systemtimes to filetimes
+	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
+	bRes = SystemTimeToFileTime(&stOld, &ftOld);
+	dumpST(stNew);
+	dumpST(stOld);
+
+	dumpFT(ftNew);
+	dumpFT(ftOld);
+
+	//date diff
+	ULARGE_INTEGER t1, t2;
+	memcpy(&t1, &ftOld, sizeof(t1));
+	memcpy(&t2, &ftNew, sizeof(t2));
+	//ULONGLONG diff = (t1.QuadPart<t2.QuadPart)?(t2.QuadPart-t1.QuadPart):(t1.QuadPart-t2.QuadPart); // return always positive result
+	ULONGLONG diff = (t2.QuadPart-t1.QuadPart);	// return positive or negative result
+	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
+	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
+	ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
+	DEBUGMSG(1, (L"### day diff=%i\n", diffDays));
+	DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
+	DEBUGMSG(1, (L"### min diff=%i\n", diffMinutes));
+	dwReturn=(int)diffDays;
 	return dwReturn;
 }
 
@@ -308,6 +328,7 @@ void TimedReboot(void)
 	}
 	lDateNow=_wtol(sDateNow);
 	lDateBooted=_wtol(g_LastBootDate);
+/*
 	//for calculating filetime is easier to use
 	FILETIME ftDateTimeNow;
 	FILETIME ftDateTimeBoot;
@@ -346,11 +367,12 @@ void TimedReboot(void)
 	DEBUGMSG(1, (L"### min diff=%i\n", diffMinutes));
 //	if(diff>30*24*60*60*(ULONGLONG)10000000)//checks for 30 days diff
 //		return true;
-
 	dumpFT(ft);
 #if DEBUG
 	nclog(L"DayDiff=%i, MinuteDiff=%i\n", ulDayDiff, ulMinuteDiff);
 #endif
+*/
+	getDayDiff(lt, g_stRebootTime);
 	//test if we are past next boot time
 	if (lDateNow > lDateBooted + g_iRebootDays)
 	{
