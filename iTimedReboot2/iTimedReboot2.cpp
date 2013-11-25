@@ -265,6 +265,13 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 
 //=================================================================================
 int getDayDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
+	DEBUGMSG(1, (L"getDayDiff()...\n"));
+	TCHAR szText[MAX_PATH];memset(szText,0,MAX_PATH*sizeof(TCHAR));
+	dumpST(szText, stOld);
+	DEBUGMSG(1, (L"old time: %s\n", szText));
+	dumpST(szText, stNew);
+	DEBUGMSG(1, (L"new time: %s\n", szText));
+
 	DWORD dwReturn = 0;
 	FILETIME ftNew;
 	FILETIME ftOld;
@@ -281,15 +288,122 @@ int getDayDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
 	ULARGE_INTEGER t1, t2;
 	memcpy(&t1, &ftOld, sizeof(t1));
 	memcpy(&t2, &ftNew, sizeof(t2));
-	//ULONGLONG diff = (t1.QuadPart<t2.QuadPart)?(t2.QuadPart-t1.QuadPart):(t1.QuadPart-t2.QuadPart); // return always positive result
-	ULONGLONG diff = (t2.QuadPart-t1.QuadPart);	// return positive or negative result
+	ULONGLONG diff; BOOL bIsNegative=FALSE;
+	if(t1.QuadPart<t2.QuadPart){// return always positive result
+		diff=(t2.QuadPart-t1.QuadPart);
+	}
+	else{
+		diff=(t1.QuadPart-t2.QuadPart); 	
+		bIsNegative=TRUE;
+	}
+	//ULONGLONG diff = (t2.QuadPart-t1.QuadPart);	// return positive or negative result
 	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
 	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
 	ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
 	DEBUGMSG(1, (L"### day diff=%i\n", diffDays));
 	DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
 	DEBUGMSG(1, (L"### min diff=%i\n", diffMinutes));
-	dwReturn=(int)diffDays;
+	if(bIsNegative)
+		dwReturn=(int)(0-diffDays);
+	else
+		dwReturn=(int)diffDays;
+	DEBUGMSG(1, (L"GetDayDiff end. Return = %i days diff\n", dwReturn));
+	return dwReturn;
+}
+
+//=================================================================================
+int getHourDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
+	DEBUGMSG(1, (L"getHourDiff()...\n"));
+	TCHAR szText[MAX_PATH];memset(szText,0,MAX_PATH*sizeof(TCHAR));
+	dumpST(szText, stOld);
+	DEBUGMSG(1, (L"old time: %s\n", szText));
+	dumpST(szText, stNew);
+	DEBUGMSG(1, (L"new time: %s\n", szText));
+
+	DWORD dwReturn = 0;
+	FILETIME ftNew;
+	FILETIME ftOld;
+	//convert systemtimes to filetimes
+	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
+	bRes = SystemTimeToFileTime(&stOld, &ftOld);
+	dumpST(stNew);
+	dumpST(stOld);
+
+	dumpFT(ftNew);
+	dumpFT(ftOld);
+
+	//date diff
+	ULARGE_INTEGER t1, t2;
+	memcpy(&t1, &ftOld, sizeof(t1));
+	memcpy(&t2, &ftNew, sizeof(t2));
+	ULONGLONG diff; BOOL bIsNegative=FALSE;
+	if(t1.QuadPart<t2.QuadPart){// return always positive result
+		diff=(t2.QuadPart-t1.QuadPart);
+	}
+	else{
+		diff=(t1.QuadPart-t2.QuadPart); 	
+		bIsNegative=TRUE;
+	}
+	//ULONGLONG diff = (t2.QuadPart-t1.QuadPart);	// return positive or negative result
+	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
+	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
+	ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
+	DEBUGMSG(1, (L"### day diff=%i\n", diffDays));
+	DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
+	DEBUGMSG(1, (L"### min diff=%i\n", diffMinutes));
+	if(bIsNegative)
+		dwReturn=(int)(0-diffHours);
+	else
+		dwReturn=(int)diffHours;
+	DEBUGMSG(1, (L"getHourDiff end. Return = %i hours diff\n", dwReturn));
+	return dwReturn;
+}
+
+//=================================================================================
+int getMinuteDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
+	DEBUGMSG(1, (L"getMinuteDiff()...\n"));
+	TCHAR szText[MAX_PATH];memset(szText,0,MAX_PATH*sizeof(TCHAR));
+	dumpST(szText, stOld);
+	DEBUGMSG(1, (L"old time: %s\n", szText));
+	dumpST(szText, stNew);
+	DEBUGMSG(1, (L"new time: %s\n", szText));
+
+	DWORD dwReturn = 0;
+	FILETIME ftNew;
+	FILETIME ftOld;
+	//convert systemtimes to filetimes
+	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
+	bRes = SystemTimeToFileTime(&stOld, &ftOld);
+	dumpST(stNew);
+	dumpST(stOld);
+
+	dumpFT(ftNew);
+	dumpFT(ftOld);
+
+	//date diff
+	ULARGE_INTEGER t1, t2;
+	memcpy(&t1, &ftOld, sizeof(t1));
+	memcpy(&t2, &ftNew, sizeof(t2));
+	ULONGLONG diff; BOOL bIsNegative=FALSE;
+	if(t1.QuadPart<t2.QuadPart){// return always positive result
+		diff=(t2.QuadPart-t1.QuadPart);
+	}
+	else{
+		diff=(t1.QuadPart-t2.QuadPart); 	
+		bIsNegative=TRUE;
+	}
+	//ULONGLONG diff = (t2.QuadPart-t1.QuadPart);	// return positive or negative result
+	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
+	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
+	ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
+	DEBUGMSG(1, (L"### day diff=%i\n", diffDays));
+	DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
+	DEBUGMSG(1, (L"### min diff=%i\n", diffMinutes));
+	if(bIsNegative)
+		dwReturn=(int)(0-diffMinutes);
+	else
+		dwReturn=(int)diffMinutes;
+	DEBUGMSG(1, (L"getMinuteDiff end. Return = %i minutes diff\n", dwReturn));
 	return dwReturn;
 }
 
@@ -328,61 +442,22 @@ void TimedReboot(void)
 	}
 	lDateNow=_wtol(sDateNow);
 	lDateBooted=_wtol(g_LastBootDate);
-/*
-	//for calculating filetime is easier to use
-	FILETIME ftDateTimeNow;
-	FILETIME ftDateTimeBoot;
-	FILETIME ft;
-	//convert systemtimes to filetimes
-	BOOL bRes = SystemTimeToFileTime(&lt,&ftDateTimeNow);
-	bRes = SystemTimeToFileTime(&g_stRebootTime, &ftDateTimeBoot);
-	DEBUGMSG(1, (L"DateTimeNow: "));
-	dumpST(lt);
-	DEBUGMSG(1, (L"DateTimeReboot: "));
-	dumpST(g_stRebootTime);
-	ULONGLONG ulDateTimeNow = (((ULONGLONG) ftDateTimeNow.dwHighDateTime) << 32)+ftDateTimeNow.dwLowDateTime;
-	ULONGLONG ulDateTimeBoot = (((ULONGLONG) ftDateTimeBoot.dwHighDateTime) << 32)+ftDateTimeBoot.dwLowDateTime;
-	ULONGLONG ulDayDiff = ulDateTimeNow/_DAY - (ulDateTimeBoot/_DAY + g_iRebootDays * _DAY);
-	ULONGLONG ulMinuteDiff = (ulDateTimeNow/_DAY - ulDateTimeBoot/_DAY)/_MINUTE;
-	// Copy the result back into the FILETIME structure.
-	ft.dwLowDateTime  = (DWORD) (ulMinuteDiff & 0xFFFFFFFF );
-	ft.dwHighDateTime = (DWORD) (ulMinuteDiff >> 32 );
-	DEBUGMSG(1, (L"\nMinutes Diff as filetime: "));
-	dumpFT(ft);
-	ft.dwLowDateTime  = (DWORD) (ulDayDiff & 0xFFFFFFFF );
-	ft.dwHighDateTime = (DWORD) (ulDayDiff >> 32 );
-	DEBUGMSG(1, (L"\nDay Diff as filetime: "));
-	//date diff
-	ULARGE_INTEGER t1, t2;
-	memcpy(&t1, &ftDateTimeBoot, sizeof(t1));
-	memcpy(&t2, &ftDateTimeNow, sizeof(t2));
-	ULONGLONG diff = (t1.QuadPart<t2.QuadPart)?
-		(t2.QuadPart-t1.QuadPart):
-		(t1.QuadPart-t2.QuadPart);
-	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
-	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
-	ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
-	DEBUGMSG(1, (L"### day diff=%i\n", diffDays));
-	DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
-	DEBUGMSG(1, (L"### min diff=%i\n", diffMinutes));
-//	if(diff>30*24*60*60*(ULONGLONG)10000000)//checks for 30 days diff
-//		return true;
-	dumpFT(ft);
-#if DEBUG
-	nclog(L"DayDiff=%i, MinuteDiff=%i\n", ulDayDiff, ulMinuteDiff);
-#endif
-*/
-	getDayDiff(lt, g_stRebootTime);
+	int iDayDiff = getDayDiff(lt, g_stRebootTime);
+	int iHoursDiff = getHourDiff(lt, g_stRebootTime);
+	int iMinutesDiff = getMinuteDiff(lt, g_stRebootTime);
 	//test if we are past next boot time
-	if (lDateNow > lDateBooted + g_iRebootDays)
+	//if (lDateNow > lDateBooted + g_iRebootDays)
+	if(iDayDiff>=g_iRebootDays)
 	{
 		nclog(L"__TimedReboot Check__\n\tDate now is greater than last boot date!\n",NULL);
-		if (g_stRebootTime.wHour <= lt.wHour) 
+		//if (g_stRebootTime.wHour <= lt.wHour) 
+		if(iHoursDiff>=lt.wHour)
 		{
 			nclog(L"\tHour now is greater than hour to reboot!\n",NULL);
 			//check if reboot time is reached within a tolrance of 3 minutes
 			//what happens for reboot time 00:59 !!!!
-			if (lt.wMinute-g_stRebootTime.wMinute>0 && lt.wMinute-g_stRebootTime.wMinute<3) //(g_stRebootTime.wMinute <= lt.wMinute)
+			//if (lt.wMinute-g_stRebootTime.wMinute>0 && lt.wMinute-g_stRebootTime.wMinute<3) //(g_stRebootTime.wMinute <= lt.wMinute)
+			if(iMinutesDiff>=g_stRebootTime.wMinute && iMinutesDiff<=3)
 			{
 				//nclog(L"\tMinutes now is greater than minute to reboot!\n",NULL);
 				nclog(L"\tMinutes now within timeframe of reboot time! Current Minute:%02i, Boot minute:%02i\n", lt.wMinute, g_stRebootTime.wMinute);
@@ -401,7 +476,8 @@ void TimedReboot(void)
 				DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
 					WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
 			}
-			else if (lt.wMinute-g_stRebootTime.wMinute>2){
+			else //if (lt.wMinute-g_stRebootTime.wMinute>2){
+				if(iMinutesDiff>3){
 				//do not reboot but set new boot date
 				nclog(L"\tTime greater than timeframe with reboot time! Current Minute:%02i, Boot minute:%02i\n", lt.wMinute, g_stRebootTime.wMinute);
  				RegWriteStr(rkeys[5].kname, sDateNow);
