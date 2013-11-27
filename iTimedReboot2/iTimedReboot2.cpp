@@ -515,6 +515,11 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	MSG msg;
 	HACCEL hAccelTable;
 
+	if (wcsstr(lpCmdLine, L"-test") != NULL){
+		ReadReg();
+		g_bEnableLogging=TRUE;
+		TimedReboot();
+	}
 	//allow only one instance
 	//##################### dont run if already running #############################
 	nclog(L"Checking for Mutex (single instance allowed only)...\n");
