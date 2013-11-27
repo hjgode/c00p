@@ -52,7 +52,7 @@
 			define how often to look at the time
 			if 0 there will be no time check and we will never boot or excute an exe
 		"EnableLogging","0"
-			"1" = enable logging to file
+			"1" = enable logging to file, DEFAULT
 			"0" = no logging to file
 		"RebootExt","1" 
 			"0" to initiate a reboot

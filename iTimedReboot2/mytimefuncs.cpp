@@ -2,6 +2,54 @@
 
 #include "mytimefuncs.h"
 
+
+//--------------------------------------------------------------------
+// Function name  : getSystemtimeOfString
+// Description    : return a SYSTEMTIME by parsing a string
+// Argument       : string to parse and convert, ie '201311280923' -> 2013 nov 18 09:23
+// Argument       : interval in days
+// Return type    : systemtime with new date/time
+//--------------------------------------------------------------------
+BOOL getSystemtimeOfString(TCHAR* szDateTimeString, SYSTEMTIME *stDateTime){
+	SYSTEMTIME st;
+	memset(&st,0,sizeof(SYSTEMTIME));
+	const int maxLen=14;
+	BOOL bConvertOK=FALSE;
+
+	TCHAR str[maxLen];
+	memset(str,0,maxLen*sizeof(TCHAR));
+	if(wcslen(szDateTimeString)>=8){
+		wcsncpy(str, szDateTimeString, 4); 
+		int iYear=_wtoi(str);
+		memset(str,0,maxLen*sizeof(TCHAR));
+		wcsncpy(str, &szDateTimeString[4], 2);
+		int iMonth=_wtoi(str);
+		memset(str,0,maxLen*sizeof(TCHAR));
+		wcsncpy(str, &szDateTimeString[6], 2);
+		int iDay=_wtoi(str);
+		st.wYear=iYear;
+		st.wMonth=iMonth;
+		st.wDay=iDay;
+		bConvertOK=TRUE;
+	}
+	if(wcslen(szDateTimeString)==12){
+		memset(str,0,maxLen*sizeof(TCHAR));
+		wcsncpy(str, &szDateTimeString[8], 2);
+		int iHour=_wtoi(str);
+		memset(str,0,maxLen*sizeof(TCHAR));
+		wcsncpy(str, &szDateTimeString[10], 2);
+		int iMinute=_wtoi(str);
+		st.wHour=iHour;
+		st.wMinute=iMinute;
+		bConvertOK=TRUE;
+	}
+
+	memcpy(stDateTime, &st, sizeof(SYSTEMTIME));
+	DEBUGMSG(1, (L"getSystemtimeOfString() returning with \t"));
+	dumpST(st);
+	return bConvertOK;
+}
+
 //--------------------------------------------------------------------
 // Function name  : getNextBootWithInterval
 // Description    : calc a new reboot date
@@ -34,6 +82,7 @@ SYSTEMTIME getNextBootWithInterval(SYSTEMTIME stActual, SYSTEMTIME stRebootPlann
 		stReturn.wDay, stReturn.wMonth, stReturn.wYear,
 		stReturn.wHour, stReturn.wMinute
 		));
+
 	return stReturn;
 }
 
@@ -150,6 +199,62 @@ SYSTEMTIME addDays(SYSTEMTIME stOld, int days){
 	dumpST(szPre, stNew);
 	DEBUGMSG(1, (L"addDays END\n"));
 	return stNew;
+}
+
+//--------------------------------------------------------------------
+// Function name  : getDateTimeDiff
+// Description    : return the diff between two datetimes 
+// Argument       : SYSTEMTIME stOld and stNew and the vars to store diff days,hours,minutes
+// Return type    : -1 if old is before new datetime, 0 if old is equal new and +1 if old is past new
+//--------------------------------------------------------------------
+int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours, int *iMinutes){
+	int iReturn = 0;
+	DEBUGMSG(1, (L"getDateTimeDiff()...\n"));
+	DEBUGMSG(1,(L"old date:	")); dumpST(stOld);
+	DEBUGMSG(1,(L"new date:	")); dumpST(stNew);
+
+	FILETIME ftNew;
+	FILETIME ftOld;
+	//convert systemtimes to filetimes
+	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
+	bRes = SystemTimeToFileTime(&stOld, &ftOld);
+	ULARGE_INTEGER tOld, tNew;
+	memcpy(&tOld, &ftOld, sizeof(tOld));
+	memcpy(&tNew, &ftNew, sizeof(tNew));
+	ULONGLONG diff; BOOL bIsNegative=FALSE;
+	if(tOld.QuadPart<tNew.QuadPart){// return always positive result
+		diff=(tNew.QuadPart-tOld.QuadPart);
+		bIsNegative=TRUE;
+		iReturn=-1;		//old is before new date/time
+		DEBUGMSG(1, (L"old is before new date\n"));
+	}
+	else if(tOld.QuadPart>tNew.QuadPart){
+		diff=(tOld.QuadPart-tNew.QuadPart); 
+		DEBUGMSG(1, (L"old is after new date\n"));
+		iReturn=1;
+	}
+	else if(tOld.QuadPart==tNew.QuadPart){
+		diff=0;
+		iReturn=0;
+		DEBUGMSG(1, (L"old is equal new date\n"));
+	}
+	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
+	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
+	ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
+
+	if(bIsNegative){
+		diffDays	=(int)(0-diffDays);
+		diffHours	=(int)(0-diffHours);
+		diffMinutes	=(int)(0-diffMinutes);
+	}
+	DEBUGMSG(1, (L"### day diff =%i\n", diffDays));
+	DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
+	DEBUGMSG(1, (L"### min diff =%i\n", diffMinutes));
+	*iDays		=(int)diffDays;
+	*iHours		=(int)diffHours;
+	*iMinutes	=(int)diffMinutes;
+	DEBUGMSG(1, (L"getDateTimeDiff end. Return = %i/%i/%i (days/hours/minutes) diff. Return=%i\n", *iDays, *iHours, *iMinutes, iReturn));
+	return iReturn;
 }
 
 //=================================================================================

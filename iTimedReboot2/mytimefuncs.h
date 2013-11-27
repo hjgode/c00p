@@ -10,6 +10,10 @@ void dumpFT(FILETIME ft);
 void dumpST(SYSTEMTIME st);
 void dumpST(TCHAR* szNote, SYSTEMTIME st);
 
+BOOL getSystemtimeOfString(TCHAR* szDateTimeString, SYSTEMTIME *stDateTime);
+
+int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours, int *iMinutes);
+
 SYSTEMTIME getNextBootWithInterval(SYSTEMTIME stActual, SYSTEMTIME stRebootPlanned, int daysInterval);
 
 SYSTEMTIME DT_Add(const SYSTEMTIME& Date, short Years, short Months, short Days, short Hours, short Minutes, short Seconds, short Milliseconds);

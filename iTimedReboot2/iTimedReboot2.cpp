@@ -34,6 +34,9 @@
 	#define WM_TIMECHANGE 0x1E
 #endif
 
+#define MY_MUTEX L"ITIMEDREBOOT_RUNNING"
+HANDLE hMutex=NULL;
+
 //FILETIME helpers
    #define _SECOND ((ULONGLONG) 10000000)
    #define _MINUTE (60 * _SECOND)
@@ -105,7 +108,10 @@ TCHAR			g_sPingTarget[MAX_PATH];		//target IP to ping
 bool			g_bEnableLogging=false;
 TCHAR			g_sEnableLogging[MAX_PATH];	//0=disable logging file, 1=enable
 
-TCHAR			g_LastBootDate[MAX_PATH];
+SYSTEMTIME newTime;							//calculated random reboot time
+
+TCHAR			g_LastBootDate[MAX_PATH];	//string holding the last reboot date
+SYSTEMTIME		g_stLastBootDateTime;		//SYSTEMTIME of last reboot date/time
 
 BOOL			g_DoReboot = TRUE;
 TCHAR			g_ExeName[MAX_PATH];
@@ -182,21 +188,24 @@ BOOL DoBootAction(){
 			nclog(L"DEBUGMODE no warmboot",NULL);
 		#endif
 	}
-	TCHAR str[MAX_PATH];
-	PROCESS_INFORMATION pi;
-	if(CreateProcess(g_ExeName, g_ExeArgs, NULL, NULL, FALSE, 0, NULL, NULL, NULL, &pi)==0){
-		wsprintf(str, L"CreateProcess ('%s'/'%s') failed with 0x%08x\r\n", g_ExeName, g_ExeArgs, GetLastError());
-		nclog(str,NULL);
-		return FALSE;
-	}
 	else{
+		TCHAR str[MAX_PATH];
+		PROCESS_INFORMATION pi;
+		if(CreateProcess(g_ExeName, g_ExeArgs, NULL, NULL, FALSE, 0, NULL, NULL, NULL, &pi)==0){
+			wsprintf(str, L"CreateProcess ('%s'/'%s') failed with 0x%08x\r\n", g_ExeName, g_ExeArgs, GetLastError());
+			nclog(str,NULL);
+			return FALSE;
+		}
+		else{
 
-		wsprintf(str, L"CreateProcess ('%s'/'%s') OK. pid=0x%08x\r\n", g_ExeName, g_ExeArgs, pi.dwProcessId);
-		CloseHandle(pi.hThread);
-		CloseHandle(pi.hProcess);
-		nclog(str,NULL);
-		return TRUE;
+			wsprintf(str, L"CreateProcess ('%s'/'%s') OK. pid=0x%08x\r\n", g_ExeName, g_ExeArgs, pi.dwProcessId);
+			CloseHandle(pi.hThread);
+			CloseHandle(pi.hProcess);
+			nclog(str,NULL);
+			return TRUE;
+		}
 	}
+	return TRUE;
 }
 
 SYSTEMTIME getRandomTime(SYSTEMTIME lt){
@@ -229,120 +238,181 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 void writeNewBootDate(SYSTEMTIME stBoot){
 	TCHAR szDate[MAX_PATH];
 	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stBoot, L"yyyyMMdd", szDate, MAX_PATH-1);
-	RegWriteStr(rkeys[5].kname, szDate);
-	wsprintf(rkeys[5].ksval, szDate);
+	RegWriteStr(rkeys[LastBootDate].kname, szDate);
+	wsprintf(rkeys[LastBootDate].ksval, szDate);
+	//update glovbal vars
 	wsprintf(g_LastBootDate, szDate);
+	TCHAR szLasteDateTime[13];
+	wsprintf(szLasteDateTime, L"%s%02i%02i", g_LastBootDate, newTime.wHour, newTime.wMinute);
+	if(getSystemtimeOfString(szLasteDateTime, &g_stLastBootDateTime)){
+		DEBUGMSG(true, (L"date string converted to SYSTEMTIME\n"));
+	}
+	else{
+		DEBUGMSG(true, (L"date string conversion to SYSTEMTIME FAILED!\n"));
+	}
+
 	nclog(L"Updated registry with last reboot on:\n\t%s, %s\n", szDate, g_sRebootTime);
+}
+
+void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
+	AnimateIcon(g_hInstance, g_hwnd, NIM_MODIFY, ico_redbomb);
+	Sleep(3000);
+	TCHAR sDateNow[MAX_PATH];
+	int er=0;
+	//produce a mathematic date
+	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stCurrentTime, L"yyyyMMdd", sDateNow, MAX_PATH-1);
+	nclog(L"Will reboot now. Last reboot on:\n\t%s, %s\n", sDateNow, g_sRebootTime);
+	DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
+		WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
 }
 
 //=================================================================================
 //
 //  FUNCTION:	TimedReboot()
 //
-//  PURPOSE:	check time and date and reboot, if time is reached
-//
+//  PURPOSE:	if last reboot +daysInterval is within 3 minutes = reboot
+//				else update registry with next reboot date
 //  COMMENTS:	none
 //
 void TimedReboot(void)
 {
-	DEBUGMSG(1, (L"__TimedReboot Check__\n"));
+	#if DEBUG
+		nclog(L"__TimedReboot Check__\n");
+	#endif
 	SYSTEMTIME stCurrentTime;
 	memset(&stCurrentTime, 0, sizeof(stCurrentTime));
 	GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
 
-	//check if already booted this day
-	TCHAR sDateNow[MAX_PATH];
-	int er=0;
-	//produce a mathematic date
-	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stCurrentTime, L"yyyyMMdd", sDateNow, MAX_PATH-1);
-	if (rc!=0)
-	{
-		DEBUGMSG(true, (sDateNow));
-		DEBUGMSG(true, (L"\r\n"));
-	}
-	else
-	{
-		er=GetLastError();
-		ShowError(er);
-		DEBUGMSG(true, (L"TimedReboot: Error in GetDateFormat()\r\n"));
-		nclog(L"### TimedReboot: Error in GetDateFormat(). Exiting TimedReboot function.\n",NULL);
-		return;
-	}
-	//store time of scheduled reboot date/time
-	// g_stRebootTime is the time to reboot, actual date + reboot hh:mm + random part
-	SYSTEMTIME stTimeToReboot=DT_Add(g_stRebootTime,0,0,g_iRebootDays,0,0,0,0);
-	
-	//dump some values
-	TCHAR szTxt[64]; memset(szTxt,0,64*sizeof(TCHAR)); 
-	wsprintf(szTxt, L"RebootTime");
-	dumpST(szTxt, stTimeToReboot);
-	wsprintf(szTxt, L"CurrentTime");
-	dumpST(szTxt, stCurrentTime);
+	int iDayDiff = 0;
+	int iHoursDiff = 0;
+	int iMinutesDiff = 0;
 
-	int iDayDiff = getDayDiff(stCurrentTime, stTimeToReboot);
-	int iHoursDiff = getHourDiff(stCurrentTime, stTimeToReboot);
-	int iMinutesDiff = getMinuteDiff(stCurrentTime, stTimeToReboot);
-
-	//if we are past the scheduled reboot, write new reboot date to reg, calculated with days interval starting at last stored reboot data
-	/* EXAMPLE
-	wrong reboot date in future
-		RebootTime:		20131126 00:42:22
-		CurrentTime:	20131118 13:31:07
-
-	reboot date in past
-		RebootTime:		20131026 00:42:22
-		CurrentTime:	20131118 13:31:07
+	//globals
+	/*
+	g_LastBootDate;	//string with date of last reboot
+	g_iRebootDays;	//days interval between reboots
+	g_stRebootTime;	//date/time of planned reboot, the current date + the planned reboot time + a radom time
+	g_stLastBootDateTime;		//SYSTEMTIME of last reboot date/time
 	*/
-	SYSTEMTIME stNextPlannedReboot=getNextBootWithInterval(stCurrentTime, g_stRebootTime, g_iRebootDays);
-
-	//test if we are past next boot time
-	//if within timeframe of 3 minutes, do a reboot
-	//else only update next boot time
-	if(iDayDiff<0 || iHoursDiff<0 || iMinutesDiff<0){	//we are before the date to reboot
-		DEBUGMSG(1, (L"we are before reboot date/time: %i %i %i (day,hour,min), day interval:%i\n", iDayDiff-g_iRebootDays, iHoursDiff, iMinutesDiff, g_iRebootDays));
-		return;
-	}
-	if(iDayDiff==0)	//are we at the date of reboot 
-	{
-		nclog(L"Day of reboot date reached!\n",NULL);
-		//if (g_stRebootTime.wHour <= stCurrentTime.wHour) 
-		if(iHoursDiff==0) //we are at the hour to boot
+	int iDiff=0;
+	// #### case 1 daysinterval==0 ####
+	if(g_iRebootDays==0){
+		#if DEBUG
+			nclog(L"### day interval is 0 ###\n");
+		#endif
+		//are we before the reboot datetime?
+		iDiff = getDateTimeDiff(g_stLastBootDateTime, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
+		if(iDiff==-1)
 		{
-			nclog(L"\tHour to reboot reached!\n",NULL);
-			//check if reboot time is reached within a tolerance of 3 minutes
-			//if (stCurrentTime.wMinute-g_stRebootTime.wMinute>0 && stCurrentTime.wMinute-g_stRebootTime.wMinute<3) //(g_stRebootTime.wMinute <= stCurrentTime.wMinute)
-			if(iMinutesDiff>=0 && iMinutesDiff<=3)
-			{
-				//nclog(L"\tMinutes now is greater than minute to reboot!\n",NULL);
-				nclog(L"\tMinutes now within timeframe of reboot time! Current Minute:%02i, Boot minute:%02i\n", stCurrentTime.wMinute, g_stRebootTime.wMinute);
-				DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
-				//update registry with actual boot date
-				writeNewBootDate(stCurrentTime);
+			//we are before the time
+			#if DEBUG
+					nclog(L"we are before reboot time\n");
+			#endif
+			return;
+		}
+		if(iDiff>=0 || iMinutesDiff>3){
+			//we are to late, write new lastboot date, as if we had booted
+			#if DEBUG
+					nclog(L"we are after reboot time\n");
+			#endif
+			writeNewBootDate(stCurrentTime);
+			return;
+		}
+		/*
+		getDateTimeDiff()...
+		old date:	20131119 00:30:00
+		new date:	20131119 11:18:39
+		old is before new date
+		### day diff =0
+		### hour diff=-10
+		### min diff =-648
+		getDateTimeDiff end. Return = 0/-10/-648 (days/hours/minutes) diff. Return=-1
 
-				AnimateIcon(g_hInstance, g_hwnd, NIM_MODIFY, ico_redbomb);
-				Sleep(3000);
-				nclog(L"Will reboot now. Last reboot on:\n\t%s, %s\n", sDateNow, g_sRebootTime);
-				DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
-					WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
-			}
-			else {//if (stCurrentTime.wMinute-g_stRebootTime.wMinute>2){
-				if(iMinutesDiff>3){
-					//do not reboot but set new boot date
-					nclog(L"\tTime greater than timeframe with reboot time! Current Minute:%02i, Boot minute:%02i\n", stCurrentTime.wMinute, g_stRebootTime.wMinute);
+		getDateTimeDiff()...
+		old date:	20131123 00:22:00
+		new date:	20131121 12:16:28
+		old is after new date
+		### day diff =1
+		### hour diff=36
+		### min diff =2165
+
+		*/
+		if(iDayDiff==0){
+			if(iHoursDiff==0){
+				if(iMinutesDiff>=0 && iMinutesDiff<=3){	//need to be at the minute to boot or within 3 minutes after
+					#if DEBUG
+							nclog(L"reboot time reached or with 3 minutes\n");
+					#endif
+					//save new last boot date
 					writeNewBootDate(stCurrentTime);
+					//doreboot
+					doAnimateAndReboot(stCurrentTime);
 				}
 			}
-		}else{ 
-			//hour to boot past current time
-			//re-schedule
-			nclog(L"\thour greater than reboot date/time! Hour diff:%02i, reboot hour:%02i\n", iHoursDiff, g_stRebootTime.wHour);
-			writeNewBootDate(stCurrentTime);
 		}
-	}//date check
-	else if(iDayDiff>0) {
-		//we are past or before the date to reboot
-		writeNewBootDate(stCurrentTime);
 	}
+	if(g_iRebootDays>0){
+		#if DEBUG
+				nclog(L"### days interval is > 0 ###\n");
+		#endif
+		iDiff = getDateTimeDiff(g_stLastBootDateTime, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
+/*
+old date:	20131119 00:20:00
+new date:	20131121 11:54:11
+old is before new date
+### day diff =-2
+### hour diff=-59
+### min diff =-3574
+*/
+		if(iDayDiff<0)
+		{
+			//we are before date
+			#if DEBUG
+					nclog(L"we are before reboot time\n");
+			#endif
+			return;
+		}
+		if(iDayDiff > g_iRebootDays){
+			//we are too late
+			#if DEBUG
+					nclog(L"we are after reboot time\n");
+			#endif
+			//add days interval to last boot date, should we add multiples of days interval???
+			SYSTEMTIME stLastBootDate;
+			#if DEBUG
+					nclog(L"calculating new reboot time\n");
+			#endif
+			do{
+				stLastBootDate = addDays(g_stLastBootDateTime, g_iRebootDays);
+				iDiff = getDateTimeDiff(stLastBootDate, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
+				//iDaydiff is negative as long as old is before new
+				//iDiff is negative as long as we are before date
+			}while(iDiff<=0 && iDayDiff<g_iRebootDays);
+			writeNewBootDate(stLastBootDate);
+			return;
+		}
+		if(iDayDiff==g_iRebootDays){
+			#if DEBUG
+					nclog(L"reboot date match\n");
+			#endif
+			//right day
+			if(iHoursDiff==0){
+				if(iMinutesDiff>=0 && iMinutesDiff<=3){	//need to be at the minute to boot or within 3 minutes after
+					#if DEBUG
+							nclog(L"reboot time reached or with 3 minutes\n");
+					#endif
+					//save new last boot date
+					writeNewBootDate(stCurrentTime);
+					//do reboot
+					doAnimateAndReboot(stCurrentTime);
+				}
+			}
+		}
+	}
+	#if DEBUG
+		nclog(L"--- TimedReboot Check END ---\n");
+	#endif
+	return;
 }
 
 //=====================================================================================================
@@ -358,48 +428,48 @@ void initRKEYS()
 	//init array with registry keys and vals
 	memset(&rkeys, 0, sizeof(rkeys));
 
-	wsprintf(rkeys[0].kname, L"Interval");
-	wsprintf(rkeys[0].ksval, L"30");
-	rkeys[0].kstype=REG_SZ;
+	wsprintf(rkeys[Interval].kname, L"Interval");
+	wsprintf(rkeys[Interval].ksval, L"30");
+	rkeys[Interval].kstype=REG_SZ;
 
-	wsprintf(rkeys[1].kname, L"RebootTime");
-	wsprintf(rkeys[1].ksval, L"00:00");
-	rkeys[1].kstype=REG_SZ;
+	wsprintf(rkeys[RebootTime].kname, L"RebootTime");
+	wsprintf(rkeys[RebootTime].ksval, L"00:00");
+	rkeys[RebootTime].kstype=REG_SZ;
 
-	wsprintf(rkeys[2].kname, L"PingInterval");
-	wsprintf(rkeys[2].ksval, L"60");
-	rkeys[2].kstype=REG_SZ;
+	wsprintf(rkeys[PingInterval].kname, L"PingInterval");
+	wsprintf(rkeys[PingInterval].ksval, L"60");
+	rkeys[PingInterval].kstype=REG_SZ;
 
-	wsprintf(rkeys[3].kname, L"PingTarget");
-	wsprintf(rkeys[3].ksval, L"127.0.0.1");
-	rkeys[3].kstype=REG_SZ;
+	wsprintf(rkeys[PingTarget].kname, L"PingTarget");
+	wsprintf(rkeys[PingTarget].ksval, L"127.0.0.1");
+	rkeys[PingTarget].kstype=REG_SZ;
 
-	wsprintf(rkeys[4].kname, L"EnableLogging");
-	wsprintf(rkeys[4].ksval, L"1");
-	rkeys[4].kstype=REG_SZ;
+	wsprintf(rkeys[EnableLogging].kname, L"EnableLogging");
+	wsprintf(rkeys[EnableLogging].ksval, L"1");
+	rkeys[EnableLogging].kstype=REG_SZ;
 
-	wsprintf(rkeys[5].kname, L"LastBootDate");
-	wsprintf(rkeys[5].ksval, L"19800101");
-	rkeys[5].kstype=REG_SZ;
+	wsprintf(rkeys[LastBootDate].kname, L"LastBootDate");
+	wsprintf(rkeys[LastBootDate].ksval, L"19800101");
+	rkeys[LastBootDate].kstype=REG_SZ;
 	//new with v2
-	wsprintf(rkeys[6].kname, L"RebootExt");
-	wsprintf(rkeys[6].ksval, L"1");
-	rkeys[6].kstype=REG_SZ;
-	wsprintf(rkeys[7].kname, L"RebootExtApp");
-	wsprintf(rkeys[7].ksval, L"\\Windows\\fexplore.exe");
-	rkeys[7].kstype=REG_SZ;
+	wsprintf(rkeys[RebootExt].kname, L"RebootExt");
+	wsprintf(rkeys[RebootExt].ksval, L"1");
+	rkeys[RebootExt].kstype=REG_SZ;
+	wsprintf(rkeys[RebootExtApp].kname, L"RebootExtApp");
+	wsprintf(rkeys[RebootExtApp].ksval, L"\\Windows\\fexplore.exe");
+	rkeys[RebootExtApp].kstype=REG_SZ;
 
-	wsprintf(rkeys[8].kname, L"RebootExtParms");
-	wsprintf(rkeys[8].ksval, L"\\Flash File Store");
-	rkeys[8].kstype=REG_SZ;
+	wsprintf(rkeys[RebootExtParms].kname, L"RebootExtParms");
+	wsprintf(rkeys[RebootExtParms].ksval, L"\\Flash File Store");
+	rkeys[RebootExtParms].kstype=REG_SZ;
 	//new with v3
-	wsprintf(rkeys[9].kname, L"RebootDays");
-	wsprintf(rkeys[9].ksval, L"0");
-	rkeys[9].kstype=REG_SZ;
+	wsprintf(rkeys[RebootDays].kname, L"RebootDays");
+	wsprintf(rkeys[RebootDays].ksval, L"0");
+	rkeys[RebootDays].kstype=REG_SZ;
 
-	wsprintf(rkeys[10].kname, L"NewTime");
-	wsprintf(rkeys[10].ksval, L"00:11");
-	rkeys[10].kstype=REG_SZ;
+	wsprintf(rkeys[NewTime].kname, L"NewTime");
+	wsprintf(rkeys[NewTime].ksval, L"00:11");
+	rkeys[NewTime].kstype=REG_SZ;
 
 }
 //=================================================================================
@@ -412,7 +482,7 @@ void initRKEYS()
 //
 void TimedPing(void)
 {
-	int rc = PingAddress(rkeys[3].ksval); //rc will be number of good pings
+	int rc = PingAddress(rkeys[PingTarget].ksval); //rc will be number of good pings
 	if (rc==-1)
 	{
 		//Bad IP!
@@ -445,6 +515,26 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	MSG msg;
 	HACCEL hAccelTable;
 
+	//allow only one instance
+	//##################### dont run if already running #############################
+	nclog(L"Checking for Mutex (single instance allowed only)...\n");
+
+	hMutex=CreateMutex(NULL, TRUE, MY_MUTEX);
+	if(hMutex==NULL){
+		//this should never happen
+		nclog(L"Error in CreateMutex! GetLastError()=%i\n", GetLastError());
+		nclog(L"-------- END -------\n");
+		return -99;
+	}
+	DWORD dwLast = GetLastError();
+	if(dwLast== ERROR_ALREADY_EXISTS){//mutex already exists, EXIT!
+		nclog(L"\tAttached to existing mutex\n");
+		return -2;
+	}
+	else{
+		nclog(L"\tCreated new mutex\n");
+	}
+
 	initRKEYS();
 
 	// Initialize global strings
@@ -455,7 +545,7 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	HWND hWnd = FindWindow (NULL, szWindowClass);    
 	if (hWnd) 
 	{        
-		SetForegroundWindow (hWnd);            
+		//SetForegroundWindow (hWnd);            
 		return -1;
 	}
 
@@ -597,9 +687,8 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 
 		//set the timer that checks the clock for reboot
 		if (g_iRebootTimerCheck != 0)
-		{
 			g_iTimerReboot = SetTimer(hwnd, ID_RebootTimeCheck, g_iRebootTimerCheck, NULL);
-		}
+
 		if (g_iPingTimeInterval != 0)
 			g_iTimerPing = SetTimer(hwnd, ID_PingIntervalTimer, g_iPingTimeInterval, NULL); 
 
@@ -700,8 +789,8 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		AnimateIcon(g_hInstance, hwnd, NIM_DELETE, ico_app);
 		//force redraw of taskbar
 		SendMessage(HWND_BROADCAST, WM_SETTINGCHANGE, NULL, NULL);
-		PostQuitMessage (0) ; 
-		return 0            ;
+		PostQuitMessage (0); 
+		return 0;
 		break;
   }
 
@@ -754,8 +843,9 @@ int ReadReg()
 	
 	//enable logging?
 	g_bEnableLogging = true;
-	if (wcscmp(rkeys[4].ksval, L"0") == 0)
+	if (wcscmp(rkeys[EnableLogging].ksval, L"0") == 0)
 		g_bEnableLogging=false;
+	//set nclog global loggingEnabled var
 	nclog_LogginEnabled=g_bEnableLogging;
 
 	for (i=0; i<RegEntryCount; i++)
@@ -786,11 +876,11 @@ int ReadReg()
 	}
 #endif
 	//copy reg values to globals, more readable
-	wsprintf(g_sPingTarget, rkeys[3].ksval);
+	wsprintf(g_sPingTarget, rkeys[PingTarget].ksval);
 	
 	//check boot time interval
 	//test if >30000
-	if (_wtol(rkeys[0].ksval) > 30000)
+	if (_wtol(rkeys[Interval].ksval) > 30000)
 	{	
 		DEBUGMSG(true, (L"g_iRebootTimerCheck limited to 30000\n"));
 		g_iRebootTimerCheck = 30000;
@@ -798,7 +888,7 @@ int ReadReg()
 	}
 	else
 	{
-		g_iRebootTimerCheck = _wtoi(rkeys[0].ksval) * 1000;	 //timer uses milliseconds, registry has seconds
+		g_iRebootTimerCheck = _wtoi(rkeys[Interval].ksval) * 1000;	 //timer uses milliseconds, registry has seconds
 		nclog(L"Using Time Check Interval:\t%i seconds\n", g_iRebootTimerCheck/1000);
 		DEBUGMSG(true,(str));
 	}
@@ -808,14 +898,14 @@ int ReadReg()
 	SYSTEMTIME lt;
 	memset(&lt, 0, sizeof(lt));
 	GetLocalTime(&lt);								//need pre-filled time struct
-	wcsncpy(str, rkeys[1].ksval, 2);				//get hour part of string
+	wcsncpy(str, rkeys[RebootTime].ksval, 2);				//get hour part of string
 	str[2]=0;										//add termination \0
 	lt.wHour = (ushort) _wtoi(str);							//convert to number
-	wcsncpy(str, rkeys[1].ksval + 3, 2);			//get minutes part of string
+	wcsncpy(str, rkeys[RebootTime].ksval + 3, 2);			//get minutes part of string
 	str[2]=0;
 	lt.wMinute = (ushort) _wtoi(str);
 	//get random time within timespan
-	SYSTEMTIME newTime = getRandomTime(lt);
+	newTime = getRandomTime(lt);
 
 	//g_stRebootTime=lt;	//store RebootTime in global time var
 	g_stRebootTime=newTime;	//store RebootTime including a random time offset
@@ -831,7 +921,7 @@ int ReadReg()
 
 	//ping interval
 	//test if >30000
-	if (_wtol(rkeys[2].ksval) > 30000)
+	if (_wtol(rkeys[PingInterval].ksval) > 30000)
 	{
 		DEBUGMSG(true, (L"g_iPingTimeInterval limited to 30000\n"));
 		g_iPingTimeInterval = 30*1000;
@@ -839,25 +929,43 @@ int ReadReg()
 	}
 	else
 	{
-		g_iPingTimeInterval = _wtoi(rkeys[2].ksval) * 1000; //timer uses milliseconds, registry has seconds
+		g_iPingTimeInterval = _wtoi(rkeys[PingInterval].ksval) * 1000; //timer uses milliseconds, registry has seconds
 		wsprintf(str, L"Using Ping Interval:\t%i seconds\n", g_iPingTimeInterval/1000);
 		nclog(L"Using Ping Interval:\t%i seconds\n", g_iPingTimeInterval/1000);
 		DEBUGMSG(true,(str));
 	}
 
 	//lastBootDate
-	if (StrIsNumber(rkeys[5].ksval))
+	memset(&g_stLastBootDateTime,0,sizeof(SYSTEMTIME));
+	if (StrIsNumber(rkeys[LastBootDate].ksval))
 	{
-		wsprintf(g_LastBootDate, rkeys[5].ksval);
+		wsprintf(g_LastBootDate, rkeys[LastBootDate].ksval);
 		wsprintf(str, L"Using date:\t%s\n", g_LastBootDate);
 		nclog(L"Using date:\t%s\n", g_LastBootDate);
 		DEBUGMSG(true, (L"Found valid date string in reg\n"));
+
+		//add newTime/g_sRebootTime to date string
+		TCHAR szLasteDateTime[13];
+		wsprintf(szLasteDateTime, L"%s%02i%02i", g_LastBootDate, newTime.wHour, newTime.wMinute);
+		if(getSystemtimeOfString(szLasteDateTime, &g_stLastBootDateTime)){
+			DEBUGMSG(true, (L"date string converted to SYSTEMTIME\n"));
+		}
+		else{
+			DEBUGMSG(true, (L"date string conversion to SYSTEMTIME FAILED!\n"));
+		}
 	}
 	else
 	{
 		DEBUGMSG(true, (L"### Error in date string in reg. Replaced by 19800101\n"));
 		nclog(L"### Error in date string in reg. Replaced by 19800101\n", NULL);
-		wsprintf(rkeys[5].ksval, L"19800101");
+		wsprintf(rkeys[LastBootDate].ksval, L"19800101");
+		wsprintf(g_LastBootDate, rkeys[LastBootDate].ksval);
+		if(getSystemtimeOfString(g_LastBootDate, &g_stLastBootDateTime)){
+			DEBUGMSG(true, (L"date string converted to SYSTEMTIME\n"));
+		}
+		else{
+			DEBUGMSG(true, (L"date string conversion to SYSTEMTIME FAILED!\n"));
+		}
 	}
 
 	//do a reboot or start executable?
