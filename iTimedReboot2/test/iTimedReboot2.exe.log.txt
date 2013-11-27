@@ -1,0 +1,6 @@
+0x9580cd32: __TimedReboot Check__
+0x9580cd32: ### day interval is 0 ###
+0x9580cd32: we are before reboot time
+0x9580cd32: __TimedReboot Check__
+0x9580cd32: ### day interval is 0 ###
+0x9580cd32: we are before reboot time
