@@ -142,8 +142,8 @@ int RegReadDword(TCHAR *valuename, DWORD* value)
 	LONG rc;
 	DWORD dwType=REG_DWORD;
 	DWORD dwSize=sizeof(DWORD);
-	TCHAR *szValuename;
-	szValuename=new TCHAR[wcslen(valuename)];
+	TCHAR szValuename[MAX_PATH];
+	//szValuename=new TCHAR[wcslen(valuename)];
 	wsprintf(szValuename, valuename);
 
 	if (g_hkey==NULL)
@@ -154,12 +154,12 @@ int RegReadDword(TCHAR *valuename, DWORD* value)
 		if (rc == ERROR_SUCCESS)
 		{
 			*value = dwResult;
-			delete szValuename;
+			//delete (szValuename);
 			CloseKey();
 			return rc;
 		}
 	}
-	delete szValuename;
+	//delete (szValuename);
 	CloseKey();
 	return rc;
 }

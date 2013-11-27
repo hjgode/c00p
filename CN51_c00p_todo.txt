@@ -1,3 +1,47 @@
+===============================================================
+ToDo Changes for CN51:
+
+== iLock
+
+1.  Reboot button enable/disable
+		already DONE
+2.  Close iLock using keyinput, barcode and remote
+		keyinput: 	DONE: use new iHookIdle
+		barcode: 	DONE: use a barcode to start new tool 'stopiLock'
+		remote:		DONE: use 'stopiLock'
+
+3.  add logging to file
+		already DONE
+4.  Show IP of device
+		TODO
+
+== iTimedReboot
+
+1.  new intervals for 24h, 48h, weekly
+		TODO 	add 'days' interval
+2.  randomize reboot within time frame of 2h
+		TODO 	add randomize time span
+    		a) what if the interval is shorter than the time frame?
+5.  add logging to file
+		TODO 	?
+
+== KeyToggleBoot
+	REPLACED by iHookIdle
+
+++ iHookIdle
+1.	Remove reboot dialog:	DONE
+2.	logging to file:		???
+3.	add LED alarm:			DONE
+4.	add vibrate alarm:		DONE
+5.	show alarm message:		DONE
+6.	add scan idle reset		DONE
+7.	add touch activity		NOT NEEDED 
+
+++ stopiLock
+
+	simple app that stops iLock and restores normal screen by issuing a named event
+
+#############################################################################
 3.      Anpassungen Applikationen
  
  3.1      FTP
@@ -38,37 +82,3 @@ Die Nachricht, die auf dem Display angezeigt wird, soll ganz allgemein nur ausdr
           
  4.4      IP Fenster für Staging
  Da der mRetail Client nicht mehr eingesetzt wird, braucht es neu ein Fenster wo die IP Adresse eingeblendet wird solange das Staging im SetupCenter nicht durchgeführt wurde. 
-
-===============================================================
-ToDo Changes for CN51:
-
-== iLock
-
-1.  Reboot button enable/disable
-2.  Close iLock using keyinput, barcode and remote
-3.  add logging to file
-4.  Show IP of device
-
-== iTimedReboot
-
-1.  new intervals for 24h, 48h, weekly
-2.  randomize reboot within time frame of 2h
-    a) what if the interval is shorter than the time frame?
-5.  add logging to file
-
-== KeyToggleBoot
-
-0.  Is keytoggleboot needed any more? There is a reboot dialog in the device!
-1.  reboot options dialog no more needed
-2.  add logging to file
--
-2a.  add LED and Vibrate alarm to the existing sound alarm
-3.  show window message "Device was not used for xx now."
-    a) what is the reason? Currently we only know keyboard inactivity
-4.  include screen touch activity additionally to keyboard activity to reset timeout?
-
-== NEW?
-
-1.  store model code to be readable by external apps
-2.  show IP in startup as long as device is not commisioned
-
