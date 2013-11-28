@@ -516,9 +516,11 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	HACCEL hAccelTable;
 
 	if (wcsstr(lpCmdLine, L"-test") != NULL){
+		initRKEYS();
 		ReadReg();
 		g_bEnableLogging=TRUE;
 		TimedReboot();
+		return -11;
 	}
 	//allow only one instance
 	//##################### dont run if already running #############################
