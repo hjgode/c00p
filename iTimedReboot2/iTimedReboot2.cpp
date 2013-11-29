@@ -34,6 +34,8 @@
 	#define WM_TIMECHANGE 0x1E
 #endif
 
+int iTESTMODE = 0;
+
 #define MY_MUTEX L"ITIMEDREBOOT_RUNNING"
 HANDLE hMutex=NULL;
 
@@ -238,12 +240,15 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 void writeNewBootDate(SYSTEMTIME stBoot){
 	TCHAR szDate[MAX_PATH];
 	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stBoot, L"yyyyMMdd", szDate, MAX_PATH-1);
+
 	RegWriteStr(rkeys[LastBootDate].kname, szDate);
 	wsprintf(rkeys[LastBootDate].ksval, szDate);
+	
 	//update glovbal vars
 	wsprintf(g_LastBootDate, szDate);
 	TCHAR szLasteDateTime[13];
 	wsprintf(szLasteDateTime, L"%s%02i%02i", g_LastBootDate, newTime.wHour, newTime.wMinute);
+	
 	if(getSystemtimeOfString(szLasteDateTime, &g_stLastBootDateTime)){
 		DEBUGMSG(true, (L"date string converted to SYSTEMTIME\n"));
 	}
@@ -283,6 +288,12 @@ void TimedReboot(void)
 	memset(&stCurrentTime, 0, sizeof(stCurrentTime));
 	GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
 
+	nclog(L"--- reboot time is:  %s %02i:%02i\n",
+		g_LastBootDate, newTime.wHour, newTime.wMinute);
+	nclog(L"+++ current time is: %04i%02i%02i %02i:%02i\n",
+		stCurrentTime.wYear, stCurrentTime.wMonth, stCurrentTime.wDay,
+		stCurrentTime.wHour, stCurrentTime.wMinute);
+
 	int iDayDiff = 0;
 	int iHoursDiff = 0;
 	int iMinutesDiff = 0;
@@ -310,7 +321,7 @@ void TimedReboot(void)
 			#endif
 			return;
 		}
-		if(iDiff>=0 || iMinutesDiff>3){
+		if(iDiff>0 && iMinutesDiff>3){
 			//we are to late, write new lastboot date, as if we had booted
 			#if DEBUG
 					nclog(L"we are after reboot time\n");
@@ -341,7 +352,7 @@ void TimedReboot(void)
 			if(iHoursDiff==0){
 				if(iMinutesDiff>=0 && iMinutesDiff<=3){	//need to be at the minute to boot or within 3 minutes after
 					#if DEBUG
-							nclog(L"reboot time reached or with 3 minutes\n");
+							nclog(L"reboot time reached or within 3 minutes\n");
 					#endif
 					//save new last boot date
 					writeNewBootDate(stCurrentTime);
@@ -518,8 +529,9 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	if (wcsstr(lpCmdLine, L"-test") != NULL){
 		#ifndef DEBUG
 			#define DEBUG
+		#else
+			iTESTMODE=1;
 		#endif
-		#define TEST
 		initRKEYS();
 		ReadReg();
 		g_bEnableLogging=TRUE;
@@ -915,12 +927,13 @@ int ReadReg()
 	wcsncpy(str, rkeys[RebootTime].ksval + 3, 2);			//get minutes part of string
 	str[2]=0;
 	lt.wMinute = (ushort) _wtoi(str);
-#ifdef TEST	//do not use a random time in TEST mode
-	memcpy(&newTime, &lt, sizeof(SYSTEMTIME));
-#else
-	//get random time within timespan
-	newTime = getRandomTime(lt);
-#endif
+	if( iTESTMODE==1){	//do not use a random time in TEST mode
+		memcpy(&newTime, &lt, sizeof(SYSTEMTIME));
+	}
+	else{
+		//get random time within timespan
+		newTime = getRandomTime(lt);
+	}
 	//g_stRebootTime=lt;	//store RebootTime in global time var
 	g_stRebootTime=newTime;	//store RebootTime including a random time offset
 	nclog(L"Reboot time will be:\t%00i:%00i\n", newTime.wHour, newTime.wMinute); 
@@ -954,8 +967,8 @@ int ReadReg()
 	if (StrIsNumber(rkeys[LastBootDate].ksval))
 	{
 		wsprintf(g_LastBootDate, rkeys[LastBootDate].ksval);
-		wsprintf(str, L"Using date:\t%s\n", g_LastBootDate);
-		nclog(L"Using date:\t%s\n", g_LastBootDate);
+		wsprintf(str, L"Last boot date:\t%s\n", g_LastBootDate);
+		nclog(L"Last boot date:\t%s\n", g_LastBootDate);
 		DEBUGMSG(true, (L"Found valid date string in reg\n"));
 
 		//add newTime/g_sRebootTime to date string

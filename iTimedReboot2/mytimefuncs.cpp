@@ -1,7 +1,7 @@
 // mytimefuncs.cpp
 
 #include "mytimefuncs.h"
-
+#include "nclog.h"
 
 //--------------------------------------------------------------------
 // Function name  : getSystemtimeOfString
@@ -212,28 +212,39 @@ int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours,
 	DEBUGMSG(1, (L"getDateTimeDiff()...\n"));
 	DEBUGMSG(1,(L"old date:	")); dumpST(stOld);
 	DEBUGMSG(1,(L"new date:	")); dumpST(stNew);
-
+#ifdef DEBUG
+	nclog(L"+++ old time is: %04i%02i%02i %02i:%02i\n",
+		stOld.wYear, stOld.wMonth, stOld.wDay,
+		stOld.wHour, stOld.wMinute);
+	nclog(L"+++ new time is: %04i%02i%02i %02i:%02i\n",
+		stNew.wYear, stNew.wMonth, stNew.wDay,
+		stNew.wHour, stNew.wMinute);
+#endif
 	FILETIME ftNew;
 	FILETIME ftOld;
 	//convert systemtimes to filetimes
 	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
+	if(!bRes)
+		DEBUGMSG(1, (L"SystemTimeToFileTime(&stNew, &ftNew) FAILED\n"));
 	bRes = SystemTimeToFileTime(&stOld, &ftOld);
+	if(!bRes)
+		DEBUGMSG(1, (L"SystemTimeToFileTime(&stOld, &ftOld) FAILED\n"));
 	ULARGE_INTEGER tOld, tNew;
 	memcpy(&tOld, &ftOld, sizeof(tOld));
 	memcpy(&tNew, &ftNew, sizeof(tNew));
 	ULONGLONG diff;
 	BOOL bIsNegative=FALSE;
-	if(tOld.QuadPart<tNew.QuadPart){// return always positive result
+	if(tOld.QuadPart < tNew.QuadPart){// return always positive result
 		diff=(tNew.QuadPart-tOld.QuadPart);
-		bIsNegative=TRUE;
-		iReturn=-1;		//old is before new date/time
-		DEBUGMSG(1, (L"old is before new date\n"));
-	}
-	else if(tOld.QuadPart>tNew.QuadPart){
-		diff=(tOld.QuadPart-tNew.QuadPart); 
-		DEBUGMSG(1, (L"old is after new date\n"));
 		bIsNegative=FALSE;
-		iReturn=1;
+		iReturn=1;		//old is before new date/time
+		DEBUGMSG(1, (L"old is after new date\n"));
+	}
+	else if(tOld.QuadPart > tNew.QuadPart){
+		diff=(tOld.QuadPart-tNew.QuadPart); 
+		DEBUGMSG(1, (L"old is before new date\n"));
+		bIsNegative=TRUE;
+		iReturn=-1;
 	}
 	else if(tOld.QuadPart==tNew.QuadPart){
 		diff=0;
