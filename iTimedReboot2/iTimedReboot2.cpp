@@ -237,9 +237,11 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 	return newTime;	
 }
 
-void writeNewBootDate(SYSTEMTIME stBoot){
+void writeNewBootDate(SYSTEMTIME stBoot, int dayInterval){
 	TCHAR szDate[MAX_PATH];
-	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stBoot, L"yyyyMMdd", szDate, MAX_PATH-1);
+
+	SYSTEMTIME stNewBootTime = addDays(stBoot, dayInterval);
+	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stNewBootTime, L"yyyyMMdd", szDate, MAX_PATH-1);
 
 	OpenKey();
 	if(RegWriteStr(rkeys[LastBootDate].kname, szDate)!=0)
@@ -331,7 +333,7 @@ void TimedReboot(void)
 			#if DEBUG
 					nclog(L"we are after reboot time\n");
 			#endif
-			writeNewBootDate(stCurrentTime);
+			writeNewBootDate(stCurrentTime, 0);
 			return;
 		}
 		/*
@@ -360,7 +362,7 @@ void TimedReboot(void)
 							nclog(L"reboot time reached or within 3 minutes\n");
 					#endif
 					//save new last boot date
-					writeNewBootDate(stCurrentTime);
+					writeNewBootDate(stCurrentTime, 0);
 					//doreboot
 					doAnimateAndReboot(stCurrentTime);
 					return;
@@ -381,7 +383,7 @@ old is before new date
 ### hour diff=-59
 ### min diff =-3574
 */
-		if(iDayDiff<0)
+		if(iDayDiff<g_iRebootDays)
 		{
 			//we are before date
 			#if DEBUG
@@ -391,6 +393,7 @@ old is before new date
 		}
 		if(iDayDiff > g_iRebootDays){
 			//we are too late
+
 			#if DEBUG
 					nclog(L"we are after reboot time\n");
 			#endif
@@ -405,7 +408,7 @@ old is before new date
 				//iDaydiff is negative as long as old is before new
 				//iDiff is negative as long as we are before date
 			}while(iDiff<=0 && iDayDiff<g_iRebootDays);
-			writeNewBootDate(stLastBootDate);
+			writeNewBootDate(stLastBootDate, iDayDiff);
 			return;
 		}
 		if(iDayDiff==g_iRebootDays){
@@ -413,13 +416,14 @@ old is before new date
 					nclog(L"reboot date match\n");
 			#endif
 			//right day
-			if(iHoursDiff==0){
-				if(iMinutesDiff>=0 && iMinutesDiff<=3){	//need to be at the minute to boot or within 3 minutes after
+			if(iHoursDiff==g_iRebootDays*24){
+				int iMinutes=iMinutesDiff / 60 /24;
+				if(iMinutes>=0 && iMinutes<=3){	//need to be at the minute to boot or within 3 minutes after
 					#if DEBUG
 							nclog(L"reboot time reached or with 3 minutes\n");
 					#endif
 					//save new last boot date
-					writeNewBootDate(stCurrentTime);
+					writeNewBootDate(stCurrentTime, 0);
 					//do reboot
 					doAnimateAndReboot(stCurrentTime);
 					return;

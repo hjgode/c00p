@@ -11,6 +11,11 @@
 	change from time to time to show the response of a ping to a specified
 	IP address.
 
+	Previous versions were designed to reboot daily on or after same time
+	Now, we boot only, if we are at or within 3 minutes after reboot time.
+	Additionally there is a days interval. If days==0 there will be only
+	one boot and the registry is not updated with the interval.
+	
 ===purpose===
 	v1 based
 	watch an IP to ping, changes icon on today screen for number of returned pings
@@ -45,10 +50,10 @@
 			the number of days between reboots
 		"PingTarget","127.0.0.1"
 			define the IP address of the host to ping periodically
-		"PingInterva,"600"
+		"PingInterval,"600"
 			define how often to test the host
 			if 0, there will be no periodcal ping 
-		"Interva,"60"
+		"Interval,"60"
 			define how often to look at the time
 			if 0 there will be no time check and we will never boot or excute an exe
 		"EnableLogging","0"
