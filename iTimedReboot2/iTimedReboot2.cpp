@@ -516,6 +516,10 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	HACCEL hAccelTable;
 
 	if (wcsstr(lpCmdLine, L"-test") != NULL){
+		#ifndef DEBUG
+			#define DEBUG
+		#endif
+		#define TEST
 		initRKEYS();
 		ReadReg();
 		g_bEnableLogging=TRUE;
@@ -911,9 +915,12 @@ int ReadReg()
 	wcsncpy(str, rkeys[RebootTime].ksval + 3, 2);			//get minutes part of string
 	str[2]=0;
 	lt.wMinute = (ushort) _wtoi(str);
+#ifdef TEST	//do not use a random time in TEST mode
+	memcpy(&newTime, &lt, sizeof(SYSTEMTIME));
+#else
 	//get random time within timespan
 	newTime = getRandomTime(lt);
-
+#endif
 	//g_stRebootTime=lt;	//store RebootTime in global time var
 	g_stRebootTime=newTime;	//store RebootTime including a random time offset
 	nclog(L"Reboot time will be:\t%00i:%00i\n", newTime.wHour, newTime.wMinute); 

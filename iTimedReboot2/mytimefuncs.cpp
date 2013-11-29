@@ -221,7 +221,8 @@ int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours,
 	ULARGE_INTEGER tOld, tNew;
 	memcpy(&tOld, &ftOld, sizeof(tOld));
 	memcpy(&tNew, &ftNew, sizeof(tNew));
-	ULONGLONG diff; BOOL bIsNegative=FALSE;
+	ULONGLONG diff;
+	BOOL bIsNegative=FALSE;
 	if(tOld.QuadPart<tNew.QuadPart){// return always positive result
 		diff=(tNew.QuadPart-tOld.QuadPart);
 		bIsNegative=TRUE;
@@ -231,12 +232,14 @@ int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours,
 	else if(tOld.QuadPart>tNew.QuadPart){
 		diff=(tOld.QuadPart-tNew.QuadPart); 
 		DEBUGMSG(1, (L"old is after new date\n"));
+		bIsNegative=FALSE;
 		iReturn=1;
 	}
 	else if(tOld.QuadPart==tNew.QuadPart){
 		diff=0;
 		iReturn=0;
 		DEBUGMSG(1, (L"old is equal new date\n"));
+		bIsNegative=FALSE;
 	}
 	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
 	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
@@ -254,6 +257,7 @@ int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours,
 	*iHours		=(int)diffHours;
 	*iMinutes	=(int)diffMinutes;
 	DEBUGMSG(1, (L"getDateTimeDiff end. Return = %i/%i/%i (days/hours/minutes) diff. Return=%i\n", *iDays, *iHours, *iMinutes, iReturn));
+
 	return iReturn;
 }
 
