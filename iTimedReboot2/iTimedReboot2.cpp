@@ -182,12 +182,12 @@ BOOL WarmBoot()
 //
 BOOL DoBootAction(){
 	if(g_DoReboot){
-		nclog(L"Rebooting now...",NULL);
+		nclog(L"Rebooting now...\n",NULL);
 		Sleep(1000);
 		#ifndef DEBUG
 			return KernelIoControl(IOCTL_HAL_REBOOT, NULL, 0, NULL, 0, NULL);
 		#else
-			nclog(L"DEBUGMODE no warmboot",NULL);
+			nclog(L"DEBUGMODE no warmboot\n",NULL);
 		#endif
 	}
 	else{
@@ -241,7 +241,10 @@ void writeNewBootDate(SYSTEMTIME stBoot){
 	TCHAR szDate[MAX_PATH];
 	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stBoot, L"yyyyMMdd", szDate, MAX_PATH-1);
 
-	RegWriteStr(rkeys[LastBootDate].kname, szDate);
+	OpenKey();
+	if(RegWriteStr(rkeys[LastBootDate].kname, szDate)!=0)
+		DEBUGMSG(1, (L"save lastbootdate to reg failed!\n"));
+	CloseKey();
 	wsprintf(rkeys[LastBootDate].ksval, szDate);
 	
 	//update glovbal vars
@@ -260,13 +263,15 @@ void writeNewBootDate(SYSTEMTIME stBoot){
 }
 
 void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
-	AnimateIcon(g_hInstance, g_hwnd, NIM_MODIFY, ico_redbomb);
-	Sleep(3000);
+	if(iTESTMODE==0){
+		AnimateIcon(g_hInstance, g_hwnd, NIM_MODIFY, ico_redbomb);
+		Sleep(3000);
+	}
 	TCHAR sDateNow[MAX_PATH];
 	int er=0;
 	//produce a mathematic date
 	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stCurrentTime, L"yyyyMMdd", sDateNow, MAX_PATH-1);
-	nclog(L"Will reboot now. Last reboot on:\n\t%s, %s\n", sDateNow, g_sRebootTime);
+	nclog(L"##### Will reboot now. Last reboot on:\n\t%s, %s #####\n", sDateNow, g_sRebootTime);
 	DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
 		WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
 }
@@ -358,6 +363,7 @@ void TimedReboot(void)
 					writeNewBootDate(stCurrentTime);
 					//doreboot
 					doAnimateAndReboot(stCurrentTime);
+					return;
 				}
 			}
 		}
@@ -416,6 +422,7 @@ old is before new date
 					writeNewBootDate(stCurrentTime);
 					//do reboot
 					doAnimateAndReboot(stCurrentTime);
+					return;
 				}
 			}
 		}
