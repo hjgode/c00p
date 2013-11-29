@@ -12,7 +12,7 @@ ECHO ############## START ############### >test_run.txt
 
 echo Importing test reg keys...
 echo Importing test reg keys... >>test_run.txt
-pregutl @iTimedReboot2.reg >>test_run.txt
+pregutl @iTimedReboot2_one_day.reg >>test_run.txt
 
 REM the reg should now contain
 rem LastBootDate=20131129
