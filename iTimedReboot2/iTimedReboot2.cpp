@@ -278,6 +278,27 @@ void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
 		WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
 }
 
+void writeCurrentBootDate(SYSTEMTIME stCurrentTime){
+	SYSTEMTIME stLastBootDate;
+	int iDiff;
+	int iDayDiff = 0;
+	int iHoursDiff = 0;
+	int iMinutesDiff = 0;
+	#if DEBUG
+			nclog(L"calculating new reboot time\n");
+	#endif
+	SYSTEMTIME stStartDate = g_stLastBootDateTime;
+	do{
+		stLastBootDate = addDays(stStartDate, g_iRebootDays);
+		dumpST(L"stLastBootDate", stLastBootDate);
+		iDiff = getDateTimeDiff(stLastBootDate, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
+		stStartDate=stLastBootDate;
+		//iDaydiff is negative as long as old is before new
+		//iDiff is negative as long as we are before date
+	}while(abs(iDayDiff) < g_iRebootDays);// while(iDiff<=0 && iDayDiff<g_iRebootDays);
+	writeNewBootDate(stLastBootDate, iDayDiff);	//write reg as we we have booted
+}
+
 //=================================================================================
 //
 //  FUNCTION:	TimedReboot()
@@ -393,22 +414,21 @@ old is before new date
 		}
 		if(iDayDiff > g_iRebootDays){
 			//we are too late
-
 			#if DEBUG
 					nclog(L"we are after reboot time\n");
 			#endif
 			//add days interval to last boot date, should we add multiples of days interval???
-			SYSTEMTIME stLastBootDate;
-			#if DEBUG
-					nclog(L"calculating new reboot time\n");
-			#endif
-			do{
-				stLastBootDate = addDays(g_stLastBootDateTime, g_iRebootDays);
-				iDiff = getDateTimeDiff(stLastBootDate, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
-				//iDaydiff is negative as long as old is before new
-				//iDiff is negative as long as we are before date
-			}while(iDiff<=0 && iDayDiff<g_iRebootDays);
-			writeNewBootDate(stLastBootDate, iDayDiff);
+			
+			//SYSTEMTIME stLastBootDate;
+			writeCurrentBootDate(stCurrentTime);
+			//do{
+			//	stLastBootDate = addDays(g_stLastBootDateTime, g_iRebootDays);
+			//	dumpST(L"stLastBootDate", stLastBootDate);
+			//	iDiff = getDateTimeDiff(stLastBootDate, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
+			//	//iDaydiff is negative as long as old is before new
+			//	//iDiff is negative as long as we are before date
+			//}while(iDayDiff<g_iRebootDays);// while(iDiff<=0 && iDayDiff<g_iRebootDays);
+			//writeNewBootDate(stLastBootDate, iDayDiff);	//write reg as we we have booted
 			return;
 		}
 		if(iDayDiff==g_iRebootDays){
@@ -417,7 +437,13 @@ old is before new date
 			#endif
 			//right day
 			if(iHoursDiff==g_iRebootDays*24){
-				int iMinutes=iMinutesDiff / 60 /24;
+				#if DEBUG
+						nclog(L"reboot hour match\n");
+				#endif
+				//check minute diff
+				int iMinutesCurrent = stCurrentTime.wMinute;
+				int iMinutesLastBoot = g_stLastBootDateTime.wMinute;
+				int iMinutes = abs(iMinutesCurrent - iMinutesLastBoot);
 				if(iMinutes>=0 && iMinutes<=3){	//need to be at the minute to boot or within 3 minutes after
 					#if DEBUG
 							nclog(L"reboot time reached or with 3 minutes\n");
@@ -428,6 +454,33 @@ old is before new date
 					doAnimateAndReboot(stCurrentTime);
 					return;
 				}
+				if(iMinutes<0){
+					//before reboot time
+					#if DEBUG
+							nclog(L"we are before reboot minute\n");
+					#endif
+				}
+				if(iMinutes>3){
+					//after reboot time
+					#if DEBUG
+							nclog(L"we are more than 3 minutes after reboot minute\n");
+					#endif
+					writeCurrentBootDate(stCurrentTime);				
+				}
+			}
+			//same day but ...
+			if(iHoursDiff>g_iRebootDays*24){
+				//too late
+				#if DEBUG
+						nclog(L"we are after reboot hour\n");
+				#endif
+				writeCurrentBootDate(stCurrentTime);
+			}
+			if(iHoursDiff<g_iRebootDays*24){
+				//too early
+				#if DEBUG
+						nclog(L"we are before reboot hour\n");
+				#endif
 			}
 		}
 	}

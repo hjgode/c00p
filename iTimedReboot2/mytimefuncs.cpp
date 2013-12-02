@@ -220,15 +220,18 @@ int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours,
 		stNew.wYear, stNew.wMonth, stNew.wDay,
 		stNew.wHour, stNew.wMinute);
 #endif
+
 	FILETIME ftNew;
 	FILETIME ftOld;
 	//convert systemtimes to filetimes
 	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
 	if(!bRes)
 		DEBUGMSG(1, (L"SystemTimeToFileTime(&stNew, &ftNew) FAILED\n"));
+	
 	bRes = SystemTimeToFileTime(&stOld, &ftOld);
 	if(!bRes)
 		DEBUGMSG(1, (L"SystemTimeToFileTime(&stOld, &ftOld) FAILED\n"));
+
 	ULARGE_INTEGER tOld, tNew;
 	memcpy(&tOld, &ftOld, sizeof(tOld));
 	memcpy(&tNew, &ftNew, sizeof(tNew));
@@ -238,11 +241,11 @@ int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours,
 		diff=(tNew.QuadPart-tOld.QuadPart);
 		bIsNegative=FALSE;
 		iReturn=1;		//old is before new date/time
-		DEBUGMSG(1, (L"old is after new date\n"));
+		DEBUGMSG(1, (L"old is before new date\n"));
 	}
 	else if(tOld.QuadPart > tNew.QuadPart){
 		diff=(tOld.QuadPart-tNew.QuadPart); 
-		DEBUGMSG(1, (L"old is before new date\n"));
+		DEBUGMSG(1, (L"old is after new date\n"));
 		bIsNegative=TRUE;
 		iReturn=-1;
 	}
@@ -252,9 +255,19 @@ int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours,
 		DEBUGMSG(1, (L"old is equal new date\n"));
 		bIsNegative=FALSE;
 	}
+
+	LONG lDiff = CompareFileTime(&ftOld, &ftNew);
+
 	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
-	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
-	ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
+	ULONGLONG diffHours = diff /   (60*60*(ULONGLONG)10000000);
+	ULONGLONG diffMinutes = diff /    (60*(ULONGLONG)10000000);	
+	//gives wrong result:
+	/*
+	0xb68adf9a: --- reboot time is:  20131130 12:45
+	0xb68adf9a: +++ current time is: 20131202 13:55
+
+	returns 2 diffMinutes!!! instead of 70
+	*/
 
 	if(bIsNegative){
 		diffDays	=(int)(0-diffDays);
