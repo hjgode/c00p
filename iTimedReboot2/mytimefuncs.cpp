@@ -201,6 +201,33 @@ SYSTEMTIME addDays(SYSTEMTIME stOld, int days){
 	return stNew;
 }
 
+DWORD DiffInDays(SYSTEMTIME st1, SYSTEMTIME st2)
+{
+  FILETIME ft1, ft2;
+  SystemTimeToFileTime(&st1, &ft1);
+  SystemTimeToFileTime(&st2, &ft2);
+ 
+  LARGE_INTEGER li1;
+  li1.LowPart  = ft1.dwLowDateTime;
+  li1.HighPart = ft1.dwHighDateTime;
+  LARGE_INTEGER li2;
+  li2.LowPart  = ft2.dwLowDateTime;
+  li2.HighPart = ft2.dwHighDateTime;
+ 
+  LARGE_INTEGER li3;
+  li3.QuadPart = li1.QuadPart - li2.QuadPart;
+ 
+  li3.QuadPart /= 10; // => now us
+  li3.QuadPart /= 1000; // now ms
+  li3.QuadPart /= 1000; // now sec
+  li3.QuadPart /= 60; // now min
+  DEBUGMSG(1,(L"minutes diff=%i\n",li3));
+  li3.QuadPart /= 60; // now h
+  li3.QuadPart /= 24; // now days
+ 
+  return li3.LowPart;
+}
+
 //--------------------------------------------------------------------
 // Function name  : getDateTimeDiff
 // Description    : return the diff between two datetimes 

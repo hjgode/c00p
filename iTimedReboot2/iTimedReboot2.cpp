@@ -114,6 +114,7 @@ SYSTEMTIME newTime;							//calculated random reboot time
 
 TCHAR			g_LastBootDate[MAX_PATH];	//string holding the last reboot date
 SYSTEMTIME		g_stLastBootDateTime;		//SYSTEMTIME of last reboot date/time
+SYSTEMTIME		g_stRebootDateTime;			//the date/time we have to reboot
 
 BOOL			g_DoReboot = TRUE;
 TCHAR			g_ExeName[MAX_PATH];
@@ -254,6 +255,7 @@ void writeNewBootDate(SYSTEMTIME stBoot, int dayInterval){
 	TCHAR szLasteDateTime[13];
 	wsprintf(szLasteDateTime, L"%s%02i%02i", g_LastBootDate, newTime.wHour, newTime.wMinute);
 	
+	//TODO check implementation!
 	if(getSystemtimeOfString(szLasteDateTime, &g_stLastBootDateTime)){
 		DEBUGMSG(true, (L"date string converted to SYSTEMTIME\n"));
 	}
@@ -325,15 +327,21 @@ void TimedReboot(void)
 	int iDayDiff = 0;
 	int iHoursDiff = 0;
 	int iMinutesDiff = 0;
+	int iDiff=0;
+
+	DiffInDays(g_stRebootDateTime, stCurrentTime);
+
+	iDiff = getDateTimeDiff(g_stRebootDateTime, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
 
 	//globals
 	/*
+	g_stRebootDateTime; //SYSTEMTIME of next reboot
+
 	g_LastBootDate;	//string with date of last reboot
 	g_iRebootDays;	//days interval between reboots
 	g_stRebootTime;	//date/time of planned reboot, the current date + the planned reboot time + a radom time
 	g_stLastBootDateTime;		//SYSTEMTIME of last reboot date/time
 	*/
-	int iDiff=0;
 	// #### case 1 daysinterval==0 ####
 	if(g_iRebootDays==0){
 		#if DEBUG
@@ -1051,6 +1059,7 @@ int ReadReg()
 		nclog(L"### Error in date string in reg. Replaced by 19800101\n", NULL);
 		wsprintf(rkeys[LastBootDate].ksval, L"19800101");
 		wsprintf(g_LastBootDate, rkeys[LastBootDate].ksval);
+		
 		if(getSystemtimeOfString(g_LastBootDate, &g_stLastBootDateTime)){
 			DEBUGMSG(true, (L"date string converted to SYSTEMTIME\n"));
 		}
@@ -1087,6 +1096,13 @@ int ReadReg()
 		nclog( L"Using Days Interval:\t%i\n", g_iRebootDays );
 		DEBUGMSG(true,(str));
 	}
+
+	//TODO check if works OK
+	//we need the date and time of when to reboot
+	g_stRebootDateTime=addDays(g_stLastBootDateTime, g_iRebootDays);
+	nclog(L"### next time to reboot: %04i%02i%02i %02i:%02i\n", 
+		g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
+		g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
 
 	return 0;
 }
