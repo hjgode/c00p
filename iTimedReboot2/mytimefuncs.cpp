@@ -68,9 +68,11 @@ SYSTEMTIME getNextBootWithInterval(SYSTEMTIME stActual, SYSTEMTIME stRebootPlann
 	//result will be negative if stActual is past stRebootPlanned
 	int minutesdiff=DiffInMinutes(stActual, stPlannedReboot2, &iDays, &iHours, &iMinutes);
 	//repeat until minutesdiff>0
+	SYSTEMTIME newRebootTime;
 	while (minutesdiff<0){
-		stPlannedReboot2=addDays(stPlannedReboot2, daysInterval);
+		newRebootTime=addDays(stPlannedReboot2, daysInterval);
 		minutesdiff=DiffInMinutes(stActual, stPlannedReboot2, &iDays, &iHours, &iMinutes);
+		stPlannedReboot2=newRebootTime;
 	}
 	//subtract one days interval
 	stReturn=addDays(stPlannedReboot2, -daysInterval);
@@ -191,8 +193,8 @@ SYSTEMTIME addDays(SYSTEMTIME stOld, int days){
 	TCHAR szPre[MAX_PATH];
 	wsprintf(szPre, L"old time: ");
 	dumpST(szPre, stOld);
-	SYSTEMTIME stNew;
 
+	SYSTEMTIME stNew;
 	stNew = DT_Add(stOld,0,0,days,0,0,0,0);
 
 	wsprintf(szPre, L"new time: ");

@@ -5,14 +5,14 @@
 //version	change
 // 1.0		initial release
 /*
-			[HKEY_LOCAL_MACHINE\SOFTWARE\Intermec\iTimedReboot2]
-			"Interval"="0"			//0=OFF, seconds between time checks, do not use >30000
-			"RebootDays"="0"		//days between reboots
-			"RebootTime"="00:00"	//time to reboot in hh:mm
-			"PingInterval"="0"		//0=OFF, seconds between pings
-			"PingTarget"="127.0.0.1"//target IP to ping
-			"EnableLogging"="0"		//0=disable logging file, 1=enable
-			"LastBootDate"=yyyymmdd	//date of last boot
+[HKEY_LOCAL_MACHINE\SOFTWARE\Intermec\iTimedReboot2]
+"Interval"="0"			//0=OFF, seconds between time checks, do not use >30000
+"RebootDays"="0"		//days between reboots
+"RebootTime"="00:00"	//time to reboot in hh:mm
+"PingInterval"="0"		//0=OFF, seconds between pings
+"PingTarget"="127.0.0.1"//target IP to ping
+"EnableLogging"="0"		//0=disable logging file, 1=enable
+"LastBootDate"=yyyymmdd	//date of last boot
 */
 
 #include "stdafx.h"
@@ -31,7 +31,7 @@
 #define IDC_BUTTON_CANCEL 202 
 
 #ifndef WM_TIMECHANGE
-	#define WM_TIMECHANGE 0x1E
+#define WM_TIMECHANGE 0x1E
 #endif
 
 int iTESTMODE = 0;
@@ -40,10 +40,10 @@ int iTESTMODE = 0;
 HANDLE hMutex=NULL;
 
 //FILETIME helpers
-   #define _SECOND ((ULONGLONG) 10000000)
-   #define _MINUTE (60 * _SECOND)
-   #define _HOUR   (60 * _MINUTE)
-   #define _DAY    (24 * _HOUR)
+#define _SECOND ((ULONGLONG) 10000000)
+#define _MINUTE (60 * _SECOND)
+#define _HOUR   (60 * _MINUTE)
+#define _DAY    (24 * _HOUR)
 
 #define		MAX_LOADSTRING			100
 
@@ -72,14 +72,14 @@ const int		IconSlot = 0;
 // List of Icon that is created and to be animated
 #define			NUM_ICON_FOR_ANIMATION	9
 static int		IconResourceArray[NUM_ICON_FOR_ANIMATION] = {IDI_ICON0,	//the standard tray icon (a black bomb)
-															 IDI_ICON1, //a red X (used for no ping reply)
-															 IDI_ICON2, //one small yellow bar (one ping returned)
-															 IDI_ICON3, //two green bars
-															 IDI_ICON4, //three green bars (three ping returned)
-															 IDI_ICON5, //four green bars
-															 IDI_ICON6, //a question mark
-															 IDI_ICON7, //a black bomb
-															 IDI_ICON8};//a red bomb
+IDI_ICON1, //a red X (used for no ping reply)
+IDI_ICON2, //one small yellow bar (one ping returned)
+IDI_ICON3, //two green bars
+IDI_ICON4, //three green bars (three ping returned)
+IDI_ICON5, //four green bars
+IDI_ICON6, //a question mark
+IDI_ICON7, //a black bomb
+IDI_ICON8};//a red bomb
 const int ico_app		=0;
 const int ico_redx		=1;
 const int ico_ping1		=2;
@@ -185,11 +185,11 @@ BOOL DoBootAction(){
 	if(g_DoReboot){
 		nclog(L"Rebooting now...\n",NULL);
 		Sleep(1000);
-		#ifndef DEBUG
-			return KernelIoControl(IOCTL_HAL_REBOOT, NULL, 0, NULL, 0, NULL);
-		#else
-			nclog(L"DEBUGMODE no warmboot\n",NULL);
-		#endif
+#ifndef DEBUG
+		return KernelIoControl(IOCTL_HAL_REBOOT, NULL, 0, NULL, 0, NULL);
+#else
+		nclog(L"DEBUGMODE no warmboot\n",NULL);
+#endif
 	}
 	else{
 		TCHAR str[MAX_PATH];
@@ -250,12 +250,12 @@ void writeLastBootDate(SYSTEMTIME stBoot){
 		DEBUGMSG(1, (L"save lastbootdate to reg failed!\n"));
 	CloseKey();
 	wsprintf(rkeys[LastBootDate].ksval, szDate);
-	
+
 	//update glovbal vars
 	wsprintf(g_LastBootDate, szDate);
 	TCHAR szLasteDateTime[13];
 	wsprintf(szLasteDateTime, L"%s%02i%02i", g_LastBootDate, newTime.wHour, newTime.wMinute);
-	
+
 	//TODO check implementation!
 	if(getSystemtimeOfString(szLasteDateTime, &g_stLastBootDateTime)){
 		DEBUGMSG(true, (L"date string converted to SYSTEMTIME\n"));
@@ -278,7 +278,7 @@ void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
 	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stCurrentTime, L"yyyyMMdd", sDateNow, MAX_PATH-1);
 	nclog(L"##### Will reboot now. Last reboot on:\n\t%s, %s #####\n", sDateNow, g_sRebootTime);
 	DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
-		WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
+	WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
 }
 
 //void writeCurrentBootDate(SYSTEMTIME stCurrentTime){
@@ -310,11 +310,14 @@ void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
 //				else update registry with next reboot date
 //  COMMENTS:	none
 //
-void TimedReboot(void)
+int TimedReboot(void)
 {
-	#if DEBUG
-		nclog(L"__TimedReboot Check__\n");
-	#endif
+#if DEBUG
+	nclog(L"__TimedReboot Check__\n");
+#endif
+
+	int iReturn=0;	//return 0 for normal operation, return 1 to exit (reboot time), 2 for past reboot time, -1 for before reboot time
+
 	SYSTEMTIME stCurrentTime;
 	memset(&stCurrentTime, 0, sizeof(stCurrentTime));
 	GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
@@ -338,11 +341,11 @@ void TimedReboot(void)
 	//if minutes is > 0 and < 3 (we are later than reboot time) but within timespan, we need to update the registry and do a warmboot
 	//if minutes is < 0 we are before reboot time
 	//if minutes is > 3 we are behind reboot time and have to recalculate the next reboot time with day interval 
-	
+
 	//iDiff = getDateTimeDiff(g_stRebootDateTime, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
 	if(iDiff < 0){
 		DEBUGMSG(1, (L"WE ARE BEFORE REBOOT TIME\n"));
-		return;
+		return iReturn;
 	}
 	if(iDiff <= 3 && iDiff >= 0){
 		DEBUGMSG(1, (L"WE ARE WITHIN REBOOT TIMESPAN\n"));
@@ -351,7 +354,8 @@ void TimedReboot(void)
 		//update of vars not needed as we do a reboot
 		//do a warmboot
 		doAnimateAndReboot(stCurrentTime);
-		return;
+		iReturn=1;
+		return iReturn;
 	}
 	if(iDiff > 0){
 		DEBUGMSG(1, (L"WE ARE AFTER REBOOT TIME\n"));
@@ -362,8 +366,8 @@ void TimedReboot(void)
 		wsprintf(g_LastBootDate, L"%04i%02i%02i", 
 			g_stLastBootDateTime.wYear, g_stLastBootDateTime.wMonth, g_stLastBootDateTime.wDay);
 		writeLastBootDate(g_stLastBootDateTime);
-
-		return;
+		iReturn=2;
+		return iReturn;
 	}
 
 	//globals
@@ -376,10 +380,10 @@ void TimedReboot(void)
 	g_stLastBootDateTime;		//SYSTEMTIME of last reboot date/time
 	*/
 
-	#if DEBUG
-		nclog(L"--- TimedReboot Check END ---\n");
-	#endif
-	return;
+#if DEBUG
+	nclog(L"--- TimedReboot Check END ---\n");
+#endif
+	return iReturn;
 }
 
 //=====================================================================================================
@@ -474,22 +478,26 @@ void TimedPing(void)
 //  COMMENTS:	none
 //
 int APIENTRY WinMain(	HINSTANCE hInstance,
-					HINSTANCE hPrevInstance,
-					LPTSTR    lpCmdLine,
-					int       nCmdShow)
+					 HINSTANCE hPrevInstance,
+					 LPTSTR    lpCmdLine,
+					 int       nCmdShow)
 {
- 	// TODO: Place code here.
+	// TODO: Place code here.
 	MSG msg;
 	HACCEL hAccelTable;
 
 	if (wcsstr(lpCmdLine, L"-test") != NULL){
-		#ifndef DEBUG
-			#define DEBUG
-		#else
-			iTESTMODE=1;
-		#endif
+#ifndef DEBUG
+#define DEBUG
+#else
+		iTESTMODE=1;
+#endif
 		initRKEYS();
-		ReadReg();
+
+		if(ReadReg()==-1){
+			DEBUGMSG(1, (L"\n!!!!!!!!!! UNABLE to read Registry settings !!!!!!!!!!!!!!\n"));
+			return -22;
+		}
 		g_bEnableLogging=TRUE;
 		TimedReboot();
 		return -11;
@@ -602,37 +610,37 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
-   HWND hWnd;
+	HWND hWnd;
 
-   g_hInstance = hInstance; // Store instance handle in our global variable
+	g_hInstance = hInstance; // Store instance handle in our global variable
 
 	hWnd = CreateWindow (szWindowClass, szTitle  ,   
-			 WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_OVERLAPPED,          // Style flags                         
-			 CW_USEDEFAULT,       // x position                         
-			 CW_USEDEFAULT,       // y position                         
-			 CW_USEDEFAULT,       // Initial width                         
-			 CW_USEDEFAULT,       // Initial height                         
-			 NULL,                // Parent                         
-			 NULL,                // Menu, must be null                         
-			 hInstance,           // Application instance                         
-			 NULL);               // Pointer to create
+		WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_OVERLAPPED,          // Style flags                         
+		CW_USEDEFAULT,       // x position                         
+		CW_USEDEFAULT,       // y position                         
+		CW_USEDEFAULT,       // Initial width                         
+		CW_USEDEFAULT,       // Initial height                         
+		NULL,                // Parent                         
+		NULL,                // Menu, must be null                         
+		hInstance,           // Application instance                         
+		NULL);               // Pointer to create
 
-   if (!hWnd)
-   {
-      ShowError(GetLastError());
-	   return FALSE;
-   }
+	if (!hWnd)
+	{
+		ShowError(GetLastError());
+		return FALSE;
+	}
 
 	g_hwnd=hWnd;
 	g_hInstance=hInstance;
-	
-   ShowWindow(hWnd, SW_HIDE);
-   UpdateWindow(hWnd);
 
-   // Add icon on system tray during initialzation
-   AnimateIcon(hInstance, hWnd, NIM_ADD, ico_app);
-	  
-   return TRUE;
+	ShowWindow(hWnd, SW_HIDE);
+	UpdateWindow(hWnd);
+
+	// Add icon on system tray during initialzation
+	AnimateIcon(hInstance, hWnd, NIM_ADD, ico_app);
+
+	return TRUE;
 }
 
 //=================================================================================
@@ -644,13 +652,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //   COMMENTS:
 //
 LONG FAR PASCAL WndProc (HWND hwnd   , UINT message , 
-                         UINT wParam , LONG lParam)                
+						 UINT wParam , LONG lParam)                
 { 
 
 	static HWND hButtonOK=NULL;
 	static HWND hButtonCancel=NULL;
-  switch (message)         
-  {
+	switch (message)         
+	{
 	case WM_WININICHANGE:
 		DEBUGMSG(1, (L"Got WM_MYTIMECHANGED mesg\n"));
 		break;
@@ -695,27 +703,27 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 	case WM_COMMAND:
 		switch(LOWORD(wParam))
 		{
-			case IDC_BUTTON_OK:
-				Shell_NotifyIcon(NIM_DELETE, &IconData);
-				PostQuitMessage (0) ; 
-				break;
-			case IDC_BUTTON_CANCEL:
-				ShowWindow(hwnd, SW_HIDE);
-				break;
+		case IDC_BUTTON_OK:
+			Shell_NotifyIcon(NIM_DELETE, &IconData);
+			PostQuitMessage (0) ; 
+			break;
+		case IDC_BUTTON_CANCEL:
+			ShowWindow(hwnd, SW_HIDE);
+			break;
 		}
 		break;
 	case WM_TIMER:
 		switch (wParam)
-			{
-				case ID_RebootTimeCheck:
-					//check the time against g_sRebootTime
-					TimedReboot();
-					break;
-				case ID_PingIntervalTimer:
-					//try a ping;
-					TimedPing();
-					break;
-			}
+		{
+		case ID_RebootTimeCheck:
+			//check the time against g_sRebootTime
+			TimedReboot();
+			break;
+		case ID_PingIntervalTimer:
+			//try a ping;
+			TimedPing();
+			break;
+		}
 		return 0;
 		break;
 	case WM_PAINT:
@@ -728,32 +736,32 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		GetClientRect (hwnd, &rect);    
 		hdc = BeginPaint (hwnd, &ps);
 		wsprintf(str, L"%s loaded.\nDays interval: %i\nBoottime: %s\nLast Boot date: %s\nPing Target: %s\nLogging: %i\nTime check interval: %i\nPing time interval: %i", 
-						szWindowClass,
-						g_iRebootDays,
-						g_sRebootTime,
-						g_LastBootDate,
-						g_sPingTarget, 
-						g_bEnableLogging,
-						g_iRebootTimerCheck,
-						g_iPingTimeInterval ); 
+			szWindowClass,
+			g_iRebootDays,
+			g_sRebootTime,
+			g_LastBootDate,
+			g_sPingTarget, 
+			g_bEnableLogging,
+			g_iRebootTimerCheck,
+			g_iPingTimeInterval ); 
 		DrawText (hdc, str, -1, &rect,
 			DT_CENTER /* |DT_VCENTER | DT_SINGLELINE*/);    
 		EndPaint (hwnd, &ps);     
 		return 0;
 		break;
 	case MYMSG_TASKBARNOTIFY:
-		    switch (lParam) {
-				case WM_LBUTTONUP:
-					SetWindowPos(hwnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE | SWP_NOREPOSITION | SWP_SHOWWINDOW);
-					ShowWindow(hwnd, SW_MAXIMIZE);
-					//if (MessageBox(hwnd, L"iTimedReboot2 is loaded. End Application?", szTitle , 
-					//	MB_YESNO | MB_ICONQUESTION | MB_APPLMODAL | MB_SETFOREGROUND | MB_TOPMOST)==IDYES)
-					//{
-					//	Shell_NotifyIcon(NIM_DELETE, &IconData);
-					//	PostQuitMessage (0) ; 
-					//}
-					//ShowWindow(hwnd, SW_HIDE);
-				}
+		switch (lParam) {
+	case WM_LBUTTONUP:
+		SetWindowPos(hwnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE | SWP_NOREPOSITION | SWP_SHOWWINDOW);
+		ShowWindow(hwnd, SW_MAXIMIZE);
+		//if (MessageBox(hwnd, L"iTimedReboot2 is loaded. End Application?", szTitle , 
+		//	MB_YESNO | MB_ICONQUESTION | MB_APPLMODAL | MB_SETFOREGROUND | MB_TOPMOST)==IDYES)
+		//{
+		//	Shell_NotifyIcon(NIM_DELETE, &IconData);
+		//	PostQuitMessage (0) ; 
+		//}
+		//ShowWindow(hwnd, SW_HIDE);
+		}
 		return 0;
 		break;
 	case WM_DESTROY:
@@ -771,9 +779,9 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		PostQuitMessage (0); 
 		return 0;
 		break;
-  }
+	}
 
-  return DefWindowProc (hwnd , message , wParam , lParam) ;
+	return DefWindowProc (hwnd , message , wParam , lParam) ;
 }
 
 //=====================================================================================================
@@ -819,7 +827,7 @@ int ReadReg()
 			return -1;
 		}
 	}
-	
+
 	//enable logging?
 	g_bEnableLogging = true;
 	if (wcscmp(rkeys[EnableLogging].ksval, L"0") == 0)
@@ -856,7 +864,7 @@ int ReadReg()
 #endif
 	//copy reg values to globals, more readable
 	wsprintf(g_sPingTarget, rkeys[PingTarget].ksval);
-	
+
 	//check boot time interval
 	//test if >30000
 	if (_wtol(rkeys[Interval].ksval) > 30000)
@@ -943,7 +951,7 @@ int ReadReg()
 		nclog(L"### Error in date string in reg. Replaced by 19800101\n", NULL);
 		wsprintf(rkeys[LastBootDate].ksval, L"19800101");
 		wsprintf(g_LastBootDate, rkeys[LastBootDate].ksval);
-		
+
 		if(getSystemtimeOfString(g_LastBootDate, &g_stLastBootDateTime)){
 			DEBUGMSG(true, (L"date string converted to SYSTEMTIME\n"));
 		}
@@ -993,12 +1001,12 @@ int ReadReg()
 
 //=====================================================================================================
 /*	Function Name   : AnimateIcon
-	Description		: Function which will act based on the message type that is received as parameter
-					  like ADD, MODIFY, DELETE icon in the system tray. Also send a message to display
-					  the icon in title bar as well as in the task bar application.
-	Function Called	: Shell_NotifyIcon	-	API which will Add, Modify, Delete icon in tray.
-					  SendMessage - Send a message to windows
-	Variable		: NOTIFYICONDATA - Structure which will have the details of the tray icons
+Description		: Function which will act based on the message type that is received as parameter
+like ADD, MODIFY, DELETE icon in the system tray. Also send a message to display
+the icon in title bar as well as in the task bar application.
+Function Called	: Shell_NotifyIcon	-	API which will Add, Modify, Delete icon in tray.
+SendMessage - Send a message to windows
+Variable		: NOTIFYICONDATA - Structure which will have the details of the tray icons
 */
 void AnimateIcon(HINSTANCE hInstance, HWND hWnd, DWORD dwMsgType,UINT nIndexOfIcon)
 {
@@ -1015,7 +1023,7 @@ void AnimateIcon(HINSTANCE hInstance, HWND hWnd, DWORD dwMsgType,UINT nIndexOfIc
 	IconData.hWnd   = hWnd;
 	IconData.uCallbackMessage = MYMSG_TASKBARNOTIFY;
 	IconData.uFlags = NIF_MESSAGE | NIF_ICON ;
-	
+
 	int rc = Shell_NotifyIcon(dwMsgType, &IconData);
 	if (rc==0)
 		ShowError(GetLastError());
@@ -1027,8 +1035,8 @@ void AnimateIcon(HINSTANCE hInstance, HWND hWnd, DWORD dwMsgType,UINT nIndexOfIc
 
 //=====================================================================================================
 /*	Function Name   : StrIsNumber
-	Description		: Function which will if str contains a date like string
-	Variable		: str to test
+Description		: Function which will if str contains a date like string
+Variable		: str to test
 */
 bool StrIsNumber(TCHAR *str)
 {
