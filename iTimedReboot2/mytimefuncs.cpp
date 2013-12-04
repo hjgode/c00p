@@ -63,24 +63,24 @@ SYSTEMTIME getNextBootWithInterval(SYSTEMTIME stActual, SYSTEMTIME stRebootPlann
 	memcpy(&stReturn, &stRebootPlanned, sizeof(SYSTEMTIME));
 	//day diff?
 	SYSTEMTIME stPlannedReboot2=addDays(stRebootPlanned, daysInterval);
-	int daydiff=getDayDiff(stActual, stPlannedReboot2);
-	int minutesdiff=getMinuteDiff(stActual, stPlannedReboot2);
-	//if positive, planned is past actual, which is OK
-	if(daydiff>=0 && minutesdiff>3){
-		DEBUGMSG(1, (L"we are past the planned reboot!\n"));
-		//add x number of day intervals until we are before a planned reboot
-		stPlannedReboot2=stRebootPlanned;
-		do{
-			stPlannedReboot2=addDays(stPlannedReboot2,1);
-			daydiff=getDayDiff(stActual, stPlannedReboot2);
-			minutesdiff=getMinuteDiff(stActual, stPlannedReboot2);
-		}while (daydiff>0 && minutesdiff>0);
-		stReturn=stPlannedReboot2;
+
+	int iDays,iHours,iMinutes;
+	//result will be negative if stActual is past stRebootPlanned
+	int minutesdiff=DiffInMinutes(stActual, stPlannedReboot2, &iDays, &iHours, &iMinutes);
+	//repeat until minutesdiff>0
+	while (minutesdiff<0){
+		stPlannedReboot2=addDays(stPlannedReboot2, daysInterval);
+		minutesdiff=DiffInMinutes(stActual, stPlannedReboot2, &iDays, &iHours, &iMinutes);
 	}
-	
-	DEBUGMSG(1, (L"Next reboot at %02i.%02i.%04i %02i:%02i!\n",
+	//subtract one days interval
+	stReturn=addDays(stPlannedReboot2, -daysInterval);
+
+	DEBUGMSG(1, (L"Last reboot calculated for %02i.%02i.%04i %02i:%02i!\n\tdays interval: %i\n\tstActual: %04i%02i%02i %02i:%02i",
 		stReturn.wDay, stReturn.wMonth, stReturn.wYear,
-		stReturn.wHour, stReturn.wMinute
+		stReturn.wHour, stReturn.wMinute,
+		daysInterval,
+		stActual.wDay, stActual.wMonth, stActual.wDay,
+		stActual.wHour, stActual.wMinute
 		));
 
 	return stReturn;
@@ -201,262 +201,62 @@ SYSTEMTIME addDays(SYSTEMTIME stOld, int days){
 	return stNew;
 }
 
-DWORD DiffInDays(SYSTEMTIME st1, SYSTEMTIME st2)
-{
-  FILETIME ft1, ft2;
-  SystemTimeToFileTime(&st1, &ft1);
-  SystemTimeToFileTime(&st2, &ft2);
- 
-  LARGE_INTEGER li1;
-  li1.LowPart  = ft1.dwLowDateTime;
-  li1.HighPart = ft1.dwHighDateTime;
-  LARGE_INTEGER li2;
-  li2.LowPart  = ft2.dwLowDateTime;
-  li2.HighPart = ft2.dwHighDateTime;
- 
-  LARGE_INTEGER li3;
-  li3.QuadPart = li1.QuadPart - li2.QuadPart;
- 
-  li3.QuadPart /= 10; // => now us
-  li3.QuadPart /= 1000; // now ms
-  li3.QuadPart /= 1000; // now sec
-  li3.QuadPart /= 60; // now min
-  DEBUGMSG(1,(L"minutes diff=%i\n",li3));
-  li3.QuadPart /= 60; // now h
-  li3.QuadPart /= 24; // now days
- 
-  return li3.LowPart;
-}
-
 //--------------------------------------------------------------------
-// Function name  : getDateTimeDiff
+// Function name  : DiffInMinutes
 // Description    : return the diff between two datetimes 
-// Argument       : SYSTEMTIME stOld and stNew and the vars to store diff days,hours,minutes
-// Return type    : -1 if old is before new datetime, 0 if old is equal new and +1 if old is past new
+// Argument       : SYSTEMTIME st1 and st2 and the vars to store diff days,hours,minutes
+// Return type    : number of minutes from st1 before st2, 
+//				  : will be negative if st1 is past st2
 //--------------------------------------------------------------------
-int getDateTimeDiff(SYSTEMTIME stOld, SYSTEMTIME stNew, int *iDays, int *iHours, int *iMinutes){
-	int iReturn = 0;
-	DEBUGMSG(1, (L"getDateTimeDiff()...\n"));
-	DEBUGMSG(1,(L"old date:	")); dumpST(stOld);
-	DEBUGMSG(1,(L"new date:	")); dumpST(stNew);
-#ifdef DEBUG
-	nclog(L"+++ old time is: %04i%02i%02i %02i:%02i\n",
-		stOld.wYear, stOld.wMonth, stOld.wDay,
-		stOld.wHour, stOld.wMinute);
-	nclog(L"+++ new time is: %04i%02i%02i %02i:%02i\n",
-		stNew.wYear, stNew.wMonth, stNew.wDay,
-		stNew.wHour, stNew.wMinute);
-#endif
+int DiffInMinutes(SYSTEMTIME st1, SYSTEMTIME st2, int *iDays, int *iHours, int *iMinutes)
+{
+	DEBUGMSG(1, (L"### DiffInMinutes start ###\n"));
+	DEBUGMSG(1, (L"+++ st1 is: %04i%02i%02i %02i:%02i\n",
+		st1.wYear, st1.wMonth, st1.wDay,
+		st1.wHour, st1.wMinute));
+	DEBUGMSG(1, (L"+++ st2 is: %04i%02i%02i %02i:%02i\n",
+		st2.wYear, st2.wMonth, st2.wDay,
+		st2.wHour, st2.wMinute));
 
-	FILETIME ftNew;
-	FILETIME ftOld;
-	//convert systemtimes to filetimes
-	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
-	if(!bRes)
-		DEBUGMSG(1, (L"SystemTimeToFileTime(&stNew, &ftNew) FAILED\n"));
-	
-	bRes = SystemTimeToFileTime(&stOld, &ftOld);
-	if(!bRes)
-		DEBUGMSG(1, (L"SystemTimeToFileTime(&stOld, &ftOld) FAILED\n"));
+	FILETIME ft1, ft2;
+	SystemTimeToFileTime(&st1, &ft1);
+	SystemTimeToFileTime(&st2, &ft2);
 
-	ULARGE_INTEGER tOld, tNew;
-	memcpy(&tOld, &ftOld, sizeof(tOld));
-	memcpy(&tNew, &ftNew, sizeof(tNew));
-	ULONGLONG diff;
-	BOOL bIsNegative=FALSE;
-	if(tOld.QuadPart < tNew.QuadPart){// return always positive result
-		diff=(tNew.QuadPart-tOld.QuadPart);
-		bIsNegative=FALSE;
-		iReturn=1;		//old is before new date/time
-		DEBUGMSG(1, (L"old is before new date\n"));
-	}
-	else if(tOld.QuadPart > tNew.QuadPart){
-		diff=(tOld.QuadPart-tNew.QuadPart); 
-		DEBUGMSG(1, (L"old is after new date\n"));
-		bIsNegative=TRUE;
-		iReturn=-1;
-	}
-	else if(tOld.QuadPart==tNew.QuadPart){
-		diff=0;
-		iReturn=0;
-		DEBUGMSG(1, (L"old is equal new date\n"));
-		bIsNegative=FALSE;
-	}
+	LARGE_INTEGER li1;
+	li1.LowPart  = ft1.dwLowDateTime;
+	li1.HighPart = ft1.dwHighDateTime;
+	LARGE_INTEGER li2;
+	li2.LowPart  = ft2.dwLowDateTime;
+	li2.HighPart = ft2.dwHighDateTime;
 
-	LONG lDiff = CompareFileTime(&ftOld, &ftNew);
+	LARGE_INTEGER li3;
 
-	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
-	ULONGLONG diffHours = diff /   (60*60*(ULONGLONG)10000000);
-	ULONGLONG diffMinutes = diff /    (60*(ULONGLONG)10000000);	
-	//gives wrong result:
-	/*
-	0xb68adf9a: --- reboot time is:  20131130 12:45
-	0xb68adf9a: +++ current time is: 20131202 13:55
+	// time st2 should be after st1
+	li3.QuadPart = li2.QuadPart - li1.QuadPart;
 
-	returns 2 diffMinutes!!! instead of 70
-	*/
+	//TODO: check differences with test date time
+	DWORD dwDays=0, dwHours=0, dwMinutes=0;
+	li3.QuadPart /= 10; // => now us
+	li3.QuadPart /= 1000; // now ms
+	li3.QuadPart /= 1000; // now sec
+	li3.QuadPart /= 60; // now min
+	DEBUGMSG(1,(L"minutes diff=%i\n",li3.QuadPart));
+	dwMinutes=li3.LowPart; 
 
-	if(bIsNegative){
-		diffDays	=(int)(0-diffDays);
-		diffHours	=(int)(0-diffHours);
-		diffMinutes	=(int)(0-diffMinutes);
-	}
-	DEBUGMSG(1, (L"### day diff =%i\n", diffDays));
-	DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
-	DEBUGMSG(1, (L"### min diff =%i\n", diffMinutes));
-	*iDays		=(int)diffDays;
-	*iHours		=(int)diffHours;
-	*iMinutes	=(int)diffMinutes;
-	DEBUGMSG(1, (L"getDateTimeDiff end. Return = %i/%i/%i (days/hours/minutes) diff. Return=%i\n", *iDays, *iHours, *iMinutes, iReturn));
+	li3.QuadPart /= 60; // now h
+	dwHours=li3.LowPart;
+	DEBUGMSG(1,(L"hours diff=%i\n",li3.QuadPart));
 
-	return iReturn;
-}
+	li3.QuadPart /= 24; // now days
+	dwDays=li3.LowPart; 
+	DEBUGMSG(1,(L"days diff=%i\n",li3.QuadPart));
 
-//=================================================================================
-/// get day diff of old to new date
-int getDayDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
-	DEBUGMSG(1, (L"getDayDiff()...\n"));
-	//TCHAR szText[MAX_PATH];memset(szText,0,MAX_PATH*sizeof(TCHAR));
-	//dumpST(szText, stOld);
-	//DEBUGMSG(1, (L"old time: %s\n", szText));
-	//dumpST(szText, stNew);
-	//DEBUGMSG(1, (L"new time: %s\n", szText));
+	*iDays=dwDays;
+	*iHours=dwHours;
+	*iMinutes=dwMinutes;
 
-	DWORD dwReturn = 0;
-	FILETIME ftNew;
-	FILETIME ftOld;
-	//convert systemtimes to filetimes
-	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
-	bRes = SystemTimeToFileTime(&stOld, &ftOld);
+	DEBUGMSG(1, (L"--- DiffInMinutes end ---\n\tReturn = %i/%i/%i (days/hours/minutes) diff. Return=%i\n", *iDays, *iHours, *iMinutes, *iMinutes));
 
-	//dumpST(stNew);
-	//dumpST(stOld);
-
-	//dumpFT(ftNew);
-	//dumpFT(ftOld);
-
-	//date diff
-	ULARGE_INTEGER tOld, tNew;
-	memcpy(&tOld, &ftOld, sizeof(tOld));
-	memcpy(&tNew, &ftNew, sizeof(tNew));
-	ULONGLONG diff; BOOL bIsNegative=FALSE;
-	if(tOld.QuadPart<tNew.QuadPart){// return always positive result
-		diff=(tNew.QuadPart-tOld.QuadPart);
-		bIsNegative=TRUE;
-	}
-	else{
-		diff=(tOld.QuadPart-tNew.QuadPart); 	
-	}
-	//ULONGLONG diff = (tNew.QuadPart-tOld.QuadPart);	// return positive or negative result
-	ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
-	//ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
-	//ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
-	//DEBUGMSG(1, (L"### day diff=%i\n", bIsNegative? diffDays:0-diffDays));
-	//DEBUGMSG(1, (L"### hour diff=%i\n", bIsNegative? diffHours:0-diffHours));
-	//DEBUGMSG(1, (L"### min diff=%i\n", bIsNegative? diffMinutes:0-diffMinutes));
-	if(bIsNegative)
-		dwReturn=(int)(0-diffDays);
-	else
-		dwReturn=(int)diffDays;
-	DEBUGMSG(1, (L"GetDayDiff end. Return = %i days diff\n", dwReturn));
-	return dwReturn;
-}
-
-//=================================================================================
-int getHourDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
-	DEBUGMSG(1, (L"getHourDiff()...\n"));
-	//TCHAR szText[MAX_PATH];memset(szText,0,MAX_PATH*sizeof(TCHAR));
-	//dumpST(szText, stOld);
-	//DEBUGMSG(1, (L"old time: %s\n", szText));
-	//dumpST(szText, stNew);
-	//DEBUGMSG(1, (L"new time: %s\n", szText));
-
-	DWORD dwReturn = 0;
-	FILETIME ftNew;
-	FILETIME ftOld;
-	//convert systemtimes to filetimes
-	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
-	bRes = SystemTimeToFileTime(&stOld, &ftOld);
-
-	//dumpST(stNew);
-	//dumpST(stOld);
-
-	//dumpFT(ftNew);
-	//dumpFT(ftOld);
-
-	//date diff
-	ULARGE_INTEGER t1, t2;
-	memcpy(&t1, &ftOld, sizeof(t1));
-	memcpy(&t2, &ftNew, sizeof(t2));
-	ULONGLONG diff; BOOL bIsNegative=FALSE;
-	if(t1.QuadPart<t2.QuadPart){// return always positive result
-		diff=(t2.QuadPart-t1.QuadPart);
-		bIsNegative=TRUE;
-	}
-	else{
-		diff=(t1.QuadPart-t2.QuadPart); 	
-	}
-	//ULONGLONG diff = (t2.QuadPart-t1.QuadPart);	// return positive or negative result
-	//ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
-	ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
-	//ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
-	//DEBUGMSG(1, (L"### day diff=%i\n", diffDays));
-	//DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
-	//DEBUGMSG(1, (L"### min diff=%i\n", diffMinutes));
-	if(bIsNegative)
-		dwReturn=(int)(0-diffHours);
-	else
-		dwReturn=(int)diffHours;
-	DEBUGMSG(1, (L"getHourDiff end. Return = %i hours diff\n", dwReturn));
-	return dwReturn;
-}
-
-//=================================================================================
-int getMinuteDiff(SYSTEMTIME stOld, SYSTEMTIME stNew){
-	DEBUGMSG(1, (L"getMinuteDiff()...\n"));
-	//TCHAR szText[MAX_PATH];memset(szText,0,MAX_PATH*sizeof(TCHAR));
-	//dumpST(szText, stOld);
-	//DEBUGMSG(1, (L"old time: %s\n", szText));
-	//dumpST(szText, stNew);
-	//DEBUGMSG(1, (L"new time: %s\n", szText));
-
-	DWORD dwReturn = 0;
-	FILETIME ftNew;
-	FILETIME ftOld;
-	//convert systemtimes to filetimes
-	BOOL bRes = SystemTimeToFileTime(&stNew, &ftNew);
-	bRes = SystemTimeToFileTime(&stOld, &ftOld);
-
-	//dumpST(stNew);
-	//dumpST(stOld);
-
-	//dumpFT(ftNew);
-	//dumpFT(ftOld);
-
-	//date diff
-	ULARGE_INTEGER t1, t2;
-	memcpy(&t1, &ftOld, sizeof(t1));
-	memcpy(&t2, &ftNew, sizeof(t2));
-	ULONGLONG diff; BOOL bIsNegative=FALSE;
-	if(t1.QuadPart<t2.QuadPart){// return always positive result
-		diff=(t2.QuadPart-t1.QuadPart);
-		bIsNegative=TRUE;
-	}
-	else{
-		diff=(t1.QuadPart-t2.QuadPart); 	
-	}
-	//ULONGLONG diff = (t2.QuadPart-t1.QuadPart);	// return positive or negative result
-	//ULONGLONG diffDays = diff / (24*60*60*(ULONGLONG)10000000);
-	//ULONGLONG diffHours = diff / (60*60*(ULONGLONG)10000000);
-	ULONGLONG diffMinutes = diff / (60*(ULONGLONG)10000000);
-	//DEBUGMSG(1, (L"### day diff=%i\n", diffDays));
-	//DEBUGMSG(1, (L"### hour diff=%i\n", diffHours));
-	//DEBUGMSG(1, (L"### min diff=%i\n", diffMinutes));
-	if(bIsNegative)
-		dwReturn=(int)(0-diffMinutes);
-	else
-		dwReturn=(int)diffMinutes;
-	DEBUGMSG(1, (L"getMinuteDiff end. Return = %i minutes diff\n", dwReturn));
-	return dwReturn;
+	return dwMinutes;
 }
 
