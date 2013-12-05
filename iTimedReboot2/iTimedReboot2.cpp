@@ -344,11 +344,15 @@ int TimedReboot(void)
 
 	//iDiff = getDateTimeDiff(g_stRebootDateTime, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
 	if(iDiff < 0){
+		if(iTESTMODE==1)
+			nclog(L"WE ARE BEFORE REBOOT TIME\n");
 		DEBUGMSG(1, (L"WE ARE BEFORE REBOOT TIME\n"));
 		return iReturn;
 	}
 	if(iDiff <= 3 && iDiff >= 0){
 		DEBUGMSG(1, (L"WE ARE WITHIN REBOOT TIMESPAN\n"));
+		if(iTESTMODE==1)
+			nclog(L"WE ARE WITHIN REBOOT TIMESPAN\n");
 		//write current date as last reboot date to reg
 		writeLastBootDate(stCurrentTime);
 		//update of vars not needed as we do a reboot
@@ -358,11 +362,16 @@ int TimedReboot(void)
 		return iReturn;
 	}
 	if(iDiff > 0){
+		if(iTESTMODE==1)
+			nclog(L"WE ARE AFTER REBOOT TIME\n");
 		DEBUGMSG(1, (L"WE ARE AFTER REBOOT TIME\n"));
 		//calc next day to reboot using day interval and last reboot date
 		SYSTEMTIME stLastReboot = getNextBootWithInterval(stCurrentTime, g_stLastBootDateTime, g_iRebootDays);
+		
+		//the new date will be the next time to boot, we need to calc the last 'theoretic' reboot date
 		//update registry and global vars
-		g_stLastBootDateTime=stLastReboot;
+		g_stLastBootDateTime=addDays(stLastReboot, -g_iRebootDays);
+
 		wsprintf(g_LastBootDate, L"%04i%02i%02i", 
 			g_stLastBootDateTime.wYear, g_stLastBootDateTime.wMonth, g_stLastBootDateTime.wDay);
 		writeLastBootDate(g_stLastBootDateTime);
@@ -487,15 +496,14 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	HACCEL hAccelTable;
 
 	if (wcsstr(lpCmdLine, L"-test") != NULL){
-#ifndef DEBUG
-#define DEBUG
-#else
+#ifdef DEBUG
 		iTESTMODE=1;
 #endif
 		initRKEYS();
 
 		if(ReadReg()==-1){
-			DEBUGMSG(1, (L"\n!!!!!!!!!! UNABLE to read Registry settings !!!!!!!!!!!!!!\n"));
+			//DEBUGMSG(1, (L"\n!!!!!!!!!! UNABLE to read Registry settings !!!!!!!!!!!!!!\n"));
+			nclog(L"\n!!!!!!!!!! UNABLE to read Registry settings !!!!!!!!!!!!!!\n");
 			return -22;
 		}
 		g_bEnableLogging=TRUE;
@@ -900,7 +908,7 @@ int ReadReg()
 	}
 	//g_stRebootTime=lt;	//store RebootTime in global time var
 	g_stRebootTime=newTime;	//store RebootTime including a random time offset
-	nclog(L"Reboot time will be:\t%00i:%00i\n", newTime.wHour, newTime.wMinute); 
+	nclog(L"Reboot time will be:\t%02i:%02i\n", newTime.wHour, newTime.wMinute); 
 	//convert the newTime to a string 'hh:mm'
 	wsprintf(rkeys[NewTime].ksval, L"%02i:%02i", newTime.wHour, newTime.wMinute);
 	//store reboot time in global var
@@ -978,15 +986,20 @@ int ReadReg()
 	if (_wtol(rkeys[RebootDays].ksval) > 28)
 	{
 		DEBUGMSG(true, (L"g_iRebootDays limited to 28\n"));
-		nclog(L"g_iRebootDays limited to 28. Now using %i.\n",0);
-		g_iRebootDays = 0;
+		nclog(L"g_iRebootDays limited to 28. Now using %i.\n",1);
+		g_iRebootDays = 1;
 	}
 	else
 	{
 		g_iRebootDays = _wtoi(rkeys[RebootDays].ksval); //days between reboots
+		if(g_iRebootDays==0){
+			nclog(L"reboot days interval calculated as 0. Changed to valid 1 value\n");
+			g_iRebootDays=1;			
+		}
 		wsprintf(str, L"Using Days Interval:\t%i\n", g_iRebootDays);
 		nclog( L"Using Days Interval:\t%i\n", g_iRebootDays );
 		DEBUGMSG(true,(str));
+		wsprintf( rkeys[RebootDays].ksval, L"%i", g_iRebootDays );
 	}
 
 	//TODO check if works OK

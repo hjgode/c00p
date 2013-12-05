@@ -59,31 +59,41 @@ BOOL getSystemtimeOfString(TCHAR* szDateTimeString, SYSTEMTIME *stDateTime){
 // Return type    : systemtime with new date/time
 //--------------------------------------------------------------------
 SYSTEMTIME getNextBootWithInterval(SYSTEMTIME stActual, SYSTEMTIME stRebootPlanned, int daysInterval){
+	DEBUGMSG(1, (L"#####################################################\n"));
 	SYSTEMTIME stReturn;
 	memcpy(&stReturn, &stRebootPlanned, sizeof(SYSTEMTIME));
 	//day diff?
 	SYSTEMTIME stPlannedReboot2=addDays(stRebootPlanned, daysInterval);
+	DEBUGMSG(1, (L"getNextBootWithInterval():\n\treboot planned for %02i.%02i.%04i %02i:%02i!\n\tdays interval: %i\n\tstActual: %04i%02i%02i %02i:%02i\n",
+		stRebootPlanned.wDay, stRebootPlanned.wMonth, stRebootPlanned.wYear,
+		stRebootPlanned.wHour, stRebootPlanned.wMinute,
+		daysInterval,
+		stActual.wDay, stActual.wMonth, stActual.wDay,
+		stActual.wHour, stActual.wMinute
+		));
 
 	int iDays,iHours,iMinutes;
 	//result will be negative if stActual is past stRebootPlanned
 	int minutesdiff=DiffInMinutes(stActual, stPlannedReboot2, &iDays, &iHours, &iMinutes);
 	//repeat until minutesdiff>0
 	SYSTEMTIME newRebootTime;
-	while (minutesdiff<0){
+	do{
 		newRebootTime=addDays(stPlannedReboot2, daysInterval);
 		minutesdiff=DiffInMinutes(stActual, stPlannedReboot2, &iDays, &iHours, &iMinutes);
 		stPlannedReboot2=newRebootTime;
-	}
+	}while (minutesdiff<=3); //(daysInterval*24*60));
+
 	//subtract one days interval
 	stReturn=addDays(stPlannedReboot2, -daysInterval);
 
-	DEBUGMSG(1, (L"Last reboot calculated for %02i.%02i.%04i %02i:%02i!\n\tdays interval: %i\n\tstActual: %04i%02i%02i %02i:%02i",
+	DEBUGMSG(1, (L"getNextBootWithInterval():\n\tNext reboot calculated to %02i.%02i.%04i %02i:%02i!\n\tdays interval: %i\n\tstActual: %04i%02i%02i %02i:%02i\n",
 		stReturn.wDay, stReturn.wMonth, stReturn.wYear,
 		stReturn.wHour, stReturn.wMinute,
 		daysInterval,
 		stActual.wDay, stActual.wMonth, stActual.wDay,
 		stActual.wHour, stActual.wMinute
 		));
+	DEBUGMSG(1, (L"#####################################################\n"));
 
 	return stReturn;
 }
