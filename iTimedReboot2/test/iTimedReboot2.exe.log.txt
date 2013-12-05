@@ -1,12 +1,13 @@
-0x55d814b2: Using Time Check Interval:	30 seconds
-0x55d814b2: Reboot time will be:	12:45
-0x55d814b2: Using Ping Interval:	60 seconds
-0x55d814b2: Last boot date:	20131129
-0x55d814b2: Using Days Interval:	1
-0x55d814b2: __TimedReboot Check__
-0x55d814b2: --- reboot time is:  20131129 12:45
-0x55d814b2: +++ current time is: 20131129 12:47
-0x55d814b2: ### days interval is > 0 ###
-0x55d814b2: +++ old time is: 20131129 12:45
-0x55d814b2: +++ new time is: 20131129 12:47
-0x55d814b2: we are before reboot time
+0xd6a92da2: Using Time Check Interval:	30 seconds
+0xd6a92da2: Reboot time will be:	15:00
+0xd6a92da2: Using Ping Interval:	60 seconds
+0xd6a92da2: Last boot date:	20060402
+0xd6a92da2: Using Days Interval:	7
+0xd6a92da2: ### next time to reboot: 20060409 15:00
+0xd6a92da2: __TimedReboot Check__
+0xd6a92da2: --- last reboot date is:  20060402, reboot time is 15:00
+0xd6a92da2: +++ current time is: 20141111 15:00
+0xd6a92da2: +++ reboot scheduled for: 20060409 15:00
+0xd6a92da2: WE ARE AFTER REBOOT TIME
+0xd6a92da2: Updated registry with last reboot on:
+	20141109, 15:00

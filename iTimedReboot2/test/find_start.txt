@@ -1,5 +1,5 @@
-adjusted
-Creating
-calculating
-interval
-launch
+Last boot date
+Using Days Interval
+next time to reboot
+reboot settings now
+WE ARE
