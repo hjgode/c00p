@@ -26,7 +26,7 @@
 		set "RebootExt" to string="1"
 		set "RebootExtApp" to string with name of the executable to start
 		set "RebootExtParms" to string with args to be used for exectable specified with "RebootExtApp" 
-	if "RebootExt":string="0" iTemedReboot will work as v1 version and initiate a reboot
+	if "RebootExt":string="0" iTimedReboot will work as v1 version and initiate a reboot
 	
 ===notes===
 	as iTimedReboot uses timers it will not run, when a device is in suspend mode. In suspend mode only hardware
@@ -44,10 +44,13 @@
 		"LastBootDate","20000101"
 			controls if reboot will take place, iTimedReboot does not initiate a second reboot on same date
 			date string is in format YYYYMMDD
+			you can set a start date here, days interval will be added until reboot time + 3 minutes
 		"RebootTime","02:00"
 			define the time of when to reboot, uses 24 hours format
-		"RebootDays",="0"
-			the number of days between reboots
+		"RebootDays",="1"
+			the number of days between reboots, min 1 to 28 max
+			if 7, for example, and start date (last reboot) is a sunday, next reboot will be a sunday too
+			RebootDays and daysInterval is used for calulating next reboot
 		"PingTarget","127.0.0.1"
 			define the IP address of the host to ping periodically
 		"PingInterval,"600"
@@ -66,21 +69,25 @@
 			complete path and name of external exe
 		"RebootExtParms",""
 			arguments to be used when starting external exe
+			
 		"newTime", "00:31"
-			review reboot time after added a random time
+			informational use only, review reboot time after added a random time
 			
 ===default registry===
 	if started with arg "-writereg" a default registry will be written:
 	
 		"Interval="30"
-		"RebootTime="00:00"
 		"PingInterval"="60"
 		"PingTarget"="127.0.0.1"
 		"EnableLogging"="1"
+		
 		"LastBootDate"="19800101"
+		"RebootTime="00:00"
+
 		//new with v2
 		"RebootExt"="1"
 		"RebootExtApp"="\Windows\fexplore.exe"
 		"RebootExtParms"="\Flash File Store"
 		
+		"RebootDays"="1"	//default 1, day interval between reboots
 		"newTime"="00:11"	//no default as for review only!
