@@ -29,6 +29,7 @@ static char		logFileName[MAX_PATH];
 static TCHAR	logFileNameW[MAX_PATH];
 static BOOL		bFirstFileCall = true;
 BOOL		nclog_LogginEnabled = FALSE;
+static int checkFileSizeCount=0;			//do check file size on every write
 
 #ifdef USEWINSOCK
 // bind the log socket to a specific port.
@@ -93,6 +94,44 @@ static void wsa_send(const char *x)
 }
 #endif
 
+void checkFileSize(TCHAR *szName){
+	//only check every 10th call
+	if(checkFileSizeCount<10)
+		return;
+	else
+		checkFileSizeCount=0;
+
+	checkFileSizeCount++;
+
+	HANDLE hFile = CreateFile(szName, 
+       GENERIC_READ,          // open for writing
+       FILE_SHARE_READ,       // share
+       NULL,                   // default security
+       OPEN_EXISTING,          // open existing
+       FILE_ATTRIBUTE_NORMAL,  // normal file
+       NULL);                  // no attr. template
+	DWORD dwFileSize = GetFileSize(hFile, NULL);
+	CloseHandle(hFile);
+
+	if(dwFileSize != 0xFFFFFFFF){ //no error
+		if(dwFileSize>0x100000){ //more than 1MB?
+			//make a backup
+			//delete previous bak
+			TCHAR txtFileNameBAK[MAX_PATH];
+			wsprintf(txtFileNameBAK, L"%s.bak", szName);
+			DeleteFile(txtFileNameBAK);
+			//rename old file to .BAK
+			MoveFile(szName, txtFileNameBAK);
+		}
+	}
+}
+void checkFileSize(char *szName){
+	TCHAR szNameW[MAX_PATH];
+	memset(szNameW,0, MAX_PATH*sizeof(TCHAR));
+	mbstowcs(szNameW, szName, strlen(szName));
+	checkFileSize(szNameW);
+}
+
 //========================== start of file stuff =============================
 static int initFileNames()
 {
@@ -108,6 +147,8 @@ static int initFileNames()
 
 	//#### we maintain two log files, an actual and a bak one
 	//get file size
+	checkFileSize(txtFileName);
+	/*
 	HANDLE hFile = CreateFile(txtFileName, 
        GENERIC_READ,          // open for writing
        FILE_SHARE_READ,       // share
@@ -129,6 +170,7 @@ static int initFileNames()
 			MoveFile(txtFileName, txtFileNameBAK);
 		}
 	}
+	*/
 
 	//copy filename to global char and tchar var
 	wsprintf(logFileNameW, txtFileName);
@@ -192,6 +234,9 @@ static int writefile(TCHAR *filetext){
 	if (bFirstFileCall){
 		// Get name of executable
 		initFileNames();
+	}
+	else{
+		checkFileSize(logFileNameW);
 	}
 
 	fp = fopen(logFileName, "a+");

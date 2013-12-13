@@ -1,6 +1,8 @@
 // iTimedReboot2.cpp : Defines the entry point for the application.
 //
 
+// iTimedReboot2 v0.3
+
 //history
 //version	change
 // 1.0		initial release
@@ -281,27 +283,6 @@ void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
 	WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
 }
 
-//void writeCurrentBootDate(SYSTEMTIME stCurrentTime){
-//	SYSTEMTIME stLastBootDate;
-//	int iDiff;
-//	int iDayDiff = 0;
-//	int iHoursDiff = 0;
-//	int iMinutesDiff = 0;
-//	#if DEBUG
-//			nclog(L"calculating new reboot time\n");
-//	#endif
-//	SYSTEMTIME stStartDate = g_stLastBootDateTime;
-//	do{
-//		stLastBootDate = addDays(stStartDate, g_iRebootDays);
-//		dumpST(L"stLastBootDate", stLastBootDate);
-//		iDiff = getDateTimeDiff(stLastBootDate, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
-//		stStartDate=stLastBootDate;
-//		//iDaydiff is negative as long as old is before new
-//		//iDiff is negative as long as we are before date
-//	}while(abs(iDayDiff) < g_iRebootDays);// while(iDiff<=0 && iDayDiff<g_iRebootDays);
-//	writeLastBootDate(stLastBootDate);	//write reg as we we have booted
-//}
-
 //=================================================================================
 //
 //  FUNCTION:	TimedReboot()
@@ -312,25 +293,25 @@ void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
 //
 int TimedReboot(void)
 {
-#if DEBUG
-	nclog(L"__TimedReboot Check__\n");
-#endif
+	if(iTESTMODE==1)
+		nclog(L"__TimedReboot Check__\n");
 
 	int iReturn=0;	//return 0 for normal operation, return 1 to exit (reboot time), 2 for past reboot time, -1 for before reboot time
 
 	SYSTEMTIME stCurrentTime;
 	memset(&stCurrentTime, 0, sizeof(stCurrentTime));
 	GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
-#if DEBUG
-	nclog(L"--- last reboot date is:  %s, reboot time is %02i:%02i\n",
-		g_LastBootDate, newTime.wHour, newTime.wMinute);
-	nclog(L"+++ current time is: %04i%02i%02i %02i:%02i\n",
-		stCurrentTime.wYear, stCurrentTime.wMonth, stCurrentTime.wDay,
-		stCurrentTime.wHour, stCurrentTime.wMinute);
-	nclog(L"+++ reboot scheduled for: %04i%02i%02i %02i:%02i\n",
-		g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
-		g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
-#endif
+	if(iTESTMODE==1){
+		nclog(L"--- last reboot date is:  %s, reboot time is %02i:%02i\n",
+			g_LastBootDate, newTime.wHour, newTime.wMinute);
+		nclog(L"+++ current time is: %04i%02i%02i %02i:%02i\n",
+			stCurrentTime.wYear, stCurrentTime.wMonth, stCurrentTime.wDay,
+			stCurrentTime.wHour, stCurrentTime.wMinute);
+		nclog(L"+++ reboot scheduled for: %04i%02i%02i %02i:%02i\n",
+			g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
+			g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
+	}
+
 	int iDayDiff = 0;
 	int iHoursDiff = 0;
 	int iMinutesDiff = 0;
@@ -389,9 +370,8 @@ int TimedReboot(void)
 	g_stLastBootDateTime;		//SYSTEMTIME of last reboot date/time
 	*/
 
-#if DEBUG
-	nclog(L"--- TimedReboot Check END ---\n");
-#endif
+	if(iTESTMODE==1)
+		nclog(L"--- TimedReboot Check END ---\n");
 	return iReturn;
 }
 
@@ -496,9 +476,7 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	HACCEL hAccelTable;
 
 	if (wcsstr(lpCmdLine, L"-test") != NULL){
-#ifdef DEBUG
 		iTESTMODE=1;
-#endif
 		initRKEYS();
 
 		if(ReadReg()==-1){
@@ -840,6 +818,8 @@ int ReadReg()
 	g_bEnableLogging = true;
 	if (wcscmp(rkeys[EnableLogging].ksval, L"0") == 0)
 		g_bEnableLogging=false;
+	if(iTESTMODE==1)
+		g_bEnableLogging=1;
 	//set nclog global loggingEnabled var
 	nclog_LogginEnabled=g_bEnableLogging;
 
