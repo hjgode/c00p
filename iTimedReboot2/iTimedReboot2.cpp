@@ -267,7 +267,8 @@ void writeLastBootDate(SYSTEMTIME stBoot){
 		DEBUGMSG(true, (L"date string conversion to SYSTEMTIME FAILED!\n"));
 	}
 
-	nclog(L"Updated registry with last reboot on:\n\t%s, %s\n", szDate, g_sRebootTime);
+	if(iTESTMODE==1)
+		nclog(L"Updated registry with last reboot on:\n\t%s, %s\n", szDate, g_sRebootTime);
 }
 
 void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
