@@ -188,7 +188,8 @@ BOOL DoBootAction(){
 		nclog(L"Rebooting now...\n",NULL);
 		Sleep(1000);
 #ifndef DEBUG
-		return KernelIoControl(IOCTL_HAL_REBOOT, NULL, 0, NULL, 0, NULL);
+		if(iTESTMODE==0)
+			return KernelIoControl(IOCTL_HAL_REBOOT, NULL, 0, NULL, 0, NULL);
 #else
 		nclog(L"DEBUGMODE no warmboot\n",NULL);
 #endif
