@@ -2,6 +2,10 @@
 
 iLock5 version history
 
+	version 5.4.1.0
+		there is a problem with CreateToolhelp32Snapshot in FindProcess(): the snapshot is not created
+		fixed using a failover by trying 3 times (~3 x 5 seconds) and then just looking for window
+		
 	version 5.4.0.0
 		width and pos values are adjusted to QVGA screen
 		added reg settings to adjust width of IP and progress list

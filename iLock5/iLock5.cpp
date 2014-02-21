@@ -24,7 +24,11 @@
 
 #include "getIPtable.h"
 
-#pragma comment (user , "version 5.4.0.0")	//see also iLock5ppc.rc !
+#pragma comment (user , "version 5.4.1.0")	//see also iLock5ppc.rc !
+
+#ifndef SH_CURPROC
+	#define SH_CURPROC      2	//for WaitApiReady
+#endif
 
 //START stop watchdog code
 #define STOPEVENTNAME L"STOPILOCK"
@@ -39,6 +43,8 @@ HANDLE _hStopThread=NULL;
 #ifndef TH32CS_SNAPNOHEAPS
 #define TH32CS_SNAPNOHEAPS = 0x40000000
 #endif
+
+#define MAX_PROCESSLISTCOUNT_FAILURES	3	//hack for failing CreateToolhelp32Snapshot
 
 //if the listview is clicked the timers are paused
 #define LISTVIEWPAUSES
@@ -978,6 +984,8 @@ int str_ends_with(const TCHAR * str, const TCHAR * suffix) {
 //
 LRESULT FindProcess(TCHAR * ExeName)
 {
+	static int failedProcessListCount=0;	//counter for failing CreateToolhelp32Snapshot() calls
+
 	bool ExeRunning=false;
 	TCHAR testName[64];
 	//make a snapshot for all processes and find the matching processID
@@ -1007,8 +1015,15 @@ LRESULT FindProcess(TCHAR * ExeName)
 		} while (Process32Next(hSnap, &pe));
 	  }//processFirst
 	}//hSnap
-	else
+	else{
+		nclog(L"iLock5: CreateToolhelp32Snapshot failed. LastError=0x%08x\r\n", GetLastError());
+		failedProcessListCount++;
+		if(failedProcessListCount==MAX_PROCESSLISTCOUNT_FAILURES){
+			nclog(L"iLock5: CreateToolhelp32Snapshot failed %i times, failover and continue without process verification\r\n", MAX_PROCESSLISTCOUNT_FAILURES);
+			return 0;	//return a fake success
+		}
 		return -1; //error getting snapshot
+	}
 	CloseToolhelp32Snapshot(hSnap);
 	if (ExeRunning)
 		return 1; //found the exe
