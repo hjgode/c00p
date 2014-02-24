@@ -24,7 +24,9 @@
 
 #include "getIPtable.h"
 
-#pragma comment (user , "version 5.4.1.0")	//see also iLock5ppc.rc !
+#define szPRODUCTVERSION	"version 5.4.1.0"
+#define szPRODUCTVERSIONW	L"version 5.4.1.0"
+#pragma comment (user , szPRODUCTVERSION)	//see also iLock5ppc.rc !
 
 #ifndef SH_CURPROC
 	#define SH_CURPROC      2	//for WaitApiReady
@@ -1013,10 +1015,19 @@ LRESULT FindProcess(TCHAR * ExeName)
 			}
 			//======================================
 		} while (Process32Next(hSnap, &pe));
+		nclog(L"iLock5: Process32Next done!\r\n");
 	  }//processFirst
+	  else{
+		  nclog(L"iLock5: Process32First returned false!\r\n");
+		  failedProcessListCount++;
+		  if(failedProcessListCount==MAX_PROCESSLISTCOUNT_FAILURES){
+			nclog(L"iLock5: Process32First failed %i times, failover and continue without process verification\r\n", MAX_PROCESSLISTCOUNT_FAILURES);
+			return 0;	//return a fake success
+		  }
+	  }
 	}//hSnap
 	else{
-		nclog(L"iLock5: CreateToolhelp32Snapshot failed. LastError=0x%08x\r\n", GetLastError());
+		nclog(L"iLock5: CreateToolhelp32Snapshot failed. LastError=0x%08x. Returning -1\r\n", GetLastError());
 		failedProcessListCount++;
 		if(failedProcessListCount==MAX_PROCESSLISTCOUNT_FAILURES){
 			nclog(L"iLock5: CreateToolhelp32Snapshot failed %i times, failover and continue without process verification\r\n", MAX_PROCESSLISTCOUNT_FAILURES);
@@ -1024,11 +1035,16 @@ LRESULT FindProcess(TCHAR * ExeName)
 		}
 		return -1; //error getting snapshot
 	}
+	nclog(L"iLock5: CloseToolhelp32Snapshot...\r\n");
 	CloseToolhelp32Snapshot(hSnap);
-	if (ExeRunning)
+	if (ExeRunning){
+		nclog(L"iLock5: FindProcess() return 1 for '%s'\r\n", ExeName);
 		return 1; //found the exe
-	else
+	}
+	else{
+		nclog(L"iLock5: FindProcess() return 0 for '%s'\r\n", ExeName);
 		return 0; //exe not found
+	}
 }
 
 //======================================================================
@@ -1412,7 +1428,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				//read productversion from resources!
 				TCHAR szVersionInfo[MAX_PATH];
 				TCHAR szProductName[MAX_PATH];
-				myGetFileVersionInfo(hInst, szVersionInfo, L"5.4.0.0");
+				myGetFileVersionInfo(hInst, szVersionInfo, szPRODUCTVERSIONW);
 				myGetFileProductNameInfo(NULL, szProductName);
 				wsprintf(szVersion, L"%s v%s", szProductName, szVersionInfo);
 
