@@ -198,12 +198,12 @@ BEGIN
         BLOCK "040704b0"
         BEGIN
             VALUE "FileDescription", "iLock5 Application"
-            VALUE "FileVersion", "5, 4, 1, 0"
+            VALUE "FileVersion", "5, 4, 1, 1"
             VALUE "InternalName", "iLock5"
             VALUE "LegalCopyright", "Copyright (C) 2013"
             VALUE "OriginalFilename", "iLock5.exe"
             VALUE "ProductName", "iLock5 Application"
-            VALUE "ProductVersion", "5, 4, 1, 0"
+            VALUE "ProductVersion", "5, 4, 1, 1"
         END
     END
     BLOCK "VarFileInfo"

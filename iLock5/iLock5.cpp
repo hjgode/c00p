@@ -24,8 +24,8 @@
 
 #include "getIPtable.h"
 
-#define szPRODUCTVERSION	"version 5.4.1.0"
-#define szPRODUCTVERSIONW	L"version 5.4.1.0"
+#define szPRODUCTVERSION	"version 5.4.1.1"
+#define szPRODUCTVERSIONW	L"version 5.4.1.1"
 #pragma comment (user , szPRODUCTVERSION)	//see also iLock5ppc.rc !
 
 #ifndef SH_CURPROC
@@ -1020,7 +1020,7 @@ LRESULT FindProcess(TCHAR * ExeName)
 	  else{
 		  nclog(L"iLock5: Process32First returned false!\r\n");
 		  failedProcessListCount++;
-		  if(failedProcessListCount==MAX_PROCESSLISTCOUNT_FAILURES){
+		  if(failedProcessListCount>=MAX_PROCESSLISTCOUNT_FAILURES){
 			nclog(L"iLock5: Process32First failed %i times, failover and continue without process verification\r\n", MAX_PROCESSLISTCOUNT_FAILURES);
 			return 0;	//return a fake success
 		  }
@@ -1029,7 +1029,7 @@ LRESULT FindProcess(TCHAR * ExeName)
 	else{
 		nclog(L"iLock5: CreateToolhelp32Snapshot failed. LastError=0x%08x. Returning -1\r\n", GetLastError());
 		failedProcessListCount++;
-		if(failedProcessListCount==MAX_PROCESSLISTCOUNT_FAILURES){
+		if(failedProcessListCount>=MAX_PROCESSLISTCOUNT_FAILURES){
 			nclog(L"iLock5: CreateToolhelp32Snapshot failed %i times, failover and continue without process verification\r\n", MAX_PROCESSLISTCOUNT_FAILURES);
 			return 0;	//return a fake success
 		}
@@ -1430,7 +1430,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				TCHAR szProductName[MAX_PATH];
 				myGetFileVersionInfo(hInst, szVersionInfo, szPRODUCTVERSIONW);
 				myGetFileProductNameInfo(NULL, szProductName);
-				wsprintf(szVersion, L"%s v%s", szProductName, szVersionInfo);
+				wsprintf(szVersion, L"%s %s", szProductName, szVersionInfo);
 
 				wsprintf(tstr, L"iLock %s started", szVersion);
 
