@@ -24,13 +24,17 @@
 
 #include "getIPtable.h"
 
-#define szPRODUCTVERSION	"version 5.4.1.1"
-#define szPRODUCTVERSIONW	L"version 5.4.1.1"
+#define szPRODUCTVERSION	"version 5.4.1.2"
+#define szPRODUCTVERSIONW	L"version 5.4.1.2"
 #pragma comment (user , szPRODUCTVERSION)	//see also iLock5ppc.rc !
 
 #ifndef SH_CURPROC
 	#define SH_CURPROC      2	//for WaitApiReady
 #endif
+
+//for testing we signal when we finished our job
+#define ILOCK_READY_EVENT L"iLockReady"
+HANDLE hiLockReady=NULL;
 
 //START stop watchdog code
 #define STOPEVENTNAME L"STOPILOCK"
@@ -1489,7 +1493,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else
 				nclog(L"iLock5: Watchdog thread creation failed\r\n");
 
-            return 0;	//5.1.8.1 return messgage has been processed
+			//for TESTING signal when ready
+			hiLockReady = CreateEvent(NULL, TRUE, FALSE, ILOCK_READY_EVENT);
+			if(hiLockReady!=NULL){
+				if(GetLastError()==ERROR_ALREADY_EXISTS){
+					//something wrong, the name should not exist
+					nclog(L"iLock5: Ready signal event handle already exists!\r\n");
+				}
+				else{
+					nclog(L"iLock5: New ready signal event handle created.\r\n");
+				}
+			}
+			else{
+				nclog(L"iLock5: Ready signal event handle creation failed: 0x%08x\r\n", GetLastError());
+			}
+
+			return 0;	//5.1.8.1 return messgage has been processed
 	   case WM_NOTIFY:
 #ifdef LISTVIEWPAUSES
 			if ((int)wParam == IDC_LVIEW)
@@ -1769,6 +1788,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 								Add2List(hProcList, tstr);
 								//Add2List(hProcList, L"Waiting 10 sec.");
 								SetTimer(hWnd, timer3, timer3intervall, NULL);
+								//for TESTINg signal ready event
+								SetEvent(hiLockReady);
 							}
 						}
 						PostMessage(hProgress, PBM_STEPIT, 0, 0);
