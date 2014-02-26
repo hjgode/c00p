@@ -5,10 +5,6 @@
 	Name="j9w"
 	ProjectGUID="{8DC8B77F-1D15-40BB-9EA3-11E4BF72D32E}"
 	RootNamespace="j9w"
-	SccProjectName="Svn"
-	SccAuxPath="Svn"
-	SccLocalPath="Svn"
-	SccProvider="SubversionScc"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
