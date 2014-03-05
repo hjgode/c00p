@@ -1,7 +1,16 @@
 /*
 
 iLock5 version history
-
+	version 5.4.1.3
+		changed return coding for failover, now using exeRunning var instead of returning 0 (which was wrong)
+		
+	version 5.4.1.2
+		fixed a bug with failover check. One should not use the same var for different countings.
+		
+	version 5.4.1.1
+		there is another problem with Process32First() failing!
+		added another failover condition for that
+		
 	version 5.4.1.0
 		there is a problem with CreateToolhelp32Snapshot in FindProcess(): the snapshot is not created
 		fixed using a failover by trying 3 times (~3 x 5 seconds) and then just looking for window

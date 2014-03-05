@@ -24,8 +24,8 @@
 
 #include "getIPtable.h"
 
-#define szPRODUCTVERSION	"version 5.4.1.2"
-#define szPRODUCTVERSIONW	L"version 5.4.1.2"
+#define szPRODUCTVERSION	"version 5.4.1.3"
+#define szPRODUCTVERSIONW	L"version 5.4.1.3"
 #pragma comment (user , szPRODUCTVERSION)	//see also iLock5ppc.rc !
 
 #ifndef SH_CURPROC
@@ -1026,7 +1026,8 @@ LRESULT FindProcess(TCHAR * ExeName)
 		  failedProcessListCount++;
 		  if(failedProcessListCount>=MAX_PROCESSLISTCOUNT_FAILURES){
 			nclog(L"iLock5: Process32First failed %i times, failover and continue without process verification\r\n", MAX_PROCESSLISTCOUNT_FAILURES);
-			return 0;	//return a fake success
+			//return 1;	//return a fake success
+			ExeRunning=true;
 		  }
 	  }
 	}//hSnap
@@ -1035,9 +1036,10 @@ LRESULT FindProcess(TCHAR * ExeName)
 		failedProcessListCount++;
 		if(failedProcessListCount>=MAX_PROCESSLISTCOUNT_FAILURES){
 			nclog(L"iLock5: CreateToolhelp32Snapshot failed %i times, failover and continue without process verification\r\n", MAX_PROCESSLISTCOUNT_FAILURES);
-			return 0;	//return a fake success
+			//return 1;	//return a fake success
+			ExeRunning=true;
 		}
-		return -1; //error getting snapshot
+		//return -1; //error getting snapshot
 	}
 	nclog(L"iLock5: CloseToolhelp32Snapshot...\r\n");
 	CloseToolhelp32Snapshot(hSnap);
