@@ -1,0 +1,8 @@
+D:\svn\git\c00p\setupWinCS\bin\Debug\setupWinCS.exe
+D:\svn\git\c00p\setupWinCS\bin\Debug\setupWinCS.pdb
+D:\svn\git\c00p\setupWinCS\obj\Debug\ResolveAssemblyReference.cache
+D:\svn\git\c00p\setupWinCS\obj\Debug\setupWinCS.Form1.resources
+D:\svn\git\c00p\setupWinCS\obj\Debug\setupWinCS.Properties.Resources.resources
+D:\svn\git\c00p\setupWinCS\obj\Debug\setupWinCS.csproj.GenerateResource.Cache
+D:\svn\git\c00p\setupWinCS\obj\Debug\setupWinCS.exe
+D:\svn\git\c00p\setupWinCS\obj\Debug\setupWinCS.pdb

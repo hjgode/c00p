@@ -24,8 +24,8 @@
 
 #include "getIPtable.h"
 
-#define szPRODUCTVERSION	"version 5.4.1.3"
-#define szPRODUCTVERSIONW	L"version 5.4.1.3"
+#define szPRODUCTVERSION	"version 5.4.1.4"
+#define szPRODUCTVERSIONW	L"version 5.4.1.4"
 #pragma comment (user , szPRODUCTVERSION)	//see also iLock5ppc.rc !
 
 #ifndef SH_CURPROC
@@ -769,7 +769,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     SHInitExtraControls();
 
     LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING); 
-    LoadString(hInstance, IDC_ILOCK5, szWindowClass, MAX_LOADSTRING);
+    LoadString(hInstance, IDC_ILOCK5, szWindowClass, MAX_LOADSTRING); //ILOCK5
 
     //If it is already running, then focus on the window, and exit
     hWnd = FindWindow(szWindowClass, szTitle);	
@@ -1086,21 +1086,25 @@ BOOL CALLBACK EnumWindowsProc2(HWND hwnd, LPARAM lParam)
 	TCHAR classname[MAX_PATH];
 	TCHAR caption[MAX_PATH];
 	GetClassName(hwnd, classname, MAX_PATH);
-	if(wcsicmp(classname, L"ILOCK5")){	//enumWindows will crash on self window!
-		hwnd=GetWindow(hwnd, GW_HWNDNEXT);
-		return TRUE;	//walk on to next main window
-	}
-	GetWindowText(hwnd, caption, MAX_PATH);
-    DEBUGMSG(1, (L"Window title: '%s'\n", caption));
     DEBUGMSG(1, (L"Class name: '%s'\n",classname));
+	if(wcsicmp(classname, L"ILOCK5")==0){	//wcsicmp returns 0 for identical strings!
+		//enumWindows will crash on getWindowText on self window!
+		DEBUGMSG(1, (L"enumWindows found iLock, skipping GetWindowText...\n"));
+		//hwnd=GetWindow(hwnd, GW_HWNDNEXT);
+		//return TRUE;	//walk on to next main window
+		wsprintf(caption, L"iLock5"); //dummy action
+	}
+	else
+		GetWindowText(hwnd, caption, MAX_PATH);
+    DEBUGMSG(1, (L"Window title: '%s'\n", caption));
 	if(hwnd!=NULL){
 		if(isSetupWindow(classname, caption, hwnd)){
 			hSetupWindow=hwnd;
 			DEBUGMSG(1, (L"### found installer ###\n"));
-			return FALSE;
+			return FALSE;//stop enum
 		}
 	}
-	return TRUE;
+	return TRUE;//continue with enum
 }
 
 //======================================================================
@@ -1109,7 +1113,8 @@ int ShowInstallers()
 {
 	hSetupWindow=NULL;	//reset
 	DEBUGMSG(1, (L"ShowInstallers()...\n"));
-
+	//EnumWindows continues until the last top-level window 
+	//is enumerated or the callback function returns FALSE
 	BOOL beWin = EnumWindows(EnumWindowsProc2, NULL);
 	if(hSetupWindow!=NULL){
 		SetTopWindow(hSetupWindow);
