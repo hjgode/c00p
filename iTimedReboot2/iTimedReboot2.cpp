@@ -510,6 +510,7 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 		nclog(L"\tCreated new mutex\n");
 	}
 
+	//init the rkeys struct with defaults
 	initRKEYS();
 
 	// Initialize global strings

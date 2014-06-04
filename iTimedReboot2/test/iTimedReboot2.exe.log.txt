@@ -1,13 +1,14 @@
-0xd6a92da2: Using Time Check Interval:	30 seconds
-0xd6a92da2: Reboot time will be:	15:00
-0xd6a92da2: Using Ping Interval:	60 seconds
-0xd6a92da2: Last boot date:	20060402
-0xd6a92da2: Using Days Interval:	7
-0xd6a92da2: ### next time to reboot: 20060409 15:00
-0xd6a92da2: __TimedReboot Check__
-0xd6a92da2: --- last reboot date is:  20060402, reboot time is 15:00
-0xd6a92da2: +++ current time is: 20141111 15:00
-0xd6a92da2: +++ reboot scheduled for: 20060409 15:00
-0xd6a92da2: WE ARE AFTER REBOOT TIME
-0xd6a92da2: Updated registry with last reboot on:
-	20141109, 15:00
+0x631656e2: DEBUGMODE no warmboot
+0xe3226d32: Using Time Check Interval:	30 seconds
+0xe3226d32: Reboot time will be:	02:36
+0xe3226d32: Using Ping Interval:	60 seconds
+0xe3226d32: Last boot date:	20140604
+0xe3226d32: Using Days Interval:	1
+0xe3226d32: ### next time to reboot: 20140605 02:36
+0xe3226d32: __TimedReboot Check__
+0xe3226d32: --- last reboot date is:  20140604, reboot time is 02:36
+0xe3226d32: +++ current time is: 20140605 02:46
+0xe3226d32: +++ reboot scheduled for: 20140605 02:36
+0xe3226d32: WE ARE AFTER REBOOT TIME
+0xe3226d32: Updated registry with last reboot on:
+	20140605, 02:36

@@ -1,12 +1,11 @@
 ############## START ############### 
 ====================================================== 
  TEST1... 
-    test systemzeit vor rebootzeit 
 ====================================================== 
-system time now 14:00 10.11.2013 
+system time now 14:00 04.06.2014 
 Importing test reg keys... 
 set value HKLM\Software\Intermec\iTimedReboot2  newTime : "00:34"
-set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20131110"
+set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20140604"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExt : "0"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExtParms : "\Flash File Store"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExtApp : "\Windows\fexplore.exe"
@@ -14,46 +13,45 @@ set value HKLM\Software\Intermec\iTimedReboot2  RebootDays : "1"
 set value HKLM\Software\Intermec\iTimedReboot2  EnableLogging : "1"
 set value HKLM\Software\Intermec\iTimedReboot2  PingTarget : "127.0.0.1"
 set value HKLM\Software\Intermec\iTimedReboot2  PingInterval : "60"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "15:00"
+set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "02:00"
 set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
-reboot settings now lastreboot=15:00 10.11.2013, days interval=1 
+reboot settings now lastreboot=02:00 04.06.2014, days interval=1 
 Result: 
 [HKLM\Software\Intermec\iTimedReboot2]
-Default=""
 EnableLogging="1"
 Interval="30"
-LastBootDate="20131110"
+LastBootDate="20140604"
 PingInterval="60"
 PingTarget="127.0.0.1"
 RebootDays="1"
 RebootExt="0"
 RebootExtApp="\Windows\fexplore.exe"
 RebootExtParms="\Flash File Store"
-RebootTime="15:00"
-newTime="15:00"
+RebootTime="02:00"
+newTime="02:00"
 
 *************** LOG  TEST1 **************** 
-0x391e60aa: Using Time Check Interval:	30 seconds
-0x391e60aa: Reboot time will be:	15:00
-0x391e60aa: Using Ping Interval:	60 seconds
-0x391e60aa: Last boot date:	20131110
-0x391e60aa: Using Days Interval:	1
-0x391e60aa: ### next time to reboot: 20131111 15:00
-0x391e60aa: __TimedReboot Check__
-0x391e60aa: --- last reboot date is:  20131110, reboot time is 15:00
-0x391e60aa: +++ current time is: 20131110 14:00
-0x391e60aa: +++ reboot scheduled for: 20131111 15:00
-0x391e60aa: WE ARE BEFORE REBOOT TIME
+0xa31ddfde: Using Time Check Interval:	30 seconds
+0xa31ddfde: Reboot time will be:	02:00
+0xa31ddfde: Using Ping Interval:	60 seconds
+0xa31ddfde: Last boot date:	20140604
+0xa31ddfde: Using Days Interval:	1
+0xa31ddfde: ### next time to reboot: 20140605 02:00
+0xa31ddfde: __TimedReboot Check__
+0xa31ddfde: --- last reboot date is:  20140604, reboot time is 02:00
+0xa31ddfde: +++ current time is: 20140604 14:00
+0xa31ddfde: +++ reboot scheduled for: 20140605 02:00
+0xa31ddfde: WE ARE BEFORE REBOOT TIME
 ---------------TEST1  --------------- 
 .
 ====================================================== 
  TEST2... 
-    test systemzeit nach rebootzeit 
+    set time 2 minutes before reboot 
 ====================================================== 
-system time now 16:00 11.11.2013 
+system time now 02:34 05.06.2014 
 Importing test reg keys... 
 set value HKLM\Software\Intermec\iTimedReboot2  newTime : "00:34"
-set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20131110"
+set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20140605"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExt : "0"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExtParms : "\Flash File Store"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExtApp : "\Windows\fexplore.exe"
@@ -61,48 +59,45 @@ set value HKLM\Software\Intermec\iTimedReboot2  RebootDays : "1"
 set value HKLM\Software\Intermec\iTimedReboot2  EnableLogging : "1"
 set value HKLM\Software\Intermec\iTimedReboot2  PingTarget : "127.0.0.1"
 set value HKLM\Software\Intermec\iTimedReboot2  PingInterval : "60"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "15:00"
+set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "02:36"
 set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
-reboot settings now lastreboot=15:00 10.11.2013, days interval=1 
+reboot settings now lastreboot=02:36 05.06.2014, days interval=1 
 Result: 
 [HKLM\Software\Intermec\iTimedReboot2]
-Default=""
 EnableLogging="1"
 Interval="30"
-LastBootDate="20131111"
+LastBootDate="20140605"
 PingInterval="60"
 PingTarget="127.0.0.1"
 RebootDays="1"
 RebootExt="0"
 RebootExtApp="\Windows\fexplore.exe"
 RebootExtParms="\Flash File Store"
-RebootTime="15:00"
-newTime="15:00"
+RebootTime="02:36"
+newTime="02:36"
 
 *************** LOG  TEST2 **************** 
-0x37235236: Using Time Check Interval:	30 seconds
-0x37235236: Reboot time will be:	15:00
-0x37235236: Using Ping Interval:	60 seconds
-0x37235236: Last boot date:	20131110
-0x37235236: Using Days Interval:	1
-0x37235236: ### next time to reboot: 20131111 15:00
-0x37235236: __TimedReboot Check__
-0x37235236: --- last reboot date is:  20131110, reboot time is 15:00
-0x37235236: +++ current time is: 20131111 16:00
-0x37235236: +++ reboot scheduled for: 20131111 15:00
-0x37235236: WE ARE AFTER REBOOT TIME
-0x37235236: Updated registry with last reboot on:
-	20131111, 15:00
+0xc3d4c596: Using Time Check Interval:	30 seconds
+0xc3d4c596: Reboot time will be:	02:36
+0xc3d4c596: Using Ping Interval:	60 seconds
+0xc3d4c596: Last boot date:	20140605
+0xc3d4c596: Using Days Interval:	1
+0xc3d4c596: ### next time to reboot: 20140606 02:36
+0xc3d4c596: __TimedReboot Check__
+0xc3d4c596: --- last reboot date is:  20140605, reboot time is 02:36
+0xc3d4c596: +++ current time is: 20140605 02:34
+0xc3d4c596: +++ reboot scheduled for: 20140606 02:36
+0xc3d4c596: WE ARE BEFORE REBOOT TIME
 ---------------TEST2  --------------- 
 .
 ====================================================== 
  TEST3... 
     test systemzeit zu rebootzeit 
 ====================================================== 
-system time now 15:00 11.11.2013 
+system time now 02:36 05.06.2014 
 Importing test reg keys... 
 set value HKLM\Software\Intermec\iTimedReboot2  newTime : "00:34"
-set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20131110"
+set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20140604"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExt : "0"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExtParms : "\Flash File Store"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExtApp : "\Windows\fexplore.exe"
@@ -110,51 +105,50 @@ set value HKLM\Software\Intermec\iTimedReboot2  RebootDays : "1"
 set value HKLM\Software\Intermec\iTimedReboot2  EnableLogging : "1"
 set value HKLM\Software\Intermec\iTimedReboot2  PingTarget : "127.0.0.1"
 set value HKLM\Software\Intermec\iTimedReboot2  PingInterval : "60"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "15:00"
+set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "02:36"
 set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
-reboot settings now lastreboot=15:00 10.11.2013, days interval=1 
+reboot settings now lastreboot=02:36 04.06.2014, days interval=1 
 Result: 
 [HKLM\Software\Intermec\iTimedReboot2]
-Default=""
 EnableLogging="1"
 Interval="30"
-LastBootDate="20131111"
+LastBootDate="20140605"
 PingInterval="60"
 PingTarget="127.0.0.1"
 RebootDays="1"
 RebootExt="0"
 RebootExtApp="\Windows\fexplore.exe"
 RebootExtParms="\Flash File Store"
-RebootTime="15:00"
-newTime="15:00"
+RebootTime="02:36"
+newTime="02:36"
 
 *************** LOG  TEST3 **************** 
-0x97085c4a: Using Time Check Interval:	30 seconds
-0x97085c4a: Reboot time will be:	15:00
-0x97085c4a: Using Ping Interval:	60 seconds
-0x97085c4a: Last boot date:	20131110
-0x97085c4a: Using Days Interval:	1
-0x97085c4a: ### next time to reboot: 20131111 15:00
-0x97085c4a: __TimedReboot Check__
-0x97085c4a: --- last reboot date is:  20131110, reboot time is 15:00
-0x97085c4a: +++ current time is: 20131111 15:00
-0x97085c4a: +++ reboot scheduled for: 20131111 15:00
-0x97085c4a: WE ARE WITHIN REBOOT TIMESPAN
-0x97085c4a: Updated registry with last reboot on:
-	20131111, 15:00
-0x97085c4a: ##### Will reboot now. Last reboot on:
-	20131111, 15:00 #####
-0x97085c4a: Rebooting now...
+0x631656e2: Using Time Check Interval:	30 seconds
+0x631656e2: Reboot time will be:	02:36
+0x631656e2: Using Ping Interval:	60 seconds
+0x631656e2: Last boot date:	20140604
+0x631656e2: Using Days Interval:	1
+0x631656e2: ### next time to reboot: 20140605 02:36
+0x631656e2: __TimedReboot Check__
+0x631656e2: --- last reboot date is:  20140604, reboot time is 02:36
+0x631656e2: +++ current time is: 20140605 02:36
+0x631656e2: +++ reboot scheduled for: 20140605 02:36
+0x631656e2: WE ARE WITHIN REBOOT TIMESPAN
+0x631656e2: Updated registry with last reboot on:
+	20140605, 02:36
+0x631656e2: ##### Will reboot now. Last reboot on:
+	20140605, 02:36 #####
+0x631656e2: Rebooting now...
 ---------------TEST3  --------------- 
 .
 ====================================================== 
  TEST4... 
-   test systemzeit zu 2 minuten nach rebootzeit 
+   test systemzeit zu 10 minuten nach rebootzeit 
 ====================================================== 
-system time now 15:02 11.11.2013 
+system time now 02:46 05.06.2014 
 Importing test reg keys... 
 set value HKLM\Software\Intermec\iTimedReboot2  newTime : "00:34"
-set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20131110"
+set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20140604"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExt : "0"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExtParms : "\Flash File Store"
 set value HKLM\Software\Intermec\iTimedReboot2  RebootExtApp : "\Windows\fexplore.exe"
@@ -162,139 +156,37 @@ set value HKLM\Software\Intermec\iTimedReboot2  RebootDays : "1"
 set value HKLM\Software\Intermec\iTimedReboot2  EnableLogging : "1"
 set value HKLM\Software\Intermec\iTimedReboot2  PingTarget : "127.0.0.1"
 set value HKLM\Software\Intermec\iTimedReboot2  PingInterval : "60"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "15:00"
+set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "02:36"
 set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
-reboot settings now lastreboot=15:00 10.11.2013, days interval=1 
+reboot settings now lastreboot=02:36 04.06.2014, days interval=1 
 Result: 
 [HKLM\Software\Intermec\iTimedReboot2]
-Default=""
 EnableLogging="1"
 Interval="30"
-LastBootDate="20131111"
+LastBootDate="20140605"
 PingInterval="60"
 PingTarget="127.0.0.1"
 RebootDays="1"
 RebootExt="0"
 RebootExtApp="\Windows\fexplore.exe"
 RebootExtParms="\Flash File Store"
-RebootTime="15:00"
-newTime="15:00"
+RebootTime="02:36"
+newTime="02:36"
 
 *************** LOG  TEST4 **************** 
-0xf70853f2: Using Time Check Interval:	30 seconds
-0xf70853f2: Reboot time will be:	15:00
-0xf70853f2: Using Ping Interval:	60 seconds
-0xf70853f2: Last boot date:	20131110
-0xf70853f2: Using Days Interval:	1
-0xf70853f2: ### next time to reboot: 20131111 15:00
-0xf70853f2: __TimedReboot Check__
-0xf70853f2: --- last reboot date is:  20131110, reboot time is 15:00
-0xf70853f2: +++ current time is: 20131111 15:02
-0xf70853f2: +++ reboot scheduled for: 20131111 15:00
-0xf70853f2: WE ARE WITHIN REBOOT TIMESPAN
-0xf70853f2: Updated registry with last reboot on:
-	20131111, 15:00
-0xf70853f2: ##### Will reboot now. Last reboot on:
-	20131111, 15:00 #####
-0xf70853f2: Rebooting now...
+0x631656e2: DEBUGMODE no warmboot
+0xe3226d32: Using Time Check Interval:	30 seconds
+0xe3226d32: Reboot time will be:	02:36
+0xe3226d32: Using Ping Interval:	60 seconds
+0xe3226d32: Last boot date:	20140604
+0xe3226d32: Using Days Interval:	1
+0xe3226d32: ### next time to reboot: 20140605 02:36
+0xe3226d32: __TimedReboot Check__
+0xe3226d32: --- last reboot date is:  20140604, reboot time is 02:36
+0xe3226d32: +++ current time is: 20140605 02:46
+0xe3226d32: +++ reboot scheduled for: 20140605 02:36
+0xe3226d32: WE ARE AFTER REBOOT TIME
+0xe3226d32: Updated registry with last reboot on:
+	20140605, 02:36
 ---------------TEST4  --------------- 
-.
-====================================================== 
- TEST5... 
-   test systemzeit weit nach letzter rebootzeit 
-====================================================== 
-system time now 15:00 11.11.2013 
-Importing test reg keys... 
-set value HKLM\Software\Intermec\iTimedReboot2  newTime : "00:34"
-set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20060402"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootExt : "0"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootExtParms : "\Flash File Store"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootExtApp : "\Windows\fexplore.exe"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootDays : "7"
-set value HKLM\Software\Intermec\iTimedReboot2  EnableLogging : "1"
-set value HKLM\Software\Intermec\iTimedReboot2  PingTarget : "127.0.0.1"
-set value HKLM\Software\Intermec\iTimedReboot2  PingInterval : "60"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "15:00"
-set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
-reboot settings now lastreboot=15:00 02.04.2006, days interval=7 
-Result: 
-[HKLM\Software\Intermec\iTimedReboot2]
-Default=""
-EnableLogging="1"
-Interval="30"
-LastBootDate="20131110"
-PingInterval="60"
-PingTarget="127.0.0.1"
-RebootDays="7"
-RebootExt="0"
-RebootExtApp="\Windows\fexplore.exe"
-RebootExtParms="\Flash File Store"
-RebootTime="15:00"
-newTime="15:00"
-
-*************** LOG  TEST5 **************** 
-0xf70853f2: DEBUGMODE no warmboot
-0x76a9f7f6: Using Time Check Interval:	30 seconds
-0x76a9f7f6: Reboot time will be:	15:00
-0x76a9f7f6: Using Ping Interval:	60 seconds
-0x76a9f7f6: Last boot date:	20060402
-0x76a9f7f6: Using Days Interval:	7
-0x76a9f7f6: ### next time to reboot: 20060409 15:00
-0x76a9f7f6: __TimedReboot Check__
-0x76a9f7f6: --- last reboot date is:  20060402, reboot time is 15:00
-0x76a9f7f6: +++ current time is: 20131111 15:00
-0x76a9f7f6: +++ reboot scheduled for: 20060409 15:00
-0x76a9f7f6: WE ARE AFTER REBOOT TIME
-0x76a9f7f6: Updated registry with last reboot on:
-	20131110, 15:00
----------------TEST5  --------------- 
-.
-====================================================== 
- TEST6... 
-   test systemzeit weit vor letzter rebootzeit 
-====================================================== 
-system time now 15:00 11.11.2014 
-Importing test reg keys... 
-set value HKLM\Software\Intermec\iTimedReboot2  newTime : "00:34"
-set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20060402"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootExt : "0"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootExtParms : "\Flash File Store"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootExtApp : "\Windows\fexplore.exe"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootDays : "7"
-set value HKLM\Software\Intermec\iTimedReboot2  EnableLogging : "1"
-set value HKLM\Software\Intermec\iTimedReboot2  PingTarget : "127.0.0.1"
-set value HKLM\Software\Intermec\iTimedReboot2  PingInterval : "60"
-set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "15:00"
-set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
-reboot settings now lastreboot=15:00 02.04.2006, days interval=7 
-Result: 
-[HKLM\Software\Intermec\iTimedReboot2]
-Default=""
-EnableLogging="1"
-Interval="30"
-LastBootDate="20141109"
-PingInterval="60"
-PingTarget="127.0.0.1"
-RebootDays="7"
-RebootExt="0"
-RebootExtApp="\Windows\fexplore.exe"
-RebootExtParms="\Flash File Store"
-RebootTime="15:00"
-newTime="15:00"
-
-*************** LOG  TEST6 **************** 
-0xd6a92da2: Using Time Check Interval:	30 seconds
-0xd6a92da2: Reboot time will be:	15:00
-0xd6a92da2: Using Ping Interval:	60 seconds
-0xd6a92da2: Last boot date:	20060402
-0xd6a92da2: Using Days Interval:	7
-0xd6a92da2: ### next time to reboot: 20060409 15:00
-0xd6a92da2: __TimedReboot Check__
-0xd6a92da2: --- last reboot date is:  20060402, reboot time is 15:00
-0xd6a92da2: +++ current time is: 20141111 15:00
-0xd6a92da2: +++ reboot scheduled for: 20060409 15:00
-0xd6a92da2: WE ARE AFTER REBOOT TIME
-0xd6a92da2: Updated registry with last reboot on:
-	20141109, 15:00
----------------TEST6  --------------- 
 .
