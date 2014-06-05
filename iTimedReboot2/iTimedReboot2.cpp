@@ -1,7 +1,7 @@
 // iTimedReboot2.cpp : Defines the entry point for the application.
 //
 
-// iTimedReboot2 v0.3
+// iTimedReboot2 v0.4
 
 //history
 //version	change

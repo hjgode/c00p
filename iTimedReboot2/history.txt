@@ -1,5 +1,15 @@
 iTimedReboot2
 
+  v0.4:
+		in int TimedReboot(void)
+		...
+			wsprintf(g_LastBootDate, L"%04i%02i%02i", g_stLastBootDateTime.wYear, g_stLastBootDateTime.wMonth, g_stLastBootDateTime.wDay);
+		//	g_stRebootDateTime holds time as read by registry
+			//	+ needs to be updated as used for diff calculating, if there is no reboot (which would read the reg with new value)
+			g_stRebootDateTime=g_stLastBootDateTime;
+			writeLastBootDate(g_stLastBootDateTime);
+		release r83
+      
 	v0.3:
 		TODO: add day param to enable 24h, 48h, 7 days intervals
 			DONE
