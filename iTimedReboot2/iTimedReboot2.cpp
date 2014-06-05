@@ -355,21 +355,26 @@ int TimedReboot(void)
 		//update registry and global vars
 		g_stLastBootDateTime=addDays(stLastReboot, -g_iRebootDays);
 
-		wsprintf(g_LastBootDate, L"%04i%02i%02i", 
-			g_stLastBootDateTime.wYear, g_stLastBootDateTime.wMonth, g_stLastBootDateTime.wDay);
+		wsprintf(g_LastBootDate, L"%04i%02i%02i", g_stLastBootDateTime.wYear, g_stLastBootDateTime.wMonth, g_stLastBootDateTime.wDay);
+
+		//	g_stRebootDateTime holds time as read by registry
+		//	+ needs to be updated as used for diff calculating, if there is no reboot (which would read the reg with new value)
+		g_stRebootDateTime=g_stLastBootDateTime;
+		
 		writeLastBootDate(g_stLastBootDateTime);
+		
 		iReturn=2;
 		return iReturn;
 	}
 
 	//globals
 	/*
-	g_stRebootDateTime; //SYSTEMTIME of next reboot
 
 	g_LastBootDate;	//string with date of last reboot
 	g_iRebootDays;	//days interval between reboots
-	g_stRebootTime;	// time of planned reboot, the planned reboot time + a radom time, only hh:mm are valid
+	g_stRebootTime;			// time of planned reboot, the planned reboot time + a radom time, only hh:mm are valid
 	g_stLastBootDateTime;		//SYSTEMTIME of last reboot date/time
+	g_stRebootDateTime;			//SYSTEMTIME of next reboot
 	*/
 
 	if(iTESTMODE==1)
