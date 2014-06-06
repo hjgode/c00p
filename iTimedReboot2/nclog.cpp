@@ -277,8 +277,14 @@ void nclog (const wchar_t *fmt, ...)
         char bufOutA[512];
 		//add instance number
 		HMODULE hMod = GetModuleHandle(NULL);
+		
+		TCHAR dTime[64];
+		wsprintf (dTime, L"%s ", logDateTime());
+
 		WCHAR bufTmpW[512];
-		wsprintf(bufTmpW, L"0x%08x: %s", hMod, bufW);
+
+		wsprintf(bufTmpW, L"0x%08x, %s: %s", dTime, hMod, bufW);
+		
 		wsprintf(bufW, L"%s", bufTmpW);
 		//convert to char
         WideCharToMultiByte(CP_ACP,0,bufW,-1,bufOutA,400, NULL, NULL);
@@ -286,7 +292,7 @@ void nclog (const wchar_t *fmt, ...)
 		wsa_send(bufOutA);
 #endif
 
-			writefile(bufW);
+		writefile(bufW);
 
 #ifdef DEBUG
 		DEBUGMSG(1, (bufW));

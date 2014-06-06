@@ -1,5 +1,10 @@
 iTimedReboot2
 
+  v0.5:
+		added some more logging /see g_extraLogging...
+		moved g_stRebootDateTime update from TimeReboot() to WriteLastBootDate()
+		added szApplicationNameAndVersion to text in window to show version number
+		
   v0.4:
 		in int TimedReboot(void)
 		...

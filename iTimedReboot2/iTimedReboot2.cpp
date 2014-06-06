@@ -1,7 +1,7 @@
 // iTimedReboot2.cpp : Defines the entry point for the application.
 //
 
-// iTimedReboot2 v0.4
+// iTimedReboot2 v0.5
 
 //history
 //version	change
@@ -63,8 +63,21 @@ bool	StrIsNumber(TCHAR *str);
 // Global Variables:
 HINSTANCE		g_hInstance;								// current instance
 TCHAR			szTitle[MAX_LOADSTRING];			// The title bar text
-TCHAR			szWindowClass[MAX_LOADSTRING];		// The title bar text
+TCHAR			szWindowClass[MAX_LOADSTRING];		// window class name
+TCHAR			szApplicationNameAndVersion[MAX_LOADSTRING];
+
 HWND g_hwnd;
+
+//	### extraLogging ### (since v0.5)
+//used to do some extra logging information on every x interval
+//as main interval is 60 seconds, a value of 10 means: do some extra
+//logging every 10 Minutes
+#if DEBUG
+	const int	g_extraLogInterval = 1;
+#else
+	const int	g_extraLogInterval = 10;
+#endif
+int			g_extraLogIntervalCount = 0;
 
 //Notification icon stuff
 NOTIFYICONDATA	IconData;
@@ -160,6 +173,20 @@ extern "C" __declspec(dllimport) void SetCleanRebootFlag(void);
 void nclog (TCHAR * t);
 BOOL DoBootAction();
 
+//=================================================================================
+//
+//  FUNCTION:	isExtraLogging()
+//
+//  PURPOSE:	return TRUE if extra Logging Interval is valid
+//				return FALSE if this is no extra Looging cycle
+//  COMMENTS:	none
+//
+BOOL isExtraLogging(){
+	if(g_extraLogIntervalCount>=g_extraLogInterval)
+		return TRUE;
+	else
+		return FALSE;
+}
 
 //=================================================================================
 //
@@ -241,24 +268,39 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 	return newTime;	
 }
 
+
+//=================================================================================
+//
+//  FUNCTION:	writeLastBootDate()
+//
+//  PURPOSE:	write date part of SYSTEMTIME argument as lat boot date to registry
+//
+//  COMMENTS:	will be used on reboot and if current time is after last reboot
+//				updates global vars!
+//
 void writeLastBootDate(SYSTEMTIME stBoot){
+	//hold reversed data vale, ie 20140614 for 14.06.2014
 	TCHAR szDate[MAX_PATH];
 
 	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stBoot, L"yyyyMMdd", szDate, MAX_PATH-1);
-	wsprintf(szDate, L"%04i%02i%02i", 
-		stBoot.wYear, stBoot.wMonth, stBoot.wDay);
+	wsprintf(szDate, L"%04i%02i%02i", stBoot.wYear, stBoot.wMonth, stBoot.wDay);
 
 	OpenKey();
 	if(RegWriteStr(rkeys[LastBootDate].kname, szDate)!=0)
 		DEBUGMSG(1, (L"save lastbootdate to reg failed!\n"));
 	CloseKey();
-	wsprintf(rkeys[LastBootDate].ksval, szDate);
 
-	//update glovbal vars
+	//update global vars
+	wsprintf(rkeys[LastBootDate].ksval, szDate);
 	wsprintf(g_LastBootDate, szDate);
 	TCHAR szLasteDateTime[13];
 	wsprintf(szLasteDateTime, L"%s%02i%02i", g_LastBootDate, newTime.wHour, newTime.wMinute);
 
+	//v0.5 moved from iTimedReboot
+	//	g_stRebootDateTime holds time as read by registry
+	//	+ needs to be updated as used for diff calculating, if there is no reboot (which would read the reg with new value)
+	g_stRebootDateTime=g_stLastBootDateTime;
+		
 	//TODO check implementation!
 	if(getSystemtimeOfString(szLasteDateTime, &g_stLastBootDateTime)){
 		DEBUGMSG(true, (L"date string converted to SYSTEMTIME\n"));
@@ -267,8 +309,22 @@ void writeLastBootDate(SYSTEMTIME stBoot){
 		DEBUGMSG(true, (L"date string conversion to SYSTEMTIME FAILED!\n"));
 	}
 
-	if(iTESTMODE==1)
-		nclog(L"Updated registry with last reboot on:\n\t%s, %s\n", szDate, g_sRebootTime);
+	if(iTESTMODE==1 || isExtraLogging()){
+		SYSTEMTIME stCurrentTime;
+		memset(&stCurrentTime, 0, sizeof(stCurrentTime));
+		GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
+		nclog(L"--- last reboot date is:  %s, reboot time is %02i:%02i\n",
+			g_LastBootDate, newTime.wHour, newTime.wMinute);
+		nclog(L"+++ current time is: %04i%02i%02i %02i:%02i\n",
+			stCurrentTime.wYear, stCurrentTime.wMonth, stCurrentTime.wDay,
+			stCurrentTime.wHour, stCurrentTime.wMinute);
+		nclog(L"+++ reboot scheduled for: %04i%02i%02i %02i:%02i\n",
+			g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
+			g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
+	}
+
+	if(iTESTMODE==1 || isExtraLogging())
+		nclog(L"Updated registry with last reboot on:\n\t%s, %s\n", szDate, g_sRebootTime);	//g_sRebootTime is read once from reg on load
 }
 
 void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
@@ -295,7 +351,8 @@ void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
 //
 int TimedReboot(void)
 {
-	if(iTESTMODE==1)
+	//in TEST mode or if an extra logging cycle
+	if(iTESTMODE==1 || isExtraLogging())
 		nclog(L"__TimedReboot Check__\n");
 
 	int iReturn=0;	//return 0 for normal operation, return 1 to exit (reboot time), 2 for past reboot time, -1 for before reboot time
@@ -303,7 +360,7 @@ int TimedReboot(void)
 	SYSTEMTIME stCurrentTime;
 	memset(&stCurrentTime, 0, sizeof(stCurrentTime));
 	GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
-	if(iTESTMODE==1){
+	if(iTESTMODE==1 || isExtraLogging()){
 		nclog(L"--- last reboot date is:  %s, reboot time is %02i:%02i\n",
 			g_LastBootDate, newTime.wHour, newTime.wMinute);
 		nclog(L"+++ current time is: %04i%02i%02i %02i:%02i\n",
@@ -326,15 +383,16 @@ int TimedReboot(void)
 	//if minutes is > 3 we are behind reboot time and have to recalculate the next reboot time with day interval 
 
 	//iDiff = getDateTimeDiff(g_stRebootDateTime, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
-	if(iDiff < 0){
-		if(iTESTMODE==1)
+
+	if(iDiff < 0){	//iDiff is negative
+		if(iTESTMODE==1 || isExtraLogging())
 			nclog(L"WE ARE BEFORE REBOOT TIME\n");
 		DEBUGMSG(1, (L"WE ARE BEFORE REBOOT TIME\n"));
 		return iReturn;
 	}
 	if(iDiff <= 3 && iDiff >= 0){
 		DEBUGMSG(1, (L"WE ARE WITHIN REBOOT TIMESPAN\n"));
-		if(iTESTMODE==1)
+		if(iTESTMODE==1 || isExtraLogging())
 			nclog(L"WE ARE WITHIN REBOOT TIMESPAN\n");
 		//write current date as last reboot date to reg
 		writeLastBootDate(stCurrentTime);
@@ -345,22 +403,23 @@ int TimedReboot(void)
 		return iReturn;
 	}
 	if(iDiff > 0){
-		if(iTESTMODE==1)
+		if(iTESTMODE==1 || isExtraLogging())
 			nclog(L"WE ARE AFTER REBOOT TIME\n");
 		DEBUGMSG(1, (L"WE ARE AFTER REBOOT TIME\n"));
 		//calc next day to reboot using day interval and last reboot date
-		SYSTEMTIME stLastReboot = getNextBootWithInterval(stCurrentTime, g_stLastBootDateTime, g_iRebootDays);
+		SYSTEMTIME stNextReboot = getNextBootWithInterval(stCurrentTime, g_stLastBootDateTime, g_iRebootDays);
+
+		nclog(L"+++ next reboot calculated for %02i.%02i.%04i at %02i:%02i\n", 
+				stNextReboot.wDay, stNextReboot.wMonth, stNextReboot.wYear,
+				stNextReboot.wMinute, stNextReboot.wHour
+				);
 		
 		//the new date will be the next time to boot, we need to calc the last 'theoretic' reboot date
 		//update registry and global vars
-		g_stLastBootDateTime=addDays(stLastReboot, -g_iRebootDays);
+		g_stLastBootDateTime=addDays(stNextReboot, -g_iRebootDays);
 
 		wsprintf(g_LastBootDate, L"%04i%02i%02i", g_stLastBootDateTime.wYear, g_stLastBootDateTime.wMonth, g_stLastBootDateTime.wDay);
 
-		//	g_stRebootDateTime holds time as read by registry
-		//	+ needs to be updated as used for diff calculating, if there is no reboot (which would read the reg with new value)
-		g_stRebootDateTime=g_stLastBootDateTime;
-		
 		writeLastBootDate(g_stLastBootDateTime);
 		
 		iReturn=2;
@@ -521,6 +580,7 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDS_WINDOWCLASSNAME/*IDC_iTimedReboot2*/, szWindowClass, MAX_LOADSTRING);
+	LoadString(hInstance, IDC_iTimedReboot2, szApplicationNameAndVersion, MAX_LOADSTRING);
 
 	//allow only one instance!
 	HWND hWnd = FindWindow (NULL, szWindowClass);    
@@ -707,6 +767,8 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		}
 		break;
 	case WM_TIMER:
+		//increment global extra log interval count
+		g_extraLogIntervalCount++;
 		switch (wParam)
 		{
 		case ID_RebootTimeCheck:
@@ -718,6 +780,9 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 			TimedPing();
 			break;
 		}
+		//reset global extra log interval count?
+		if(g_extraLogIntervalCount>g_extraLogInterval)
+			g_extraLogIntervalCount=0;
 		return 0;
 		break;
 	case WM_PAINT:
@@ -729,7 +794,7 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		// the command bar height.    
 		GetClientRect (hwnd, &rect);    
 		hdc = BeginPaint (hwnd, &ps);
-		wsprintf(str, L"%s loaded.\nDays interval: %i\nBoottime: %s\nLast Boot date: %s\nPing Target: %s\nLogging: %i\nTime check interval: %i\nPing time interval: %i", 
+		wsprintf(str, L"%s loaded.\nDays interval: %i\nBoottime: %s\nLast Boot date: %s\nPing Target: %s\nLogging: %i\nTime check interval: %i\nPing time interval: %i\n\n%s", 
 			szWindowClass,
 			g_iRebootDays,
 			g_sRebootTime,
@@ -737,7 +802,9 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 			g_sPingTarget, 
 			g_bEnableLogging,
 			g_iRebootTimerCheck,
-			g_iPingTimeInterval ); 
+			g_iPingTimeInterval,
+			szApplicationNameAndVersion
+			); 
 		DrawText (hdc, str, -1, &rect,
 			DT_CENTER /* |DT_VCENTER | DT_SINGLELINE*/);    
 		EndPaint (hwnd, &ps);     
@@ -806,18 +873,22 @@ void WriteReg()
 //
 int ReadReg()
 {
+	nclog(L"===== ReadReg() start =====\n");
 	int i;
 	TCHAR str[MAX_PATH+1];
 	TCHAR name[MAX_PATH+1];
 	LONG rc;
 	if(OpenKey(g_regName)!=0){
 		RETAILMSG(1, (L"Could not open registry key '%s'!\r\n", g_regName));
+		nclog(L"Could not open registry key '%s'!\r\n", g_regName);
 		//create default reg
 		RETAILMSG(1, (L"Creating default registry keys '%s'!\r\n", g_regName));
+		nclog(L"Creating default registry keys '%s'!\r\n", g_regName);
 		WriteReg();
 		//second try
 		if(OpenKey(g_regName)!=0){
 			RETAILMSG(1, (L"2nd try: Could not open registry key '%s'!\r\n", g_regName));
+			nclog(L"2nd try: Could not open registry key '%s'!\r\n==== END ReadReg() =====\r\n", g_regName);
 			return -1;
 		}
 	}
@@ -996,7 +1067,8 @@ int ReadReg()
 	nclog(L"### next time to reboot: %04i%02i%02i %02i:%02i\n", 
 		g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
 		g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
-
+	
+	nclog(L"===== ReadReg() END =====\n");
 	return 0;
 }
 
