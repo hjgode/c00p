@@ -6,6 +6,7 @@ REGEDIT4
 @=""
 "RebootExtParms"="\\Flash File Store"
 "RebootExtApp"="\\Windows\\fexplore.exe"
+"RebootExt"="0"
 "RebootDays"="0"
 "EnableLogging"="1"
 "PingTarget"="127.0.0.1"

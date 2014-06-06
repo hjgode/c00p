@@ -70,14 +70,14 @@ HWND g_hwnd;
 
 //	### extraLogging ### (since v0.5)
 //used to do some extra logging information on every x interval
-//as main interval is 60 seconds, a value of 10 means: do some extra
+//as main interval is 30 seconds, a value of 20 means: do some extra
 //logging every 10 Minutes
 #if DEBUG
 	const int	g_extraLogInterval = 1;
 #else
-	const int	g_extraLogInterval = 10;
+	const int	g_extraLogInterval = 20;
 #endif
-int			g_extraLogIntervalCount = 0;
+int			g_extraLogIntervalCount = g_extraLogInterval;	//so first call is with extra info
 
 //Notification icon stuff
 NOTIFYICONDATA	IconData;
@@ -313,18 +313,18 @@ void writeLastBootDate(SYSTEMTIME stBoot){
 		SYSTEMTIME stCurrentTime;
 		memset(&stCurrentTime, 0, sizeof(stCurrentTime));
 		GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
-		nclog(L"--- last reboot date is:  %s, reboot time is %02i:%02i\n",
+		nclog(L"--- last reboot date is (after):  %s, reboot time is %02i:%02i\n",
 			g_LastBootDate, newTime.wHour, newTime.wMinute);
 		nclog(L"+++ current time is: %04i%02i%02i %02i:%02i\n",
 			stCurrentTime.wYear, stCurrentTime.wMonth, stCurrentTime.wDay,
 			stCurrentTime.wHour, stCurrentTime.wMinute);
-		nclog(L"+++ reboot scheduled for: %04i%02i%02i %02i:%02i\n",
+		nclog(L"+++ last reboot saved as: %04i%02i%02i %02i:%02i\n",
 			g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
 			g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
 	}
 
 	if(iTESTMODE==1 || isExtraLogging())
-		nclog(L"Updated registry with last reboot on:\n\t%s, %s\n", szDate, g_sRebootTime);	//g_sRebootTime is read once from reg on load
+		nclog(L"Updated registry with last reboot on:\t%s, %s\n", szDate, g_sRebootTime);	//g_sRebootTime is read once from reg on load
 }
 
 void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
@@ -361,12 +361,12 @@ int TimedReboot(void)
 	memset(&stCurrentTime, 0, sizeof(stCurrentTime));
 	GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
 	if(iTESTMODE==1 || isExtraLogging()){
-		nclog(L"--- last reboot date is:  %s, reboot time is %02i:%02i\n",
+		nclog(L"--- last reboot date is (before):  %s, reboot time is %02i:%02i\n",
 			g_LastBootDate, newTime.wHour, newTime.wMinute);
 		nclog(L"+++ current time is: %04i%02i%02i %02i:%02i\n",
 			stCurrentTime.wYear, stCurrentTime.wMonth, stCurrentTime.wDay,
 			stCurrentTime.wHour, stCurrentTime.wMinute);
-		nclog(L"+++ reboot scheduled for: %04i%02i%02i %02i:%02i\n",
+		nclog(L"+++ last reboot saved as: %04i%02i%02i %02i:%02i\n",
 			g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
 			g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
 	}
@@ -384,13 +384,13 @@ int TimedReboot(void)
 
 	//iDiff = getDateTimeDiff(g_stRebootDateTime, stCurrentTime, &iDayDiff, &iHoursDiff, &iMinutesDiff);
 
-	if(iDiff < 0){	//iDiff is negative
+	if(iDiff < 0){										//iDiff is negative
 		if(iTESTMODE==1 || isExtraLogging())
 			nclog(L"WE ARE BEFORE REBOOT TIME\n");
 		DEBUGMSG(1, (L"WE ARE BEFORE REBOOT TIME\n"));
-		return iReturn;
+		//return iReturn;
 	}
-	if(iDiff <= 3 && iDiff >= 0){
+	else if(iDiff >= 0 && iDiff <= 3){					//iDiff between 0 and 3 (including)
 		DEBUGMSG(1, (L"WE ARE WITHIN REBOOT TIMESPAN\n"));
 		if(iTESTMODE==1 || isExtraLogging())
 			nclog(L"WE ARE WITHIN REBOOT TIMESPAN\n");
@@ -400,18 +400,19 @@ int TimedReboot(void)
 		//do a warmboot
 		doAnimateAndReboot(stCurrentTime);
 		iReturn=1;
-		return iReturn;
+		//return iReturn;
 	}
-	if(iDiff > 0){
+	else if(iDiff > 3){									//iDiff > 3 and so outside time frame
 		if(iTESTMODE==1 || isExtraLogging())
 			nclog(L"WE ARE AFTER REBOOT TIME\n");
+
 		DEBUGMSG(1, (L"WE ARE AFTER REBOOT TIME\n"));
 		//calc next day to reboot using day interval and last reboot date
 		SYSTEMTIME stNextReboot = getNextBootWithInterval(stCurrentTime, g_stLastBootDateTime, g_iRebootDays);
 
 		nclog(L"+++ next reboot calculated for %02i.%02i.%04i at %02i:%02i\n", 
 				stNextReboot.wDay, stNextReboot.wMonth, stNextReboot.wYear,
-				stNextReboot.wMinute, stNextReboot.wHour
+				stNextReboot.wHour, stNextReboot.wMinute
 				);
 		
 		//the new date will be the next time to boot, we need to calc the last 'theoretic' reboot date
@@ -422,8 +423,10 @@ int TimedReboot(void)
 
 		writeLastBootDate(g_stLastBootDateTime);
 		
+		if(iTESTMODE==1 || isExtraLogging())
+			nclog(L"__TimedReboot Check END__\n");
 		iReturn=2;
-		return iReturn;
+		//return iReturn;
 	}
 
 	//globals
@@ -718,13 +721,14 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		break;
 	case WM_CREATE:
 		ReadReg();
+		nclog(L"WM_CREATE: szWindowClass: %s\n", szWindowClass);
 
-		nclog(L"WM_CREATE: szWindowClass: %s\n\n", szWindowClass);
-		nclog(L"WM_CREATE: ReadReg:\r\n", NULL);
+		nclog(L"WM_CREATE: DumpReg:\n", NULL);
 		for (int i=0; i<RegEntryCount; i++)
 		{
 			nclog(L"%s\t%s\n", rkeys[i].kname, rkeys[i].ksval );
 		}
+		nclog(L"WM_CREATE: DumpReg END\n\n", NULL);
 
 		//set the timer that checks the clock for reboot
 		if (g_iRebootTimerCheck != 0)
@@ -751,6 +755,9 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		}
 		else
 			DEBUGMSG(1, (L"#### GetWindowRect failed %i ####\n", GetLastError()));
+
+		//send one timer message to have a timer reboot check at start of app
+		PostMessage(hwnd, WM_TIMER, ID_RebootTimeCheck, 0);
 
 		return 0;
 		break;
@@ -781,7 +788,7 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 			break;
 		}
 		//reset global extra log interval count?
-		if(g_extraLogIntervalCount>g_extraLogInterval)
+		if(g_extraLogIntervalCount >= g_extraLogInterval)
 			g_extraLogIntervalCount=0;
 		return 0;
 		break;
@@ -1064,7 +1071,7 @@ int ReadReg()
 	//TODO check if works OK
 	//we need the date and time of when to reboot
 	g_stRebootDateTime=addDays(g_stLastBootDateTime, g_iRebootDays);
-	nclog(L"### next time to reboot: %04i%02i%02i %02i:%02i\n", 
+	nclog(L"### next time to reboot by registry: %04i%02i%02i %02i:%02i\n", 
 		g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
 		g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
 	

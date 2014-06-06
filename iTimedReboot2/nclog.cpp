@@ -213,7 +213,8 @@ TCHAR* logDateTime(){
 		wcscpy(lpDateStr, L"err");
 	}
 
-	wsprintf(str, L"Date and Time: %s %s", lpDateStr, lpTimeStr);
+	//wsprintf(str, L"Date and Time: %s %s", lpDateStr, lpTimeStr);
+	wsprintf(str, L"%s %s", lpDateStr, lpTimeStr);
 	return str;
 }
 
@@ -283,7 +284,7 @@ void nclog (const wchar_t *fmt, ...)
 
 		WCHAR bufTmpW[512];
 
-		wsprintf(bufTmpW, L"0x%08x, %s: %s", dTime, hMod, bufW);
+		wsprintf(bufTmpW, L"0x%08x, %s: %s", hMod, dTime, bufW);
 		
 		wsprintf(bufW, L"%s", bufTmpW);
 		//convert to char
