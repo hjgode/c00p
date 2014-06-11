@@ -1,20 +1,24 @@
 // iTimedReboot2.cpp : Defines the entry point for the application.
 //
 
-// iTimedReboot2 v0.5
+// iTimedReboot2 v0.6
 
-//history
+//see history.txt
 //version	change
 // 1.0		initial release
 /*
-[HKEY_LOCAL_MACHINE\SOFTWARE\Intermec\iTimedReboot2]
-"Interval"="0"			//0=OFF, seconds between time checks, do not use >30000
-"RebootDays"="0"		//days between reboots
-"RebootTime"="00:00"	//time to reboot in hh:mm
-"PingInterval"="0"		//0=OFF, seconds between pings
-"PingTarget"="127.0.0.1"//target IP to ping
-"EnableLogging"="0"		//0=disable logging file, 1=enable
-"LastBootDate"=yyyymmdd	//date of last boot
+[HKEY_LOCAL_MACHINE\Software\Intermec\iTimedReboot2]
+"newTime"="00:34"							//reboot time including a random part
+"LastBootDate"="20131112"					//date of last reboot (yyyymmdd)
+"RebootExtParms"="\\Flash File Store"		//args for external reboot app
+"RebootExtApp"="\\Windows\\fexplore.exe"	//external reboot app
+"RebootExt"="0"								//external reboot app enable/disable
+"RebootDays"="0"							//days between reboots
+"EnableLogging"="1"							//0=disable logging file, 1=enable
+"PingTarget"="127.0.0.1"					//target IP to ping
+"PingInterval"="60"							//0=OFF, seconds between pings
+"RebootTime"="00:00"						//time to reboot in hh:mm
+"Interval"="30"								//0=OFF, seconds between time checks, do not use >30000
 */
 
 #include "stdafx.h"
@@ -75,7 +79,7 @@ HWND g_hwnd;
 #if DEBUG
 	const int	g_extraLogInterval = 1;
 #else
-	const int	g_extraLogInterval = 20;
+	const int	g_extraLogInterval = 40;
 #endif
 int			g_extraLogIntervalCount = g_extraLogInterval;	//so first call is with extra info
 
@@ -256,7 +260,7 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 	//RAND_MAX; //0x7fff	
 	srand((int)GetTickCount());	//initialize random seed:
 	int randomMinutes = rand() % 120 + 1;
-	nclog(L"### TimedReboot: Using random minutes: %i\r\n", randomMinutes); 
+	nclog(L"### TimedReboot: Using random minutes: %i\n", randomMinutes); 
 
 	ut += (ULONGLONG) (randomMinutes * _MINUTE);
 	// Copy the result back into the FILETIME structure.
@@ -404,17 +408,12 @@ int TimedReboot(void)
 	}
 	else if(iDiff > 3){									//iDiff > 3 and so outside time frame
 		if(iTESTMODE==1 || isExtraLogging())
-			nclog(L"WE ARE AFTER REBOOT TIME\n");
+			nclog(L"WE ARE AFTER LAST REBOOT TIME\n");
 
-		DEBUGMSG(1, (L"WE ARE AFTER REBOOT TIME\n"));
+		DEBUGMSG(1, (L"WE ARE AFTER LAST REBOOT TIME\n"));
 		//calc next day to reboot using day interval and last reboot date
 		SYSTEMTIME stNextReboot = getNextBootWithInterval(stCurrentTime, g_stLastBootDateTime, g_iRebootDays);
 
-		nclog(L"+++ next reboot calculated for %02i.%02i.%04i at %02i:%02i\n", 
-				stNextReboot.wDay, stNextReboot.wMonth, stNextReboot.wYear,
-				stNextReboot.wHour, stNextReboot.wMinute
-				);
-		
 		//the new date will be the next time to boot, we need to calc the last 'theoretic' reboot date
 		//update registry and global vars
 		g_stLastBootDateTime=addDays(stNextReboot, -g_iRebootDays);
@@ -422,6 +421,12 @@ int TimedReboot(void)
 		wsprintf(g_LastBootDate, L"%04i%02i%02i", g_stLastBootDateTime.wYear, g_stLastBootDateTime.wMonth, g_stLastBootDateTime.wDay);
 
 		writeLastBootDate(g_stLastBootDateTime);
+		
+		if(iTESTMODE==1 || isExtraLogging())
+			nclog(L"+++ next reboot calculated for %02i.%02i.%04i at %02i:%02i\n", 
+					stNextReboot.wDay, stNextReboot.wMonth, stNextReboot.wYear,
+					stNextReboot.wHour, stNextReboot.wMinute
+					);
 		
 		if(iTESTMODE==1 || isExtraLogging())
 			nclog(L"__TimedReboot Check END__\n");
@@ -544,6 +549,14 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	MSG msg;
 	HACCEL hAccelTable;
 
+	// Initialize global strings
+	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+	LoadString(hInstance, IDS_WINDOWCLASSNAME/*IDC_iTimedReboot2*/, szWindowClass, MAX_LOADSTRING);
+	LoadString(hInstance, IDC_iTimedReboot2, szApplicationNameAndVersion, MAX_LOADSTRING);
+
+	nclog_LogginEnabled=TRUE;
+	nclog(L"%s started\n", szApplicationNameAndVersion);
+
 	if (wcsstr(lpCmdLine, L"-test") != NULL){
 		iTESTMODE=1;
 		initRKEYS();
@@ -580,11 +593,6 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 	//init the rkeys struct with defaults
 	initRKEYS();
 
-	// Initialize global strings
-	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadString(hInstance, IDS_WINDOWCLASSNAME/*IDC_iTimedReboot2*/, szWindowClass, MAX_LOADSTRING);
-	LoadString(hInstance, IDC_iTimedReboot2, szApplicationNameAndVersion, MAX_LOADSTRING);
-
 	//allow only one instance!
 	HWND hWnd = FindWindow (NULL, szWindowClass);    
 	if (hWnd) 
@@ -617,6 +625,8 @@ int APIENTRY WinMain(	HINSTANCE hInstance,
 		}
 	}
 
+	g_bEnableLogging=TRUE;
+	nclog(L"%s ended\n\n", szApplicationNameAndVersion);
 	return msg.wParam;
 }
 
@@ -728,7 +738,7 @@ LONG FAR PASCAL WndProc (HWND hwnd   , UINT message ,
 		{
 			nclog(L"%s\t%s\n", rkeys[i].kname, rkeys[i].ksval );
 		}
-		nclog(L"WM_CREATE: DumpReg END\n\n", NULL);
+		nclog(L"WM_CREATE: DumpReg END\n", NULL);
 
 		//set the timer that checks the clock for reboot
 		if (g_iRebootTimerCheck != 0)

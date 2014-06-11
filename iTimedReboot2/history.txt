@@ -1,5 +1,29 @@
 iTimedReboot2
 
+============================================
+[HKEY_LOCAL_MACHINE\Software\Intermec\iTimedReboot2]
+"newTime"="00:34"							//reboot time including a random part
+"LastBootDate"="20131112"					//date of last reboot (yyyymmdd)
+"RebootExtParms"="\\Flash File Store"		//args for external reboot app
+"RebootExtApp"="\\Windows\\fexplore.exe"	//external reboot app
+"RebootExt"="0"								//external reboot app enable/disable
+"RebootDays"="0"							//days between reboots
+"EnableLogging"="1"							//0=disable logging file, 1=enable
+"PingTarget"="127.0.0.1"					//target IP to ping
+"PingInterval"="60"							//0=OFF, seconds between pings
+"RebootTime"="00:00"						//time to reboot in hh:mm
+"Interval"="30"								//0=OFF, seconds between time checks, do not use >30000
+============================================
+
+  v0.6:
+		Moved "+++ next reboot calculated for" in TimedReboot() after global update
+		Moved "+++ next reboot calculated for" in extraLogging/Testing block (occurs only after x cycles)
+		extraLogging interval changed from 20 to 40 (x 30 seconds)
+		added
+				nclog_LogginEnabled=TRUE;
+				nclog(L"%s started\n", szApplicationNameAndVersion);
+		add beginning of WinMain to have a minmal logging all the time and to see app verion in log
+
   v0.5:
 		added some more logging /see g_extraLogging...
 		moved g_stRebootDateTime update from TimeReboot() to WriteLastBootDate()
