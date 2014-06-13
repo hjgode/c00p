@@ -283,6 +283,7 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 //				updates global vars!
 //
 void writeLastBootDate(SYSTEMTIME stBoot){
+	nclog(L"Entering writeLastBootDate...\n");
 	//hold reversed data vale, ie 20140614 for 14.06.2014
 	TCHAR szDate[MAX_PATH];
 
@@ -290,8 +291,12 @@ void writeLastBootDate(SYSTEMTIME stBoot){
 	wsprintf(szDate, L"%04i%02i%02i", stBoot.wYear, stBoot.wMonth, stBoot.wDay);
 
 	OpenKey();
-	if(RegWriteStr(rkeys[LastBootDate].kname, szDate)!=0)
+	if(RegWriteStr(rkeys[LastBootDate].kname, szDate)!=0){
 		DEBUGMSG(1, (L"save lastbootdate to reg failed!\n"));
+		nclog(L"saving lastbootdate '%s' failed\n", szDate);
+	}else{
+		nclog(L"saving lastbootdate '%s' OK\n", szDate);
+	}
 	CloseKey();
 
 	//update global vars
@@ -303,7 +308,10 @@ void writeLastBootDate(SYSTEMTIME stBoot){
 	//v0.5 moved from iTimedReboot
 	//	g_stRebootDateTime holds time as read by registry
 	//	+ needs to be updated as used for diff calculating, if there is no reboot (which would read the reg with new value)
-	g_stRebootDateTime=g_stLastBootDateTime;
+	nclog(L"setting g_stRebootDateTime to g_stLastBootDateTime\n");
+	// !!!! dont do that: g_stRebootDateTime=g_stLastBootDateTime;
+	//we need the date and time of when to reboot
+	g_stRebootDateTime=addDays(g_stLastBootDateTime, g_iRebootDays);
 		
 	//TODO check implementation!
 	if(getSystemtimeOfString(szLasteDateTime, &g_stLastBootDateTime)){
@@ -317,18 +325,19 @@ void writeLastBootDate(SYSTEMTIME stBoot){
 		SYSTEMTIME stCurrentTime;
 		memset(&stCurrentTime, 0, sizeof(stCurrentTime));
 		GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
-		nclog(L"--- last reboot date is (after):  %s, reboot time is %02i:%02i\n",
+		nclog(L"--- g_LastBootDate is (after):  %s, newTime is %02i:%02i\n",
 			g_LastBootDate, newTime.wHour, newTime.wMinute);
-		nclog(L"+++ current time is: %04i%02i%02i %02i:%02i\n",
+		nclog(L"+++ stCurrentTime is: %04i%02i%02i %02i:%02i\n",
 			stCurrentTime.wYear, stCurrentTime.wMonth, stCurrentTime.wDay,
 			stCurrentTime.wHour, stCurrentTime.wMinute);
-		nclog(L"+++ last reboot saved as: %04i%02i%02i %02i:%02i\n",
+		nclog(L"+++ g_stRebootDateTime is: %04i%02i%02i %02i:%02i\n",
 			g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
 			g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
 	}
 
 	if(iTESTMODE==1 || isExtraLogging())
 		nclog(L"Updated registry with last reboot on:\t%s, %s\n", szDate, g_sRebootTime);	//g_sRebootTime is read once from reg on load
+	nclog(L"...writeLastBootDate END\n");
 }
 
 void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
@@ -340,7 +349,7 @@ void doAnimateAndReboot(SYSTEMTIME stCurrentTime){
 	int er=0;
 	//produce a mathematic date
 	int rc = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &stCurrentTime, L"yyyyMMdd", sDateNow, MAX_PATH-1);
-	nclog(L"##### Will reboot now. Last reboot on:\n\t%s, %s #####\n", sDateNow, g_sRebootTime);
+	nclog(L"##### Will reboot now. Current date, global reboot time:\t%s, %s #####\n", sDateNow, g_sRebootTime);
 	DEBUGMSG(true, (L"\r\nREBOOT...\r\n"));
 	WarmBoot();				//ITCWarmBoot() was not used due to itc50.dll dependency
 }
@@ -365,12 +374,12 @@ int TimedReboot(void)
 	memset(&stCurrentTime, 0, sizeof(stCurrentTime));
 	GetLocalTime(&stCurrentTime);	//stCurrentTime is now the actual datetime
 	if(iTESTMODE==1 || isExtraLogging()){
-		nclog(L"--- last reboot date is (before):  %s, reboot time is %02i:%02i\n",
+		nclog(L"--- g_LastBootDate (before):  %s, reboot time is %02i:%02i\n",
 			g_LastBootDate, newTime.wHour, newTime.wMinute);
 		nclog(L"+++ current time is: %04i%02i%02i %02i:%02i\n",
 			stCurrentTime.wYear, stCurrentTime.wMonth, stCurrentTime.wDay,
 			stCurrentTime.wHour, stCurrentTime.wMinute);
-		nclog(L"+++ last reboot saved as: %04i%02i%02i %02i:%02i\n",
+		nclog(L"+++ g_stRebootDateTime is: %04i%02i%02i %02i:%02i\n",
 			g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
 			g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);
 	}
@@ -1081,6 +1090,7 @@ int ReadReg()
 	//TODO check if works OK
 	//we need the date and time of when to reboot
 	g_stRebootDateTime=addDays(g_stLastBootDateTime, g_iRebootDays);
+
 	nclog(L"### next time to reboot by registry: %04i%02i%02i %02i:%02i\n", 
 		g_stRebootDateTime.wYear, g_stRebootDateTime.wMonth, g_stRebootDateTime.wDay,
 		g_stRebootDateTime.wHour, g_stRebootDateTime.wMinute);

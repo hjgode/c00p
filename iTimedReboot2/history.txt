@@ -15,6 +15,15 @@ iTimedReboot2
 "Interval"="30"								//0=OFF, seconds between time checks, do not use >30000
 ============================================
 
+  v0.61:
+		changed some logging messages
+		changed code:
+				// !!!! dont do that: g_stRebootDateTime=g_stLastBootDateTime;
+				//we need the date and time of when to reboot
+				g_stRebootDateTime=addDays(g_stLastBootDateTime, g_iRebootDays);
+		calculation is done against g_stRebootDateTime, which is the time to reboot, and current time
+		if there is a change, g_stLastBootDateTime will be updated and so g_stRebootDateTime needs to be updated
+		
   v0.6:
 		Moved "+++ next reboot calculated for" in TimedReboot() after global update
 		Moved "+++ next reboot calculated for" in extraLogging/Testing block (occurs only after x cycles)

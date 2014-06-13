@@ -96,7 +96,7 @@ STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "iTimedReboot2"
     IDC_TRAYICON            "TRAYICON"
-    IDC_iTimedReboot2       "iTimedReboot2 v0.6"
+    IDC_iTimedReboot2       "iTimedReboot2 v0.61"
     IDS_WINDOWCLASSNAME     "iTimedReboot"
 END
 
