@@ -18,6 +18,7 @@ set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
 reboot settings now lastreboot=02:00 04.06.2014, days interval=1 
 Result: 
 [HKLM\Software\Intermec\iTimedReboot2]
+Default=""
 EnableLogging="1"
 Interval="30"
 LastBootDate="20140604"
@@ -31,24 +32,28 @@ RebootTime="02:00"
 newTime="02:00"
 
 *************** LOG  TEST1 **************** 
-0xa31ddfde: Using Time Check Interval:	30 seconds
-0xa31ddfde: Reboot time will be:	02:00
-0xa31ddfde: Using Ping Interval:	60 seconds
-0xa31ddfde: Last boot date:	20140604
-0xa31ddfde: Using Days Interval:	1
-0xa31ddfde: ### next time to reboot: 20140605 02:00
-0xa31ddfde: __TimedReboot Check__
-0xa31ddfde: --- last reboot date is:  20140604, reboot time is 02:00
-0xa31ddfde: +++ current time is: 20140604 14:00
-0xa31ddfde: +++ reboot scheduled for: 20140605 02:00
-0xa31ddfde: WE ARE BEFORE REBOOT TIME
+0x8349e986, 04.06.2014 14:00:02 : iTimedReboot2 v0.61 started
+0x8349e986, 04.06.2014 14:00:02 : ===== ReadReg() start =====
+0x8349e986, 04.06.2014 14:00:02 : Using Time Check Interval:	30 seconds
+0x8349e986, 04.06.2014 14:00:02 : Reboot time will be:	02:00
+0x8349e986, 04.06.2014 14:00:02 : Using Ping Interval:	60 seconds
+0x8349e986, 04.06.2014 14:00:02 : Last boot date:	20140604
+0x8349e986, 04.06.2014 14:00:02 : Using Days Interval:	1
+0x8349e986, 04.06.2014 14:00:02 : ### next time to reboot by registry: 20140605 02:00
+0x8349e986, 04.06.2014 14:00:02 : ===== ReadReg() END =====
+0x8349e986, 04.06.2014 14:00:02 : __TimedReboot Check__
+0x8349e986, 04.06.2014 14:00:02 : --- g_LastBootDate (before):  20140604, reboot time is 02:00
+0x8349e986, 04.06.2014 14:00:02 : +++ current time is: 20140604 14:00
+0x8349e986, 04.06.2014 14:00:02 : +++ g_stRebootDateTime is: 20140605 02:00
+0x8349e986, 04.06.2014 14:00:02 : WE ARE BEFORE REBOOT TIME
+0x8349e986, 04.06.2014 14:00:02 : --- TimedReboot Check END ---
 ---------------TEST1  --------------- 
 .
 ====================================================== 
  TEST2... 
     set time 2 minutes before reboot 
 ====================================================== 
-system time now 02:34 05.06.2014 
+system time now 02:34 06.06.2014 
 Importing test reg keys... 
 set value HKLM\Software\Intermec\iTimedReboot2  newTime : "00:34"
 set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20140605"
@@ -64,6 +69,7 @@ set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
 reboot settings now lastreboot=02:36 05.06.2014, days interval=1 
 Result: 
 [HKLM\Software\Intermec\iTimedReboot2]
+Default=""
 EnableLogging="1"
 Interval="30"
 LastBootDate="20140605"
@@ -77,17 +83,21 @@ RebootTime="02:36"
 newTime="02:36"
 
 *************** LOG  TEST2 **************** 
-0xc3d4c596: Using Time Check Interval:	30 seconds
-0xc3d4c596: Reboot time will be:	02:36
-0xc3d4c596: Using Ping Interval:	60 seconds
-0xc3d4c596: Last boot date:	20140605
-0xc3d4c596: Using Days Interval:	1
-0xc3d4c596: ### next time to reboot: 20140606 02:36
-0xc3d4c596: __TimedReboot Check__
-0xc3d4c596: --- last reboot date is:  20140605, reboot time is 02:36
-0xc3d4c596: +++ current time is: 20140605 02:34
-0xc3d4c596: +++ reboot scheduled for: 20140606 02:36
-0xc3d4c596: WE ARE BEFORE REBOOT TIME
+0x63420faa, 06.06.2014 02:34:00 : iTimedReboot2 v0.61 started
+0x63420faa, 06.06.2014 02:34:00 : ===== ReadReg() start =====
+0x63420faa, 06.06.2014 02:34:00 : Using Time Check Interval:	30 seconds
+0x63420faa, 06.06.2014 02:34:00 : Reboot time will be:	02:36
+0x63420faa, 06.06.2014 02:34:00 : Using Ping Interval:	60 seconds
+0x63420faa, 06.06.2014 02:34:01 : Last boot date:	20140605
+0x63420faa, 06.06.2014 02:34:01 : Using Days Interval:	1
+0x63420faa, 06.06.2014 02:34:01 : ### next time to reboot by registry: 20140606 02:36
+0x63420faa, 06.06.2014 02:34:01 : ===== ReadReg() END =====
+0x63420faa, 06.06.2014 02:34:01 : __TimedReboot Check__
+0x63420faa, 06.06.2014 02:34:01 : --- g_LastBootDate (before):  20140605, reboot time is 02:36
+0x63420faa, 06.06.2014 02:34:01 : +++ current time is: 20140606 02:34
+0x63420faa, 06.06.2014 02:34:01 : +++ g_stRebootDateTime is: 20140606 02:36
+0x63420faa, 06.06.2014 02:34:01 : WE ARE BEFORE REBOOT TIME
+0x63420faa, 06.06.2014 02:34:01 : --- TimedReboot Check END ---
 ---------------TEST2  --------------- 
 .
 ====================================================== 
@@ -110,6 +120,7 @@ set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
 reboot settings now lastreboot=02:36 04.06.2014, days interval=1 
 Result: 
 [HKLM\Software\Intermec\iTimedReboot2]
+Default=""
 EnableLogging="1"
 Interval="30"
 LastBootDate="20140605"
@@ -123,22 +134,30 @@ RebootTime="02:36"
 newTime="02:36"
 
 *************** LOG  TEST3 **************** 
-0x631656e2: Using Time Check Interval:	30 seconds
-0x631656e2: Reboot time will be:	02:36
-0x631656e2: Using Ping Interval:	60 seconds
-0x631656e2: Last boot date:	20140604
-0x631656e2: Using Days Interval:	1
-0x631656e2: ### next time to reboot: 20140605 02:36
-0x631656e2: __TimedReboot Check__
-0x631656e2: --- last reboot date is:  20140604, reboot time is 02:36
-0x631656e2: +++ current time is: 20140605 02:36
-0x631656e2: +++ reboot scheduled for: 20140605 02:36
-0x631656e2: WE ARE WITHIN REBOOT TIMESPAN
-0x631656e2: Updated registry with last reboot on:
-	20140605, 02:36
-0x631656e2: ##### Will reboot now. Last reboot on:
-	20140605, 02:36 #####
-0x631656e2: Rebooting now...
+0xe419d2d2, 05.06.2014 02:36:01 : iTimedReboot2 v0.61 started
+0xe419d2d2, 05.06.2014 02:36:01 : ===== ReadReg() start =====
+0xe419d2d2, 05.06.2014 02:36:01 : Using Time Check Interval:	30 seconds
+0xe419d2d2, 05.06.2014 02:36:01 : Reboot time will be:	02:36
+0xe419d2d2, 05.06.2014 02:36:01 : Using Ping Interval:	60 seconds
+0xe419d2d2, 05.06.2014 02:36:01 : Last boot date:	20140604
+0xe419d2d2, 05.06.2014 02:36:01 : Using Days Interval:	1
+0xe419d2d2, 05.06.2014 02:36:01 : ### next time to reboot by registry: 20140605 02:36
+0xe419d2d2, 05.06.2014 02:36:01 : ===== ReadReg() END =====
+0xe419d2d2, 05.06.2014 02:36:01 : __TimedReboot Check__
+0xe419d2d2, 05.06.2014 02:36:01 : --- g_LastBootDate (before):  20140604, reboot time is 02:36
+0xe419d2d2, 05.06.2014 02:36:02 : +++ current time is: 20140605 02:36
+0xe419d2d2, 05.06.2014 02:36:02 : +++ g_stRebootDateTime is: 20140605 02:36
+0xe419d2d2, 05.06.2014 02:36:02 : WE ARE WITHIN REBOOT TIMESPAN
+0xe419d2d2, 05.06.2014 02:36:02 : Entering writeLastBootDate...
+0xe419d2d2, 05.06.2014 02:36:02 : saving lastbootdate '20140605' OK
+0xe419d2d2, 05.06.2014 02:36:02 : setting g_stRebootDateTime to g_stLastBootDateTime
+0xe419d2d2, 05.06.2014 02:36:02 : --- g_LastBootDate is (after):  20140605, newTime is 02:36
+0xe419d2d2, 05.06.2014 02:36:02 : +++ stCurrentTime is: 20140605 02:36
+0xe419d2d2, 05.06.2014 02:36:02 : +++ g_stRebootDateTime is: 20140605 02:36
+0xe419d2d2, 05.06.2014 02:36:02 : Updated registry with last reboot on:	20140605, 02:36
+0xe419d2d2, 05.06.2014 02:36:02 : ...writeLastBootDate END
+0xe419d2d2, 05.06.2014 02:36:02 : ##### Will reboot now. Current date, global reboot time:	20140605, 02:36 #####
+0xe419d2d2, 05.06.2014 02:36:02 : Rebooting now...
 ---------------TEST3  --------------- 
 .
 ====================================================== 
@@ -161,6 +180,7 @@ set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
 reboot settings now lastreboot=02:36 04.06.2014, days interval=1 
 Result: 
 [HKLM\Software\Intermec\iTimedReboot2]
+Default=""
 EnableLogging="1"
 Interval="30"
 LastBootDate="20140605"
@@ -174,19 +194,93 @@ RebootTime="02:36"
 newTime="02:36"
 
 *************** LOG  TEST4 **************** 
-0x631656e2: DEBUGMODE no warmboot
-0xe3226d32: Using Time Check Interval:	30 seconds
-0xe3226d32: Reboot time will be:	02:36
-0xe3226d32: Using Ping Interval:	60 seconds
-0xe3226d32: Last boot date:	20140604
-0xe3226d32: Using Days Interval:	1
-0xe3226d32: ### next time to reboot: 20140605 02:36
-0xe3226d32: __TimedReboot Check__
-0xe3226d32: --- last reboot date is:  20140604, reboot time is 02:36
-0xe3226d32: +++ current time is: 20140605 02:46
-0xe3226d32: +++ reboot scheduled for: 20140605 02:36
-0xe3226d32: WE ARE AFTER REBOOT TIME
-0xe3226d32: Updated registry with last reboot on:
-	20140605, 02:36
+0xe419d2d2, 05.06.2014 02:46:00 : DEBUGMODE no warmboot
+0xe419d2d2, 05.06.2014 02:46:00 : --- TimedReboot Check END ---
+0xe32ad81e, 05.06.2014 02:46:00 : iTimedReboot2 v0.61 started
+0xe32ad81e, 05.06.2014 02:46:00 : ===== ReadReg() start =====
+0xe32ad81e, 05.06.2014 02:46:00 : Using Time Check Interval:	30 seconds
+0xe32ad81e, 05.06.2014 02:46:00 : Reboot time will be:	02:36
+0xe32ad81e, 05.06.2014 02:46:00 : Using Ping Interval:	60 seconds
+0xe32ad81e, 05.06.2014 02:46:01 : Last boot date:	20140604
+0xe32ad81e, 05.06.2014 02:46:01 : Using Days Interval:	1
+0xe32ad81e, 05.06.2014 02:46:01 : ### next time to reboot by registry: 20140605 02:36
+0xe32ad81e, 05.06.2014 02:46:01 : ===== ReadReg() END =====
+0xe32ad81e, 05.06.2014 02:46:01 : __TimedReboot Check__
+0xe32ad81e, 05.06.2014 02:46:01 : --- g_LastBootDate (before):  20140604, reboot time is 02:36
+0xe32ad81e, 05.06.2014 02:46:01 : +++ current time is: 20140605 02:46
+0xe32ad81e, 05.06.2014 02:46:01 : +++ g_stRebootDateTime is: 20140605 02:36
+0xe32ad81e, 05.06.2014 02:46:01 : WE ARE AFTER LAST REBOOT TIME
+0xe32ad81e, 05.06.2014 02:46:01 : Entering writeLastBootDate...
+0xe32ad81e, 05.06.2014 02:46:01 : saving lastbootdate '20140605' OK
+0xe32ad81e, 05.06.2014 02:46:01 : setting g_stRebootDateTime to g_stLastBootDateTime
+0xe32ad81e, 05.06.2014 02:46:01 : --- g_LastBootDate is (after):  20140605, newTime is 02:36
+0xe32ad81e, 05.06.2014 02:46:01 : +++ stCurrentTime is: 20140605 02:46
+0xe32ad81e, 05.06.2014 02:46:01 : +++ g_stRebootDateTime is: 20140606 02:36
+0xe32ad81e, 05.06.2014 02:46:01 : Updated registry with last reboot on:	20140605, 02:36
+0xe32ad81e, 05.06.2014 02:46:01 : ...writeLastBootDate END
+0xe32ad81e, 05.06.2014 02:46:01 : +++ next reboot calculated for 06.06.2014 at 02:36
+0xe32ad81e, 05.06.2014 02:46:01 : __TimedReboot Check END__
+0xe32ad81e, 05.06.2014 02:46:01 : --- TimedReboot Check END ---
 ---------------TEST4  --------------- 
+.
+====================================================== 
+ TEST5... 
+   test systemzeit weit nach letzter rebootzeit 
+====================================================== 
+system time now 15:00 05.06.2014 
+Importing test reg keys... 
+set value HKLM\Software\Intermec\iTimedReboot2  newTime : "00:34"
+set value HKLM\Software\Intermec\iTimedReboot2  LastBootDate : "20140506"
+set value HKLM\Software\Intermec\iTimedReboot2  RebootExt : "0"
+set value HKLM\Software\Intermec\iTimedReboot2  RebootExtParms : "\Flash File Store"
+set value HKLM\Software\Intermec\iTimedReboot2  RebootExtApp : "\Windows\fexplore.exe"
+set value HKLM\Software\Intermec\iTimedReboot2  RebootDays : "1"
+set value HKLM\Software\Intermec\iTimedReboot2  EnableLogging : "1"
+set value HKLM\Software\Intermec\iTimedReboot2  PingTarget : "127.0.0.1"
+set value HKLM\Software\Intermec\iTimedReboot2  PingInterval : "60"
+set value HKLM\Software\Intermec\iTimedReboot2  RebootTime : "15:00"
+set value HKLM\Software\Intermec\iTimedReboot2  Interval : "30"
+reboot settings now lastreboot=15:00 06.05.2014, days interval=1 
+Result: 
+[HKLM\Software\Intermec\iTimedReboot2]
+Default=""
+EnableLogging="1"
+Interval="30"
+LastBootDate="20140605"
+PingInterval="60"
+PingTarget="127.0.0.1"
+RebootDays="1"
+RebootExt="0"
+RebootExtApp="\Windows\fexplore.exe"
+RebootExtParms="\Flash File Store"
+RebootTime="15:00"
+newTime="15:00"
+
+*************** LOG  TEST5 **************** 
+0x2346d0ce, 05.06.2014 15:00:00 : iTimedReboot2 v0.61 started
+0x2346d0ce, 05.06.2014 15:00:00 : ===== ReadReg() start =====
+0x2346d0ce, 05.06.2014 15:00:00 : Using Time Check Interval:	30 seconds
+0x2346d0ce, 05.06.2014 15:00:00 : Reboot time will be:	15:00
+0x2346d0ce, 05.06.2014 15:00:00 : Using Ping Interval:	60 seconds
+0x2346d0ce, 05.06.2014 15:00:00 : Last boot date:	20140506
+0x2346d0ce, 05.06.2014 15:00:00 : Using Days Interval:	1
+0x2346d0ce, 05.06.2014 15:00:01 : ### next time to reboot by registry: 20140507 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : ===== ReadReg() END =====
+0x2346d0ce, 05.06.2014 15:00:01 : __TimedReboot Check__
+0x2346d0ce, 05.06.2014 15:00:01 : --- g_LastBootDate (before):  20140506, reboot time is 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : +++ current time is: 20140605 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : +++ g_stRebootDateTime is: 20140507 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : WE ARE AFTER LAST REBOOT TIME
+0x2346d0ce, 05.06.2014 15:00:01 : Entering writeLastBootDate...
+0x2346d0ce, 05.06.2014 15:00:01 : saving lastbootdate '20140605' OK
+0x2346d0ce, 05.06.2014 15:00:01 : setting g_stRebootDateTime to g_stLastBootDateTime
+0x2346d0ce, 05.06.2014 15:00:01 : --- g_LastBootDate is (after):  20140605, newTime is 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : +++ stCurrentTime is: 20140605 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : +++ g_stRebootDateTime is: 20140606 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : Updated registry with last reboot on:	20140605, 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : ...writeLastBootDate END
+0x2346d0ce, 05.06.2014 15:00:01 : +++ next reboot calculated for 06.06.2014 at 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : __TimedReboot Check END__
+0x2346d0ce, 05.06.2014 15:00:01 : --- TimedReboot Check END ---
+---------------TEST5  --------------- 
 .

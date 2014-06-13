@@ -1,14 +1,25 @@
-0x631656e2: DEBUGMODE no warmboot
-0xe3226d32: Using Time Check Interval:	30 seconds
-0xe3226d32: Reboot time will be:	02:36
-0xe3226d32: Using Ping Interval:	60 seconds
-0xe3226d32: Last boot date:	20140604
-0xe3226d32: Using Days Interval:	1
-0xe3226d32: ### next time to reboot: 20140605 02:36
-0xe3226d32: __TimedReboot Check__
-0xe3226d32: --- last reboot date is:  20140604, reboot time is 02:36
-0xe3226d32: +++ current time is: 20140605 02:46
-0xe3226d32: +++ reboot scheduled for: 20140605 02:36
-0xe3226d32: WE ARE AFTER REBOOT TIME
-0xe3226d32: Updated registry with last reboot on:
-	20140605, 02:36
+0x2346d0ce, 05.06.2014 15:00:00 : iTimedReboot2 v0.61 started
+0x2346d0ce, 05.06.2014 15:00:00 : ===== ReadReg() start =====
+0x2346d0ce, 05.06.2014 15:00:00 : Using Time Check Interval:	30 seconds
+0x2346d0ce, 05.06.2014 15:00:00 : Reboot time will be:	15:00
+0x2346d0ce, 05.06.2014 15:00:00 : Using Ping Interval:	60 seconds
+0x2346d0ce, 05.06.2014 15:00:00 : Last boot date:	20140506
+0x2346d0ce, 05.06.2014 15:00:00 : Using Days Interval:	1
+0x2346d0ce, 05.06.2014 15:00:01 : ### next time to reboot by registry: 20140507 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : ===== ReadReg() END =====
+0x2346d0ce, 05.06.2014 15:00:01 : __TimedReboot Check__
+0x2346d0ce, 05.06.2014 15:00:01 : --- g_LastBootDate (before):  20140506, reboot time is 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : +++ current time is: 20140605 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : +++ g_stRebootDateTime is: 20140507 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : WE ARE AFTER LAST REBOOT TIME
+0x2346d0ce, 05.06.2014 15:00:01 : Entering writeLastBootDate...
+0x2346d0ce, 05.06.2014 15:00:01 : saving lastbootdate '20140605' OK
+0x2346d0ce, 05.06.2014 15:00:01 : setting g_stRebootDateTime to g_stLastBootDateTime
+0x2346d0ce, 05.06.2014 15:00:01 : --- g_LastBootDate is (after):  20140605, newTime is 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : +++ stCurrentTime is: 20140605 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : +++ g_stRebootDateTime is: 20140606 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : Updated registry with last reboot on:	20140605, 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : ...writeLastBootDate END
+0x2346d0ce, 05.06.2014 15:00:01 : +++ next reboot calculated for 06.06.2014 at 15:00
+0x2346d0ce, 05.06.2014 15:00:01 : __TimedReboot Check END__
+0x2346d0ce, 05.06.2014 15:00:01 : --- TimedReboot Check END ---

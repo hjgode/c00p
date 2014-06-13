@@ -45,7 +45,7 @@ call:mylog "======================================================"
 call:mylog " TEST2..."
 call:mylog "    set time 2 minutes before reboot"
 call:mylog "======================================================"
-SET systime=201406050234
+SET systime=201406060234
 call:mysetdatetime %systime%
 rem setze daysinterval auf 1
 set mydayinterval=1
@@ -86,31 +86,26 @@ call:mySetRebootDateTimeAndInterval %mylastreboot%, "%myreboottime%", %mydayinte
 rem now test this
 call:MYDOTEST 4
         
-REM ###############################################################
-GOTO END_TESTS
-REM ###############################################################
-                 
 REM TEST5
 call:mylog "======================================================"
 call:mylog " TEST5..."
 call:mylog "   test systemzeit weit nach letzter rebootzeit"
 call:mylog "======================================================"
-rem setze system datum auf 11.11.2013
-rem setze system zeit auf 15:00
-SET systime=201311111500
+SET systime=201406051500
 call:mysetdatetime %systime%
 rem setze daysinterval auf 7
-set mydayinterval=7
-REM 2. april 2006 was a sunday
-rem setze lastrebootdate auf 2.4.2006, next reboot waere dann am Sonntag den 17.11.2013 15:00
-Rem lastreboot sollte dann der 10.11.2013 sein
-set mylastreboot=20060402
+set mydayinterval=1
+set mylastreboot=20140506
 rem setze reboottime auf 15:00 
 set myreboottime=15:00
 call:mySetRebootDateTimeAndInterval %mylastreboot%, "%myreboottime%", %mydayinterval%
 rem now test this
 call:MYDOTEST 5
 
+REM ###############################################################
+GOTO END_TESTS
+REM ###############################################################
+                 
 REM TEST5
 call:mylog "======================================================"
 call:mylog " TEST6..."
