@@ -1,7 +1,7 @@
 // iTimedReboot2.cpp : Defines the entry point for the application.
 //
 
-// iTimedReboot2 v0.6
+// iTimedReboot2 v0.70
 
 //see history.txt
 //version	change
@@ -19,6 +19,7 @@
 "PingInterval"="60"							//0=OFF, seconds between pings
 "RebootTime"="00:00"						//time to reboot in hh:mm
 "Interval"="30"								//0=OFF, seconds between time checks, do not use >30000
+"RandomizeLimit"="90"						//0=OFF, minutes limit for randomizing reboot time, added with v0.70
 */
 
 #include "stdafx.h"
@@ -82,6 +83,9 @@ HWND g_hwnd;
 	const int	g_extraLogInterval = 40;
 #endif
 int			g_extraLogIntervalCount = g_extraLogInterval;	//so first call is with extra info
+
+//RandomizeTime
+int g_RandomizeTime=120;
 
 //Notification icon stuff
 NOTIFYICONDATA	IconData;
@@ -152,10 +156,11 @@ enum REGKEYS{
 	RebootExtParms=8,
 	RebootDays=9,
 	NewTime=10,
+	RandomizeLimit=11,
 };
 
 //number of entries in the registry
-const int		RegEntryCount=11;				//how many entries are in the registry, with v2 changed from 6 to 9
+const int		RegEntryCount=12;				//how many entries are in the registry, with v2 changed from 6 to 9
 TCHAR*			g_regName = L"Software\\Intermec\\iTimedReboot2";
 
 //struct to hold reg names and values
@@ -259,7 +264,7 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 	// add some time
 	//RAND_MAX; //0x7fff	
 	srand((int)GetTickCount());	//initialize random seed:
-	int randomMinutes = rand() % 120 + 1;
+	int randomMinutes = rand() % g_RandomizeTime + 1;
 	nclog(L"### TimedReboot: Using random minutes: %i\n", randomMinutes); 
 
 	ut += (ULONGLONG) (randomMinutes * _MINUTE);
@@ -513,6 +518,10 @@ void initRKEYS()
 	wsprintf(rkeys[NewTime].kname, L"NewTime");
 	wsprintf(rkeys[NewTime].ksval, L"00:11");
 	rkeys[NewTime].kstype=REG_SZ;
+
+	wsprintf(rkeys[RandomizeLimit].kname, L"RandomizeLimit");
+	wsprintf(rkeys[RandomizeLimit].ksval, L"120");
+	rkeys[RandomizeLimit].kstype=REG_SZ;
 
 }
 //=================================================================================
@@ -984,13 +993,37 @@ int ReadReg()
 	wcsncpy(str, rkeys[RebootTime].ksval + 3, 2);			//get minutes part of string
 	str[2]=0;
 	lt.wMinute = (ushort) _wtoi(str);
-	if( iTESTMODE==1){	//do not use a random time in TEST mode
+
+	//read RandomizeLimit
+	if (StrIsNumber(rkeys[RandomizeLimit].ksval))
+	{
+		int lRandomizeLimit = _wtol(rkeys[RandomizeLimit].ksval);
+		if (lRandomizeLimit == 0){
+			nclog(L"RandomizeLimit converts to 0. No random time calculation!\n"); 
+			g_RandomizeTime=0;	//OFF, no randomize
+		}
+		else if(lRandomizeLimit>0 && lRandomizeLimit<120){
+			g_RandomizeTime=lRandomizeLimit;
+		}
+		else if(lRandomizeLimit<0 || lRandomizeLimit>120){
+			g_RandomizeTime=120;
+		}
+		nclog(L"Read RandomizeLimit gave %i\n", g_RandomizeTime);
+	}
+	else{
+		nclog(L"RandomizeLimit '%s' is not a number. Using default=120\n", rkeys[RandomizeLimit].ksval);
+		g_RandomizeTime=120;
+	}
+	// get new random time
+	if( iTESTMODE==1 && g_RandomizeTime==0){	//do not use a random time in TEST mode or if OFF
 		memcpy(&newTime, &lt, sizeof(SYSTEMTIME));
 	}
 	else{
 		//get random time within timespan
+		nclog(L"Getting Random time within RandomizeLimit %i\n", g_RandomizeTime);
 		newTime = getRandomTime(lt);
 	}
+
 	//g_stRebootTime=lt;	//store RebootTime in global time var
 	g_stRebootTime=newTime;	//store RebootTime including a random time offset
 	nclog(L"Reboot time will be:\t%02i:%02i\n", newTime.wHour, newTime.wMinute); 

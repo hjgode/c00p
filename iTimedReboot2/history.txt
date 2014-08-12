@@ -13,8 +13,12 @@ iTimedReboot2
 "PingInterval"="60"							//0=OFF, seconds between pings
 "RebootTime"="00:00"						//time to reboot in hh:mm
 "Interval"="30"								//0=OFF, seconds between time checks, do not use >30000
+"RandomizeLimit"="120"						//0=OFF, minutes limit for randomizing reboot time, default=120 minutes, min=0 and max=120
 ============================================
 
+  v0.70:
+		added registry entry to control randomize time limit (was fixed for 120 minutes): RandomizeLimit, min=0=OFF, max=120
+		
   v0.61:
 		changed some logging messages
 		changed code:

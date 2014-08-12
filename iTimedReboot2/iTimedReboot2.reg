@@ -13,4 +13,6 @@ REGEDIT4
 "PingInterval"="60"
 "RebootTime"="00:00"
 "Interval"="30"
+"RandomizeLimit"="120"
+
 

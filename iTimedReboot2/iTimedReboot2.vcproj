@@ -2554,6 +2554,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\registry.h"
+				>
+			</File>
+			<File
 				RelativePath="resource.h"
 				>
 			</File>
