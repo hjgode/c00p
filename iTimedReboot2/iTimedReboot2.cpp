@@ -1,7 +1,7 @@
 // iTimedReboot2.cpp : Defines the entry point for the application.
 //
 
-// iTimedReboot2 v0.70
+// iTimedReboot2 v0.80
 
 //see history.txt
 //version	change
@@ -264,8 +264,13 @@ SYSTEMTIME getRandomTime(SYSTEMTIME lt){
 	// add some time
 	//RAND_MAX; //0x7fff	
 	srand((int)GetTickCount());	//initialize random seed:
-	int randomMinutes = rand() % g_RandomizeTime + 1;
-	nclog(L"### TimedReboot: Using random minutes: %i\n", randomMinutes); 
+	int iRandom = rand();
+	int randomMinutes=0;
+	if(g_RandomizeTime!=0)
+		randomMinutes = iRandom % g_RandomizeTime + 1;	//DIV will crash for g_RandomizeTime=0!
+	else
+		randomMinutes = 0;
+	nclog(L"### TimedReboot: Using random minutes: %i (iRandom=%i)\n", randomMinutes, iRandom); 
 
 	ut += (ULONGLONG) (randomMinutes * _MINUTE);
 	// Copy the result back into the FILETIME structure.
@@ -1018,12 +1023,16 @@ int ReadReg()
 	if( iTESTMODE==1 && g_RandomizeTime==0){	//do not use a random time in TEST mode or if OFF
 		memcpy(&newTime, &lt, sizeof(SYSTEMTIME));
 	}
+	else if(g_RandomizeTime==0){
+		//get random time within timespan
+		nclog(L"Using time with no Randomize %i\n", g_RandomizeTime);
+		newTime = lt;
+	}
 	else{
 		//get random time within timespan
 		nclog(L"Getting Random time within RandomizeLimit %i\n", g_RandomizeTime);
 		newTime = getRandomTime(lt);
 	}
-
 	//g_stRebootTime=lt;	//store RebootTime in global time var
 	g_stRebootTime=newTime;	//store RebootTime including a random time offset
 	nclog(L"Reboot time will be:\t%02i:%02i\n", newTime.wHour, newTime.wMinute); 

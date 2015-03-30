@@ -16,6 +16,10 @@ iTimedReboot2
 "RandomizeLimit"="120"						//0=OFF, minutes limit for randomizing reboot time, default=120 minutes, min=0 and max=120
 ============================================
 
+  v0.80:
+		if RandomizeLimit=="0" we will not use a random time part
+		fixed possible crash for randomize=0
+		
   v0.70:
 		added registry entry to control randomize time limit (was fixed for 120 minutes): RandomizeLimit, min=0=OFF, max=120
 		
