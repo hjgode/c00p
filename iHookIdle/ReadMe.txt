@@ -27,7 +27,11 @@ config:
 			InfoEnabled		enable or disable to alarm msg to be shown
 			
 			AlarmOffKey		single VK value to switch alarm off and reset idle time
-	
+			
+			//new with v3.7.0.
+			TimeOff			time where alarm sound is disabled
+			TimeOn			time where alarm sound is allowed
+			
 		general settings
 			ForbiddenKeys	binary array with list of VK values that are filtered from the OS
 			EnableLogging	dword to switch loggin on or off
@@ -60,7 +64,11 @@ config:
 		  72,73
 	"KeySeq"="..."
 	"Timeout"=dword:0000000A
-
+	;//new with v3.7.0.
+	"TimeOff"=dword:00000578	;1400	default=0
+	"TimeOn"=dword:000005DC		;1500	default=0
+	;both 0 means Alarm Timespan is disabled, which is default and allows the alarm all the time
+	
 logging
 	see iHookIdle.exe.log.txt
 	
@@ -71,5 +79,12 @@ history:
 		StringReplace(szTemp2, L"\\r", L"\r");
 		StringReplace(szTemp2, L"\\n", L"\n");
 		for infoText
+
+	v 3.7.0
+		added TimeOff and TimeOn, is alarm is to be issued between TimeOff and TimeOn there will be no alarm sound (quiet)
+		//time		..........OFF-------ON..........
+		//current	    ^								ALARM OK
+		//                        ^                     ALARM DISABLED (quiet)
+		//                                   ^          ALARM OK
 
 /////////////////////////////////////////////////////////////////////////////

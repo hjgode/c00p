@@ -5,6 +5,7 @@
 #define IDS_APP_TITLE                   1
 #define ID_ICON                         1
 #define IDC_IHOOKIDLE                   2
+#define IDS_VERSION                     3
 #define IDD_DLGINFO                     9
 #define IDI_IHOOKIDLE                   101
 #define IDR_MENU                        102

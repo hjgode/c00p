@@ -18,10 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "setupWinCS", "setupWinCS\setupWinCS.csproj", "{31B89A11-4B64-4970-B69F-7C251084AA39}"
 EndProject
 Global
-	GlobalSection(SubversionScc) = preSolution
-		Svn-Managed = True
-		Manager = AnkhSVN - Subversion Support for Visual Studio
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|iCE-Premium (ARMV4I) = Debug|iCE-Premium (ARMV4I)
@@ -66,8 +62,6 @@ Global
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Debug|iCE-Premium (ARMV4I).Build.0 = Debug|iCE-Premium (ARMV4I)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Debug|iCE-Premium (ARMV4I).Deploy.0 = Debug|iCE-Premium (ARMV4I)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Debug|Mixed Platforms.ActiveCfg = Debug|Windows Mobile 6 Professional SDK (ARMV4I)
-		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Debug|Mixed Platforms.Build.0 = Debug|Windows Mobile 6 Professional SDK (ARMV4I)
-		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Debug|Mixed Platforms.Deploy.0 = Debug|Windows Mobile 6 Professional SDK (ARMV4I)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Debug|Pocket PC 2003 (ARMV4).ActiveCfg = Debug|Pocket PC 2003 (ARMV4)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Debug|Pocket PC 2003 (ARMV4).Build.0 = Debug|Pocket PC 2003 (ARMV4)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Debug|Pocket PC 2003 (ARMV4).Deploy.0 = Debug|Pocket PC 2003 (ARMV4)
@@ -100,8 +94,6 @@ Global
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Release|iCE-Premium (ARMV4I).Build.0 = Release|iCE-Premium (ARMV4I)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Release|iCE-Premium (ARMV4I).Deploy.0 = Release|iCE-Premium (ARMV4I)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Release|Mixed Platforms.ActiveCfg = Release|Windows Mobile 6 Professional SDK (ARMV4I)
-		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Release|Mixed Platforms.Build.0 = Release|Windows Mobile 6 Professional SDK (ARMV4I)
-		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Release|Mixed Platforms.Deploy.0 = Release|Windows Mobile 6 Professional SDK (ARMV4I)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Release|Pocket PC 2003 (ARMV4).ActiveCfg = Release|Pocket PC 2003 (ARMV4)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Release|Pocket PC 2003 (ARMV4).Build.0 = Release|Pocket PC 2003 (ARMV4)
 		{2CF72715-E18B-4975-93AC-ADDC811E4232}.Release|Pocket PC 2003 (ARMV4).Deploy.0 = Release|Pocket PC 2003 (ARMV4)
@@ -284,6 +276,8 @@ Global
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Debug|Any CPU.ActiveCfg = Debug|Windows Mobile 6 Professional SDK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Debug|iCE-Premium (ARMV4I).ActiveCfg = Debug|Windows Mobile 6.5.3 Professional DTK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Debug|Mixed Platforms.ActiveCfg = Debug|Windows Mobile 6 Professional SDK (ARMV4I)
+		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Debug|Mixed Platforms.Build.0 = Debug|Windows Mobile 6 Professional SDK (ARMV4I)
+		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Debug|Mixed Platforms.Deploy.0 = Debug|Windows Mobile 6 Professional SDK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Debug|Pocket PC 2003 (ARMV4).ActiveCfg = Debug|Windows Mobile 6.5.3 Professional DTK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Debug|Smartphone 2003 (ARMV4).ActiveCfg = Debug|Windows Mobile 6.5.3 Professional DTK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Debug|STANDARDSDK_420 (ARMV4I).ActiveCfg = Debug|Windows Mobile 6.5.3 Professional DTK (ARMV4I)
@@ -298,6 +292,8 @@ Global
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Release|Any CPU.ActiveCfg = Release|Windows Mobile 6 Professional SDK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Release|iCE-Premium (ARMV4I).ActiveCfg = Release|Windows Mobile 6.5.3 Professional DTK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Release|Mixed Platforms.ActiveCfg = Release|Windows Mobile 6 Professional SDK (ARMV4I)
+		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Release|Mixed Platforms.Build.0 = Release|Windows Mobile 6 Professional SDK (ARMV4I)
+		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Release|Mixed Platforms.Deploy.0 = Release|Windows Mobile 6 Professional SDK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Release|Pocket PC 2003 (ARMV4).ActiveCfg = Release|Windows Mobile 6.5.3 Professional DTK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Release|Smartphone 2003 (ARMV4).ActiveCfg = Release|Windows Mobile 6.5.3 Professional DTK (ARMV4I)
 		{B348C6C0-8756-417C-9259-510A9CB4D3DF}.Release|STANDARDSDK_420 (ARMV4I).ActiveCfg = Release|Windows Mobile 6.5.3 Professional DTK (ARMV4I)
@@ -460,5 +456,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(SubversionScc) = preSolution
+		Svn-Managed = True
+		Manager = AnkhSVN - Subversion Support for Visual Studio
 	EndGlobalSection
 EndGlobal

@@ -91,32 +91,6 @@ IDI_IHOOKIDLE           ICON                    "iHookIdle.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
-//
-
-IDR_MENU MENU 
-BEGIN
-    POPUP "Help"
-    BEGIN
-        MENUITEM "About",                       IDM_HELP_ABOUT
-    END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Accelerator
-//
-
-IDC_IHOOKIDLE ACCELERATORS 
-BEGIN
-    "A",            IDM_HELP_ABOUT,         VIRTKEY, CONTROL, NOINVERT
-    "Q",            IDM_OK,                 VIRTKEY, CONTROL, NOINVERT
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Dialog
 //
 
@@ -170,6 +144,32 @@ END
 #endif    // APSTUDIO_INVOKED
 
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU MENU 
+BEGIN
+    POPUP "Help"
+    BEGIN
+        MENUITEM "About",                       IDM_HELP_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDC_IHOOKIDLE ACCELERATORS 
+BEGIN
+    "A",            IDM_HELP_ABOUT,         VIRTKEY, CONTROL, NOINVERT
+    "Q",            IDM_OK,                 VIRTKEY, CONTROL, NOINVERT
+END
+
+
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -213,6 +213,7 @@ STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "iHookIdle"
     IDC_IHOOKIDLE           "IHOOKIDLE"
+    IDS_VERSION             "3.7.0"
 END
 
 STRINGTABLE 

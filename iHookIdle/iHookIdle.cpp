@@ -6,7 +6,7 @@
 #include "iHookIdle.h"
 #include "nclog.h"
 
-TCHAR szAppName[MAX_PATH] = L"iHookIdle v3.6.0";
+TCHAR szAppName[MAX_PATH] = L"iHookIdle v3.7.0";
 
 #define STOPEVENTNAME L"STOPILOCK"
 
@@ -53,6 +53,11 @@ TCHAR regVal_InfoButton2[MAX_PATH]=L"Dismiss";
 DWORD regValExtApp=0;
 TCHAR regValExtAppParms[MAX_PATH]=L"";
 TCHAR regValExtAppApp[MAX_PATH]=L"";
+
+//new with v3.7.0
+DWORD regValTimeOff=0;
+DWORD regValTimeOn=0;
+
 UINT  matchTimeout = 3000;  //ms, if zero, no autofallback
 DWORD EnableLogging = 1;
 
@@ -763,6 +768,29 @@ int ReadReg()
 		nclog(L"ReadReg(): failed reading VibrateID default=%i\n", VibrateID);
     }
 
+	//read TimeOff, start time to disable alarm
+    if (RegReadDword(L"TimeOff", &dwVal)==0)
+    {
+        regValTimeOff = dwVal;
+		nclog(L"ReadReg(): TimeOff =%04i\n", regValTimeOff);
+    }
+    else
+    {
+        regValTimeOff = 0;
+		nclog(L"ReadReg(): failed reading TimeOff default=%04i\n", regValTimeOff);
+    }
+	//read TimeOn, end time of disable alarm
+    if (RegReadDword(L"TimeOn", &dwVal)==0)
+    {
+        regValTimeOn = dwVal;
+		nclog(L"ReadReg(): TimeOn =%04i\n", regValTimeOn);
+    }
+    else
+    {
+        regValTimeOn = 0;
+		nclog(L"ReadReg(): failed reading TimeOn default=%04i\n", regValTimeOn);
+    }
+
 	TCHAR szTemp[10];
 	TCHAR szTemp2[MAX_PATH];
 	wsprintf(szTemp2, L"");
@@ -952,10 +980,10 @@ int ReadReg()
 	nclog(L"ReadReg(): CloseKey()\n");
 	CloseKey();
 
-	TCHAR str[MAX_PATH];
 
 //dump pForbiddenKeyList
 #ifdef DEBUG
+	TCHAR str[MAX_PATH];
 	char strA[MAX_PATH]; char strB[MAX_PATH];
 	sprintf(strA, "ForbiddenKeyList: ");
 	int a=0;

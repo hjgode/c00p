@@ -16,4 +16,6 @@ REGEDIT4
       72,73
 "KeySeq"="..."
 "Timeout"=dword:0000000A
+"TimeOn"=dword:00000000
+"TimeOff"=dword:00000000
 

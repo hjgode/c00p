@@ -24,6 +24,8 @@ extern int LEDid;		//which LED to use
 extern int VibrateID;
 extern int alarmLEDid;
 extern void LedOn(int id, int onoff); //onoff=0 LED is off, onoff=1 LED is on
+extern DWORD regValTimeOff;
+extern DWORD regValTimeOn;
 
 //events to control beeper and idle thread
 DWORD vibrateThreadID=0;
@@ -212,14 +214,7 @@ DWORD WINAPI vibrate(LPVOID lpParam){
 
 BOOL bToggleVibrate=TRUE;
 
-void doAlarm(){
-	//moved to vibrate alarm thread
-	//LedOn(alarmLEDid,2); //blink LED
-
-	if(g_hDlgInfo && bInfoDlgVisible){
-		SetWindowPos(g_hDlgInfo, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
-		//ShowWindow(g_hDlgInfo, SW_SHOW);
-	}
+void doSound(){
 	vibrateThreadHandle = CreateThread(NULL, 0, vibrate, (LPVOID)VibrateID, 0, &vibrateThreadID);
 
 	//issue some sound
@@ -248,8 +243,60 @@ void doAlarm(){
 		Sleep(300);
 		MessageBeep(MB_ICONERROR);
 	}
-
 #endif
+}
+
+BOOL alarmAllowed(){
+	BOOL bRet=TRUE;
+	SYSTEMTIME stCurrent, stOFF, stON;
+	GetLocalTime(&stCurrent);
+	stOFF=stCurrent;
+	stOFF.wHour=(BYTE)(regValTimeOff/100);
+	stOFF.wMinute=(BYTE)(regValTimeOff%100);
+	stON=stCurrent;
+	stON.wHour=(BYTE)(regValTimeOn/100);
+	stON.wMinute=(BYTE)(regValTimeOn%100);
+	FILETIME ftCurrent, ftOff, ftOn;
+	SystemTimeToFileTime(&stCurrent, &ftCurrent);
+	SystemTimeToFileTime(&stOFF, &ftOff);
+	SystemTimeToFileTime(&stON, &ftOn);
+	if(CompareFileTime(&ftCurrent, &ftOff)==1 && CompareFileTime(&ftCurrent, &ftOn)==-1){
+		//CompareFileTime(&first, &second) = -1 first is before second
+		//CompareFileTime(&first, &second) = +1 first is after second
+		//time		..........OFF-------ON..........
+		//current	    ^								ALARM OK
+		//                        ^                     ALARM DISABLED (quiet)
+		//                                   ^          ALARM OK
+		bRet=FALSE;
+	}
+	nclog(L"alarmAllowed=%i\n", bRet);
+	return bRet;
+}
+
+void doAlarm(){
+	//moved to vibrate alarm thread
+	//LedOn(alarmLEDid,2); //blink LED
+
+	if(g_hDlgInfo && bInfoDlgVisible){
+		SetWindowPos(g_hDlgInfo, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE | SWP_NOMOVE | SWP_SHOWWINDOW);
+		//ShowWindow(g_hDlgInfo, SW_SHOW);
+	}
+	//are TimeOff and TimeOn set?
+	if(regValTimeOff!=0 && regValTimeOn!=0){
+		if(alarmAllowed()){
+			nclog(L"within allowed alarm timespan\n");
+			vibrateThreadHandle = CreateThread(NULL, 0, vibrate, (LPVOID)VibrateID, 0, &vibrateThreadID);
+			doSound();
+		}
+		else{
+			nclog(L"outside allowed alarm timespan. Alarm sound disabled.\n");
+		}
+	}
+	else { //TimeOff/TimeOn not set
+		nclog(L"no alarm timespan set\n");
+		vibrateThreadHandle = CreateThread(NULL, 0, vibrate, (LPVOID)VibrateID, 0, &vibrateThreadID);
+		doSound();
+	}
 }
 
 DWORD WINAPI beeperThread(LPVOID lParam){
