@@ -10,6 +10,11 @@
 #include "dlg_info.h"
 #include "nclog.h"
 
+   #define _SECOND ((INT64) 10000000)
+   #define _MINUTE (60 * _SECOND)
+   #define _HOUR   (60 * _MINUTE)
+   #define _DAY    (24 * _HOUR)
+
 //extern BOOL bInfoDlgVisible;	//show/hide DlgInfo
 extern DWORD regValEnableInfo;
 
@@ -26,6 +31,7 @@ extern int alarmLEDid;
 extern void LedOn(int id, int onoff); //onoff=0 LED is off, onoff=1 LED is on
 extern DWORD regValTimeOff;
 extern DWORD regValTimeOn;
+extern DWORD regValSundayAlarmEnabled;
 
 //events to control beeper and idle thread
 DWORD vibrateThreadID=0;
@@ -246,10 +252,26 @@ void doSound(){
 #endif
 }
 
+void ftAddDays(int iDays, FILETIME* ft){
+   ULONGLONG qwResult;
+   // Copy the time into a quadword.
+   qwResult = (((ULONGLONG) ft->dwHighDateTime) << 32) + ft->dwLowDateTime;
+   // Add 30 days.
+   qwResult += (ULONGLONG)(iDays * _DAY);
+   // Copy the result back into the FILETIME structure.
+   ft->dwLowDateTime  = (DWORD) (qwResult & 0xFFFFFFFF );
+   ft->dwHighDateTime = (DWORD) (qwResult >> 32 );
+}
+
 BOOL alarmAllowed(){
 	BOOL bRet=TRUE;
 	SYSTEMTIME stCurrent, stOFF, stON;
 	GetLocalTime(&stCurrent);
+	//check for sunday, no alarms on sunday
+	if(regValSundayAlarmEnabled==0 && stCurrent.wDayOfWeek==0){
+		nclog(L"SundayAlarmEnabled=0 and we have a sunday (DayOfWeek=%i)\n", stCurrent.wDayOfWeek);
+		return FALSE;
+	}
 	stOFF=stCurrent;
 	stOFF.wHour=(BYTE)(regValTimeOff/100);
 	stOFF.wMinute=(BYTE)(regValTimeOff%100);
@@ -260,6 +282,23 @@ BOOL alarmAllowed(){
 	SystemTimeToFileTime(&stCurrent, &ftCurrent);
 	SystemTimeToFileTime(&stOFF, &ftOff);
 	SystemTimeToFileTime(&stON, &ftOn);
+	//if OffTime is less then OnTime, we are on the same day
+	//if OffTime is after OnTime (ie 2200 and 0500), we need to add one day to OnTime
+	if(CompareFileTime(&ftOff, &ftOn)==1)
+		ftAddDays(1, &ftOn);
+	//for display
+	FileTimeToSystemTime(&ftOff, &stOFF);
+	FileTimeToSystemTime(&ftOn, &stON);
+	nclog(L"alarmAllowed-OFF time: %02i.%02i.%04i %02i:%02i\n",
+		stOFF.wDay, stOFF.wMonth, stOFF.wYear,
+		stOFF.wHour, stOFF.wMinute);
+	nclog(L"alarmAllowed-ON time:  %02i.%02i.%04i %02i:%02i\n",
+		stON.wDay, stON.wMonth, stON.wYear,
+		stON.wHour, stON.wMinute);
+/*
+0x9609228a: alarmAllowed-OFF time: 01.01.2003 14:00
+0x9609228a: alarmAllowed-ON time: 02.01.2003 15:00
+*/
 	if(CompareFileTime(&ftCurrent, &ftOff)==1 && CompareFileTime(&ftCurrent, &ftOn)==-1){
 		//CompareFileTime(&first, &second) = -1 first is before second
 		//CompareFileTime(&first, &second) = +1 first is after second

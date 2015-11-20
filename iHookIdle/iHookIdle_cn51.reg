@@ -18,4 +18,4 @@ REGEDIT4
 "Timeout"=dword:0000000A
 "TimeOn"=dword:00000000
 "TimeOff"=dword:00000000
-
+"SundayAlarmEnabled"=dword:00000001

@@ -68,6 +68,8 @@ config:
 	"TimeOff"=dword:00000578	;1400	default=0
 	"TimeOn"=dword:000005DC		;1500	default=0
 	;both 0 means Alarm Timespan is disabled, which is default and allows the alarm all the time
+	;//new with v3.7.1, enable or disable alarm on sundays
+	"SundayAlarmEnabled"=dword:00000001	;default=1
 	
 logging
 	see iHookIdle.exe.log.txt
@@ -86,5 +88,13 @@ history:
 		//current	    ^								ALARM OK
 		//                        ^                     ALARM DISABLED (quiet)
 		//                                   ^          ALARM OK
+
+	v 3.7.1
+		changed code to enable use of 2200 and 0500 as OFF and ON time
+		this will result in a calculation where one day is added to ON time
+		before the time frame is checked
+		
+		new: "SundayAlarmEnabled"=dword:00000001
+		if enabled, the alarm is valid on sundays too, default = 1
 
 /////////////////////////////////////////////////////////////////////////////

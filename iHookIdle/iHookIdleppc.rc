@@ -213,7 +213,7 @@ STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "iHookIdle"
     IDC_IHOOKIDLE           "IHOOKIDLE"
-    IDS_VERSION             "3.7.0"
+    IDS_VERSION             "3.7.1"
 END
 
 STRINGTABLE 

@@ -6,7 +6,7 @@
 #include "iHookIdle.h"
 #include "nclog.h"
 
-TCHAR szAppName[MAX_PATH] = L"iHookIdle v3.7.0";
+TCHAR szAppName[MAX_PATH] = L"iHookIdle v3.7.1";
 
 #define STOPEVENTNAME L"STOPILOCK"
 
@@ -57,6 +57,9 @@ TCHAR regValExtAppApp[MAX_PATH]=L"";
 //new with v3.7.0
 DWORD regValTimeOff=0;
 DWORD regValTimeOn=0;
+
+//new with 3.7.1
+DWORD regValSundayAlarmEnabled=1;
 
 UINT  matchTimeout = 3000;  //ms, if zero, no autofallback
 DWORD EnableLogging = 1;
@@ -789,6 +792,19 @@ int ReadReg()
     {
         regValTimeOn = 0;
 		nclog(L"ReadReg(): failed reading TimeOn default=%04i\n", regValTimeOn);
+    }
+
+	//regValSundayAlarmEnabled
+	//read SundayAlarmEnabled, is alarm on sundy allword?
+    if (RegReadDword(L"SundayAlarmEnabled", &dwVal)==0)
+    {
+        regValSundayAlarmEnabled = dwVal;
+		nclog(L"ReadReg(): SundayAlarmEnabled =%04i\n", regValSundayAlarmEnabled);
+    }
+    else
+    {
+        regValSundayAlarmEnabled = 0;
+		nclog(L"ReadReg(): failed reading SundayAlarmEnabled default=%04i\n", regValSundayAlarmEnabled);
     }
 
 	TCHAR szTemp[10];
