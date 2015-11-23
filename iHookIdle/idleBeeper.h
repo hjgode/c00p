@@ -10,5 +10,7 @@ void startIdleThread(UINT iTimeOut);
 void stopIdleThread();
 void resetIdleThread();
 void stopBeeper();
+int alarmAllowed();
+TCHAR* dumpSystemTime(SYSTEMTIME, TCHAR*);
 
 #endif

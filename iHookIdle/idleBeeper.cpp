@@ -252,6 +252,13 @@ void doSound(){
 #endif
 }
 
+TCHAR* dumpSystemTime(SYSTEMTIME st, TCHAR* txt){
+	wsprintf(txt, L"%02i.%02i.%04i %02i:%02i\n",
+		st.wDay, st.wMonth, st.wYear,
+		st.wHour, st.wMinute);
+	return txt;
+}
+
 void ftAddDays(int iDays, FILETIME* ft){
    ULONGLONG qwResult;
    // Copy the time into a quadword.
@@ -261,6 +268,18 @@ void ftAddDays(int iDays, FILETIME* ft){
    // Copy the result back into the FILETIME structure.
    ft->dwLowDateTime  = (DWORD) (qwResult & 0xFFFFFFFF );
    ft->dwHighDateTime = (DWORD) (qwResult >> 32 );
+}
+
+int CompareSystemTime(SYSTEMTIME st1, SYSTEMTIME st2){	
+	int int1=st1.wHour*60+st1.wMinute;
+	int int2=st2.wHour*60+st2.wMinute;
+	if(int1<int2)
+		return -1;
+	else if(int1>int2)
+		return 1;
+	else if(int1==int2)
+		return 0;
+	return 0;
 }
 
 BOOL alarmAllowed(){
@@ -278,14 +297,65 @@ BOOL alarmAllowed(){
 	stON=stCurrent;
 	stON.wHour=(BYTE)(regValTimeOn/100);
 	stON.wMinute=(BYTE)(regValTimeOn%100);
+
+	/*	Minutes of the day, 2400?
+	if (current >= start && current < (end<start?end+24*60 : end)
+	if (current >= start && current < ((end<start)?end+24*60 : end) 
+	if (current >= start && current < ((end<start)?end+24*60 : end)) 
+	
+	if (current >= start && current < ((end<start)?end+2400 : end))  
+	*/
+	int current=stCurrent.wHour*60+stCurrent.wMinute;
+	int start=stOFF.wHour*60+stOFF.wMinute;
+	int end=stON.wHour*60+stON.wMinute, newEnd;
+	if(end<start){
+		newEnd=end+24*60;
+		nclog(L"start %i, current %i, newEnd %i\n", start, current, newEnd);
+	}else{
+		nclog(L"start %i, current %i, end %i\n", start, current, end);
+	}
+
+	if (current >= start && current < (end<start ? end+24*60 : end)){
+		nclog(L"first OK\n");
+		if (current >= start && current < ((end<start) ? end+24*60 : end)){
+			nclog(L"second OK\n");
+			if (current >= start && current < ((end<start)?end+24*60 : end)){
+				nclog(L"third OK\n");
+				; 
+			}
+		}
+	}
+
 	FILETIME ftCurrent, ftOff, ftOn;
 	SystemTimeToFileTime(&stCurrent, &ftCurrent);
 	SystemTimeToFileTime(&stOFF, &ftOff);
 	SystemTimeToFileTime(&stON, &ftOn);
 	//if OffTime is less then OnTime, we are on the same day
 	//if OffTime is after OnTime (ie 2200 and 0500), we need to add one day to OnTime
-	if(CompareFileTime(&ftOff, &ftOn)==1)
+	//ALL CALCULATIONS have to be done for being on the SAME day
+	// 22:00->05:00
+	BOOL bCrossingMidnight=FALSE;
+	if(CompareFileTime(&ftOff, &ftOn)==1){ //ftOff is after ftOn (same day)?
 		ftAddDays(1, &ftOn);
+		bCrossingMidnight=TRUE;
+	}
+/*
+0x9609228a: alarmAllowed-OFF time: 01.01.2003 14:00
+0x9609228a: alarmAllowed-ON time: 02.01.2003 15:00
+*/
+	//PROBLEM: Alarm issued although before OFF time
+	/*														Alarm	TEST
+	0xb5fcaf82: alarmAllowed-OFF time: 12.11.2015 22:00		
+	0xb5fcaf82: alarmAllowed-ON time:  13.11.2015 05:00
+	0xb5fcaf82: current time:          12.11.2015 00:31		no		OK
+									   12.11.2015 05:31		yes		OK
+									   12.11.2015 21:31		yes		OK
+									   12.11.2015 22:31		no		NOT OK
+	bCrossingMidnight=TRUE as ON is before OFF
+	*/
+	if(bCrossingMidnight)
+		ftAddDays(-1, &ftOn);
+
 	//for display
 	FileTimeToSystemTime(&ftOff, &stOFF);
 	FileTimeToSystemTime(&ftOn, &stON);
@@ -295,18 +365,22 @@ BOOL alarmAllowed(){
 	nclog(L"alarmAllowed-ON time:  %02i.%02i.%04i %02i:%02i\n",
 		stON.wDay, stON.wMonth, stON.wYear,
 		stON.wHour, stON.wMinute);
-/*
-0x9609228a: alarmAllowed-OFF time: 01.01.2003 14:00
-0x9609228a: alarmAllowed-ON time: 02.01.2003 15:00
-*/
-	if(CompareFileTime(&ftCurrent, &ftOff)==1 && CompareFileTime(&ftCurrent, &ftOn)==-1){
-		//CompareFileTime(&first, &second) = -1 first is before second
-		//CompareFileTime(&first, &second) = +1 first is after second
-		//time		..........OFF-------ON..........
-		//current	    ^								ALARM OK
-		//                        ^                     ALARM DISABLED (quiet)
-		//                                   ^          ALARM OK
-		bRet=FALSE;
+	nclog(L"current time:          %02i.%02i.%04i %02i:%02i\n",
+		stCurrent.wDay, stCurrent.wMonth, stCurrent.wYear,
+		stCurrent.wHour, stCurrent.wMinute);
+
+	if(CompareFileTime(&ftCurrent, &ftOff)==1){
+		nclog(L"### ftCurrent after ftOff\n");
+		if(CompareFileTime(&ftCurrent, &ftOn)==-1){
+			nclog(L"### ftCurrent before ftOn. Alarm disabled!\n");
+			//CompareFileTime(&first, &second) = -1 first is before second
+			//CompareFileTime(&first, &second) = +1 first is after second
+			//time		..........OFF-------ON..........
+			//current	    ^								ALARM OK
+			//                        ^                     ALARM DISABLED (quiet)
+			//                                   ^          ALARM OK
+			bRet=FALSE;
+		}
 	}
 	nclog(L"alarmAllowed=%i\n", bRet);
 	return bRet;

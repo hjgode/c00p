@@ -1066,6 +1066,41 @@ int WINAPI WinMain(HINSTANCE hInstance,
 
 	MSG msg;
 
+	//for automated test
+	int iAlarmResult=0;
+	if (wcsstr(lpCmdLine, L"-testtime") != NULL){
+		nclog(L"++++++ TESTTIME ++++++");
+		DWORD dwTestOff[]=		{1200,	1200,	1200,	 200,	 200,	 200,	2200,	2200,	2200,	2200,	0};
+		DWORD dwTestOn[] =		{1500,	1500,	1500,	 500,	 500,	 500,	 500,	 500,	 500,	 500,	0};
+		WORD dwTestTimes[]=		{1100,	1300,	1600,	 100,	 300,	 600,	2100,	2300,	 300,	 600,	0};
+		TCHAR* szTestAlarm[] =	{L"OK",	L"no",	L"OK",	L"OK",	L"no",	L"OK",	L"OK",	L"no",	L"no",	L"OK",	NULL};
+		int iTestAlarm[] =		{1,		0,		1,		1,		0,		1,		1,		0,		0,		1,	NULL};
+		SYSTEMTIME stCurrentTest;
+		GetLocalTime(&stCurrentTest);
+		SetLocalTime(&stCurrentTest);
+		regValSundayAlarmEnabled=1;
+		int y=0;
+		TCHAR* txt=(TCHAR*)malloc(16*sizeof(TCHAR));
+		while(dwTestTimes[y]!=0){	//testtimes
+			stCurrentTest.wHour=dwTestTimes[y]/100;
+			stCurrentTest.wMinute=dwTestTimes[y]%100;
+			SetLocalTime(&stCurrentTest);
+			regValTimeOff=dwTestOff[y];
+			regValTimeOn=dwTestOn[y];
+			nclog(L"\nTesttime: :                        %s", dumpSystemTime(stCurrentTest, txt));
+			iAlarmResult=alarmAllowed();
+			if(iAlarmResult==1)
+				nclog(L"+++ ALARM ALLOWED\n");
+			else
+				nclog(L"+++ ALARM NOT ALLOWED\n");
+			if(iTestAlarm[y]!=iAlarmResult)
+				nclog(L"------- ERROR------\n");
+			y++;
+		};
+		nclog(L"++++++ TESTTIME DONE ++++++");
+		return FALSE;
+	}
+
 	// Perform application initialization:
 	if (!InitInstance(hInstance, nCmdShow)) 
 	{
