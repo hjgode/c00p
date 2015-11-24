@@ -6,7 +6,7 @@
 #include "iHookIdle.h"
 #include "nclog.h"
 
-TCHAR szAppName[MAX_PATH] = L"iHookIdle v3.7.1";
+TCHAR szAppName[MAX_PATH] = L"iHookIdle v3.7.2";
 
 #define STOPEVENTNAME L"STOPILOCK"
 
@@ -1097,7 +1097,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 				nclog(L"------- ERROR------\n");
 			y++;
 		};
-		nclog(L"++++++ TESTTIME DONE ++++++");
+		nclog(L"++++++ TESTTIME DONE ++++++\n");
 		return FALSE;
 	}
 

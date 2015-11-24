@@ -282,10 +282,40 @@ int CompareSystemTime(SYSTEMTIME st1, SYSTEMTIME st2){
 	return 0;
 }
 
+BOOL isTimeOfDayBetween(SYSTEMTIME time, SYSTEMTIME timeStart, SYSTEMTIME timeEnd)
+{
+	BOOL bRet=false;
+	int current=	time.wHour*60		+	time.wMinute;
+	int start=		timeStart.wHour*60	+	timeStart.wMinute;
+	int end=		timeEnd.wHour*60	+	timeEnd.wMinute;
+
+	nclog(L"isTimeOfDayBetween: time %i, start %i, end %i\n",
+		current, start, end);
+
+	if (end < start)
+	{
+		bRet = (current <= end || current >= start);
+	}
+	else
+	{
+		bRet = (current >= start && current <= end);
+	}
+
+	if(bRet)
+		nclog(L"isTimeOfDayBetween: Time is within timespan\n");
+	else
+		nclog(L"isTimeOfDayBetween: Time is outside timespan\n");
+
+	return bRet;
+}
+
 BOOL alarmAllowed(){
 	BOOL bRet=TRUE;
 	SYSTEMTIME stCurrent, stOFF, stON;
 	GetLocalTime(&stCurrent);
+	nclog(L"current time:          %02i.%02i.%04i %02i:%02i\n",
+		stCurrent.wDay, stCurrent.wMonth, stCurrent.wYear,
+		stCurrent.wHour, stCurrent.wMinute);
 	//check for sunday, no alarms on sunday
 	if(regValSundayAlarmEnabled==0 && stCurrent.wDayOfWeek==0){
 		nclog(L"SundayAlarmEnabled=0 and we have a sunday (DayOfWeek=%i)\n", stCurrent.wDayOfWeek);
@@ -298,90 +328,16 @@ BOOL alarmAllowed(){
 	stON.wHour=(BYTE)(regValTimeOn/100);
 	stON.wMinute=(BYTE)(regValTimeOn%100);
 
-	/*	Minutes of the day, 2400?
-	if (current >= start && current < (end<start?end+24*60 : end)
-	if (current >= start && current < ((end<start)?end+24*60 : end) 
-	if (current >= start && current < ((end<start)?end+24*60 : end)) 
-	
-	if (current >= start && current < ((end<start)?end+2400 : end))  
-	*/
-	int current=stCurrent.wHour*60+stCurrent.wMinute;
-	int start=stOFF.wHour*60+stOFF.wMinute;
-	int end=stON.wHour*60+stON.wMinute, newEnd;
-	if(end<start){
-		newEnd=end+24*60;
-		nclog(L"start %i, current %i, newEnd %i\n", start, current, newEnd);
-	}else{
-		nclog(L"start %i, current %i, end %i\n", start, current, end);
-	}
-
-	if (current >= start && current < (end<start ? end+24*60 : end)){
-		nclog(L"first OK\n");
-		if (current >= start && current < ((end<start) ? end+24*60 : end)){
-			nclog(L"second OK\n");
-			if (current >= start && current < ((end<start)?end+24*60 : end)){
-				nclog(L"third OK\n");
-				; 
-			}
-		}
-	}
-
-	FILETIME ftCurrent, ftOff, ftOn;
-	SystemTimeToFileTime(&stCurrent, &ftCurrent);
-	SystemTimeToFileTime(&stOFF, &ftOff);
-	SystemTimeToFileTime(&stON, &ftOn);
-	//if OffTime is less then OnTime, we are on the same day
-	//if OffTime is after OnTime (ie 2200 and 0500), we need to add one day to OnTime
-	//ALL CALCULATIONS have to be done for being on the SAME day
-	// 22:00->05:00
-	BOOL bCrossingMidnight=FALSE;
-	if(CompareFileTime(&ftOff, &ftOn)==1){ //ftOff is after ftOn (same day)?
-		ftAddDays(1, &ftOn);
-		bCrossingMidnight=TRUE;
-	}
-/*
-0x9609228a: alarmAllowed-OFF time: 01.01.2003 14:00
-0x9609228a: alarmAllowed-ON time: 02.01.2003 15:00
-*/
-	//PROBLEM: Alarm issued although before OFF time
-	/*														Alarm	TEST
-	0xb5fcaf82: alarmAllowed-OFF time: 12.11.2015 22:00		
-	0xb5fcaf82: alarmAllowed-ON time:  13.11.2015 05:00
-	0xb5fcaf82: current time:          12.11.2015 00:31		no		OK
-									   12.11.2015 05:31		yes		OK
-									   12.11.2015 21:31		yes		OK
-									   12.11.2015 22:31		no		NOT OK
-	bCrossingMidnight=TRUE as ON is before OFF
-	*/
-	if(bCrossingMidnight)
-		ftAddDays(-1, &ftOn);
-
-	//for display
-	FileTimeToSystemTime(&ftOff, &stOFF);
-	FileTimeToSystemTime(&ftOn, &stON);
 	nclog(L"alarmAllowed-OFF time: %02i.%02i.%04i %02i:%02i\n",
 		stOFF.wDay, stOFF.wMonth, stOFF.wYear,
 		stOFF.wHour, stOFF.wMinute);
 	nclog(L"alarmAllowed-ON time:  %02i.%02i.%04i %02i:%02i\n",
 		stON.wDay, stON.wMonth, stON.wYear,
 		stON.wHour, stON.wMinute);
-	nclog(L"current time:          %02i.%02i.%04i %02i:%02i\n",
-		stCurrent.wDay, stCurrent.wMonth, stCurrent.wYear,
-		stCurrent.wHour, stCurrent.wMinute);
 
-	if(CompareFileTime(&ftCurrent, &ftOff)==1){
-		nclog(L"### ftCurrent after ftOff\n");
-		if(CompareFileTime(&ftCurrent, &ftOn)==-1){
-			nclog(L"### ftCurrent before ftOn. Alarm disabled!\n");
-			//CompareFileTime(&first, &second) = -1 first is before second
-			//CompareFileTime(&first, &second) = +1 first is after second
-			//time		..........OFF-------ON..........
-			//current	    ^								ALARM OK
-			//                        ^                     ALARM DISABLED (quiet)
-			//                                   ^          ALARM OK
-			bRet=FALSE;
-		}
-	}
+
+	bRet = !isTimeOfDayBetween(stCurrent, stOFF, stON);
+
 	nclog(L"alarmAllowed=%i\n", bRet);
 	return bRet;
 }
