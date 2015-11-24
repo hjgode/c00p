@@ -1,0 +1,94 @@
+Date and Time: 14.11.2015 06:11:29
+#### Starting iHookIdle v3.7.2 ####
+Load module: itcscan.dll
+0x36e3d026: ++++++ TESTTIME ++++++0x36e3d026: 
+Testtime: :                        14.11.2015 11:00
+0x36e3d026: current time:          14.11.2015 11:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 12:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 15:00
+0x36e3d026: isTimeOfDayBetween: time 660, start 720, end 900
+0x36e3d026: isTimeOfDayBetween: Time is outside timespan
+0x36e3d026: alarmAllowed=1
+0x36e3d026: +++ ALARM ALLOWED
+0x36e3d026: 
+Testtime: :                        14.11.2015 13:00
+0x36e3d026: current time:          14.11.2015 13:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 12:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 15:00
+0x36e3d026: isTimeOfDayBetween: time 780, start 720, end 900
+0x36e3d026: isTimeOfDayBetween: Time is within timespan
+0x36e3d026: alarmAllowed=0
+0x36e3d026: +++ ALARM NOT ALLOWED
+0x36e3d026: 
+Testtime: :                        14.11.2015 16:00
+0x36e3d026: current time:          14.11.2015 16:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 12:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 15:00
+0x36e3d026: isTimeOfDayBetween: time 960, start 720, end 900
+0x36e3d026: isTimeOfDayBetween: Time is outside timespan
+0x36e3d026: alarmAllowed=1
+0x36e3d026: +++ ALARM ALLOWED
+0x36e3d026: 
+Testtime: :                        14.11.2015 01:00
+0x36e3d026: current time:          14.11.2015 01:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 02:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 05:00
+0x36e3d026: isTimeOfDayBetween: time 60, start 120, end 300
+0x36e3d026: isTimeOfDayBetween: Time is outside timespan
+0x36e3d026: alarmAllowed=1
+0x36e3d026: +++ ALARM ALLOWED
+0x36e3d026: 
+Testtime: :                        14.11.2015 03:00
+0x36e3d026: current time:          14.11.2015 03:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 02:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 05:00
+0x36e3d026: isTimeOfDayBetween: time 180, start 120, end 300
+0x36e3d026: isTimeOfDayBetween: Time is within timespan
+0x36e3d026: alarmAllowed=0
+0x36e3d026: +++ ALARM NOT ALLOWED
+0x36e3d026: 
+Testtime: :                        14.11.2015 06:00
+0x36e3d026: current time:          14.11.2015 06:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 02:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 05:00
+0x36e3d026: isTimeOfDayBetween: time 360, start 120, end 300
+0x36e3d026: isTimeOfDayBetween: Time is outside timespan
+0x36e3d026: alarmAllowed=1
+0x36e3d026: +++ ALARM ALLOWED
+0x36e3d026: 
+Testtime: :                        14.11.2015 21:00
+0x36e3d026: current time:          14.11.2015 21:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 22:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 05:00
+0x36e3d026: isTimeOfDayBetween: time 1260, start 1320, end 300
+0x36e3d026: isTimeOfDayBetween: Time is outside timespan
+0x36e3d026: alarmAllowed=1
+0x36e3d026: +++ ALARM ALLOWED
+0x36e3d026: 
+Testtime: :                        14.11.2015 23:00
+0x36e3d026: current time:          14.11.2015 23:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 22:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 05:00
+0x36e3d026: isTimeOfDayBetween: time 1380, start 1320, end 300
+0x36e3d026: isTimeOfDayBetween: Time is within timespan
+0x36e3d026: alarmAllowed=0
+0x36e3d026: +++ ALARM NOT ALLOWED
+0x36e3d026: 
+Testtime: :                        14.11.2015 03:00
+0x36e3d026: current time:          14.11.2015 03:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 22:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 05:00
+0x36e3d026: isTimeOfDayBetween: time 180, start 1320, end 300
+0x36e3d026: isTimeOfDayBetween: Time is within timespan
+0x36e3d026: alarmAllowed=0
+0x36e3d026: +++ ALARM NOT ALLOWED
+0x36e3d026: 
+Testtime: :                        14.11.2015 06:00
+0x36e3d026: current time:          14.11.2015 06:00
+0x36e3d026: alarmAllowed-OFF time: 14.11.2015 22:00
+0x36e3d026: alarmAllowed-ON time:  14.11.2015 05:00
+0x36e3d026: isTimeOfDayBetween: time 360, start 1320, end 300
+0x36e3d026: isTimeOfDayBetween: Time is outside timespan
+0x36e3d026: alarmAllowed=1
+0x36e3d026: +++ ALARM ALLOWED
+0x36e3d026: ++++++ TESTTIME DONE ++++++
